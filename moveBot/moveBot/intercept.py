@@ -13,7 +13,7 @@ class Intercept(Node):
             self.move_action_callback)
         
     def move_action_callback(self, goal):
-        self.get_logger().info(f"{goal.request}")
+        self.get_logger().info(f"{goal.request.request.workspace_parameters}")
         result = MoveGroup.Result()
         return result
     
