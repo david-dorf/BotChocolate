@@ -93,8 +93,8 @@ class Testing(Node):
  
         msg=self.get_ik()
         
-        await self.ik_client.call_async(GetPositionIK.Request(ik_request=msg))
-        self.response=GetPositionIK.Response()
+        self.response = await self.ik_client.call_async(GetPositionIK.Request(ik_request=msg))
+        #self.response=GetPositionIK.Response()
         self.get_logger().info(f'\nresponse\n{self.response}')
 
         response=Empty.Response()
