@@ -1,6 +1,9 @@
 from rclpy.node import Node
 from rclpy.action import ActionServer, ActionClient
 from moveit_msgs.action import MoveGroup
+from moveit_msgs.srv import GetPositionIK
+import rclpy
+
 
 class MoveBot():
     def __init__(self, node):
@@ -12,6 +15,8 @@ class MoveBot():
             MoveGroup,
             "move_action",
             self.move_action_callback)
+        self.ik_service = self.create_client(GetPositionIK, "/compute_ik")
+        
         
     def create_path(self, x_goal, y_goal, z_goal, r_goal, p_goal, yaw_goal):
         """Takes in x,y,z,r,p,y pose of robot and creates a path to goal.
@@ -29,8 +34,20 @@ class MoveBot():
         ##Helper functoin get_joint_positions
         
     def get_joint_positions(self, x_goal, y_goal, z_goal, r_goal, p_goal, yaw_goal):
-        # Call action server - get positions
+        # Call comput ik service
+        position = GetPositionIK()
+        position.pose.position.x = 0.0
+        
+        # self.ik_service.call_async(GetPositionIK.Request(ik_request.pose.position.x = 0.0,
+        #                                                  = xx , y = yy, theta = 0.0))
     
     # Call moveit action
     
     # Execute
+def main(args=None):
+    rclpy.init(args=args)
+    node = MoveBot()
+    rclpy.spin(node)
+    rclpy.shutdown()
+    
+    
