@@ -10,11 +10,51 @@ import geometry_msgs
 import octomap_msgs
 import sensor_msgs
 import trajectory_msgs
-from moveit_msgs.msg import PositionIKRequest, MotionPlanRequest, Constraints, JointConstraint, PositionConstraint
+from moveit_msgs.msg import PositionIKRequest, MotionPlanRequest, Constraints, JointConstraint, RobotState
 from sensor_msgs.msg import JointState
 from moveit_msgs.srv import GetPositionIK
 from std_srvs.srv import Empty
 from rclpy.callback_groups import ReentrantCallbackGroup
+import math
+import numpy as np
+from movebot_interfaces.srv import IkGoalRqst
+
+def quaternion_from_euler(ai, aj, ak):
+    """
+    Take in Euler angles and converts them to quaternions. Function taken from link above.
+
+    Args:
+    ----
+        ai (float): Roll angle.
+        aj (float): Pitch angle.
+        ak (float): Yaw angle.
+
+    Return:
+    ------
+        float array: Array of quaternion angles.
+
+    """
+    ai /= 2.0
+    aj /= 2.0
+    ak /= 2.0
+    ci = math.cos(ai)
+    si = math.sin(ai)
+    cj = math.cos(aj)
+    sj = math.sin(aj)
+    ck = math.cos(ak)
+    sk = math.sin(ak)
+    cc = ci * ck
+    cs = ci * sk
+    sc = si * ck
+    ss = si * sk
+
+    q = np.empty((4, ))
+    q[0] = cj * sc - sj * cs
+    q[1] = cj * ss + sj * cc
+    q[2] = cj * cs - sj * sc
+    q[3] = cj * cc + sj * ss
+
+    return q
 
 class Testing(Node):
     def __init__(self):
@@ -33,7 +73,7 @@ class Testing(Node):
 
         self.jointpub  = self.create_subscription(JointState, "/joint_states",self.js_cb, 10)
         self.ik_client= self.create_client(GetPositionIK, "/compute_ik",callback_group=self.cbgroup)
-        self.call_ik    = self.create_service(Empty,"call_ik",self.ik_callback,callback_group=self.cbgroup)
+        self.call_ik    = self.create_service(IkGoalRqst,"call_ik",self.ik_callback,callback_group=self.cbgroup)
         self.call_plan    = self.create_service(Empty,"call_plan",self.plan_callback,callback_group=self.cbgroup)
         self.call_execute   = self.create_service(Empty,"call_execute",self.execute_callback,callback_group=self.cbgroup)
         self.time=0
@@ -47,7 +87,7 @@ class Testing(Node):
         self.joint_statesmsg=jointstate 
         # self.get_logger().info(f'goal msg {self.joint_statesmsg}')
 
-    def get_ik(self):
+    def get_ik(self, pose_vec):
         ikmsg = PositionIKRequest()
         ikmsg.group_name = 'panda_manipulator'
         ikmsg.robot_state.joint_state = self.joint_statesmsg
@@ -55,30 +95,32 @@ class Testing(Node):
 
         ikmsg.pose_stamped.header.frame_id = 'panda_link0'
         ikmsg.pose_stamped.header.stamp = self.get_clock().now().to_msg()
-        ikmsg.pose_stamped.pose.position.x = 0.5
-        ikmsg.pose_stamped.pose.position.y = 0.5
-        ikmsg.pose_stamped.pose.position.z = 0.5
-        ikmsg.pose_stamped.pose.orientation.x = 0.0
-        ikmsg.pose_stamped.pose.orientation.y = 0.0
-        ikmsg.pose_stamped.pose.orientation.z = 0.0
-        ikmsg.pose_stamped.pose.orientation.w = 0.0
+        ikmsg.pose_stamped.pose.position.x = pose_vec.x
+        ikmsg.pose_stamped.pose.position.y = pose_vec.y
+        ikmsg.pose_stamped.pose.position.z = pose_vec.z
+        quats = quaternion_from_euler(pose_vec.roll,pose_vec.pitch,pose_vec.yaw)
+        ikmsg.pose_stamped.pose.orientation.x = quats[0]
+        ikmsg.pose_stamped.pose.orientation.y = quats[1]
+        ikmsg.pose_stamped.pose.orientation.z = quats[2]
+        ikmsg.pose_stamped.pose.orientation.w = quats[3]
         ikmsg.timeout.sec = 5
         
         return ikmsg
-        # self.ik_future = self.ik_client.call_async(GetPositionIK.Request(ik_request = ikmsg))
-
-        # self.response=GetPositionIK.Response()
-        # self.get_logger().info(f'response{self.response}')
 
     async def ik_callback(self,request,response):
  
-        msg=self.get_ik()
-        
-        self.ik_response=await self.ik_client.call_async(GetPositionIK.Request(ik_request=msg))
+        msg=self.get_ik(request)
+
+        self.ik_response = await self.ik_client.call_async(GetPositionIK.Request(ik_request=msg))
         # self.response=GetPositionIK.Response()
-        self.get_logger().info(f'\nresponse\n{self.ik_response}')
+        self.get_logger().info(f'\nIk response\n{self.ik_response}')
         #self.get_motion_request(self.ik_response)
-        response=Empty.Response()
+        #response=Empty.Response()
+        print("HEHEHEHEHEHE")
+        print(response)
+        response.joint_states = self.ik_response.solution
+        print("AGHHHHHHHHHHHHHHHHHHHHH")
+        print(response)
         return response
     
     def get_motion_request(self):

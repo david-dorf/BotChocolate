@@ -7,9 +7,13 @@
   <maintainer email="oubrejames@gmail.com">oubre</maintainer>
   <license>TODO: License declaration</license>
 
+  <exec_depend>rclpy</exec_depend> 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
+  <exec_depend>movebot_interfaces</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+
   <test_depend>python3-pytest</test_depend>
 
   <export>
