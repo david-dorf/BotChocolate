@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': ['intercept = moveBot.intercept:main',
-                            'moveBot = moveBot.moveBot:main'
+                            'moveBot = moveBot.moveBot:main',
+                            'brick_intercept = moveBot.brick_intercept:main'
         ],
     },
 )
