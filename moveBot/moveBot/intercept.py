@@ -103,10 +103,10 @@ class Testing(Node):
 
     def get_ik(self, pose_vec):
         self.get_logger().info(f'\nPoses\n{pose_vec}')
-        if pose_vec.x==0.0 and pose_vec.y==0.0 and pose_vec.z==0.0:
+        if pose_vec[0]==0.0 and pose_vec[1]==0.0 and pose_vec[2]==0.0:
             # self.get_logger().info(f'\nPoses\n{pose_vec}')
             print("ahh")
-            pose_vec.x,pose_vec.y,pose_vec.z=self.ee_base.transform.translation.x,self.ee_base.transform.translation.y,self.ee_base.transform.translation.z
+            pose_vec[0],pose_vec[1],pose_vec[2]=self.ee_base.transform.translation.x,self.ee_base.transform.translation.y,self.ee_base.transform.translation.z
 
         ikmsg = PositionIKRequest()
         ikmsg.group_name = 'panda_manipulator'
@@ -115,23 +115,22 @@ class Testing(Node):
 
         ikmsg.pose_stamped.header.frame_id = 'panda_link0'
         ikmsg.pose_stamped.header.stamp = self.get_clock().now().to_msg()
-        ikmsg.pose_stamped.pose.position.x = pose_vec.x
-        ikmsg.pose_stamped.pose.position.y = pose_vec.y
-        ikmsg.pose_stamped.pose.position.z = pose_vec.z
-        quats = quaternion_from_euler(pose_vec.roll,pose_vec.pitch,pose_vec.yaw)
+        ikmsg.pose_stamped.pose.position.x = pose_vec[0]
+        ikmsg.pose_stamped.pose.position.y = pose_vec[1]
+        ikmsg.pose_stamped.pose.position.z = pose_vec[2]
+        quats = quaternion_from_euler(pose_vec[3],pose_vec[4],pose_vec[5])
         ikmsg.pose_stamped.pose.orientation.x = quats[0]
         ikmsg.pose_stamped.pose.orientation.y = quats[1]
         ikmsg.pose_stamped.pose.orientation.z = quats[2]
         ikmsg.pose_stamped.pose.orientation.w = quats[3]
         ikmsg.timeout.sec = 5
 
-            
         self.get_logger().info(f'\nIk msg\n{ikmsg}')
         return ikmsg
 
     async def ik_callback(self,request,response):
- 
-        msg=self.get_ik(request)
+        pose_vec = np.hstack([request.position, request.orientation])
+        msg=self.get_ik(pose_vec)
 
         self.ik_response = await self.ik_client.call_async(GetPositionIK.Request(ik_request=msg))
         # self.response=GetPositionIK.Response()
@@ -222,9 +221,9 @@ class Testing(Node):
 
         try:
             self.ee_base = self.tf_buffer.lookup_transform('panda_link0','panda_hand',rclpy.time.Time())
-            # self.get_logger().info(f'\n E.E X \n{self.ee_base.transform.translation.x}')
-            # self.get_logger().info(f'\n E.E Y \n{self.ee_base.transform.translation.y}')
-            # self.get_logger().info(f'\n E.E Z \n{self.ee_base.transform.translation.z}')
+            self.get_logger().info(f'\n E.E X \n{self.ee_base.transform.translation.x}')
+            self.get_logger().info(f'\n E.E Y \n{self.ee_base.transform.translation.y}')
+            self.get_logger().info(f'\n E.E Z \n{self.ee_base.transform.translation.z}')
         except:
             pass
 
