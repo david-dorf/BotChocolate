@@ -11,6 +11,10 @@ import octomap_msgs
 import sensor_msgs
 import trajectory_msgs
 from moveit_msgs.msg import PositionIKRequest, MotionPlanRequest, Constraints, JointConstraint, RobotState
+from geometry_msgs.msg import TransformStamped
+from tf2_ros.transform_listener import TransformListener
+from tf2_ros import TransformBroadcaster
+from tf2_ros.buffer import Buffer
 from sensor_msgs.msg import JointState
 from moveit_msgs.srv import GetPositionIK
 from std_srvs.srv import Empty
@@ -76,6 +80,16 @@ class Testing(Node):
         self.call_ik    = self.create_service(IkGoalRqst,"call_ik",self.ik_callback,callback_group=self.cbgroup)
         self.call_plan    = self.create_service(Empty,"call_plan",self.plan_callback,callback_group=self.cbgroup)
         self.call_execute   = self.create_service(Empty,"call_execute",self.execute_callback,callback_group=self.cbgroup)
+        self.timer = self.create_timer(1/100, self.timer_callback)
+
+
+        # self.broadcaster = TransformBroadcaster(self)
+        # self.ee_base = TransformStamped()
+        # self.ee_base.header.frame_id = "panda_link0"
+        # self.ee_base.child_frame_id = "panda_hand"
+
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
         self.time=0
 
 
@@ -88,10 +102,16 @@ class Testing(Node):
         # self.get_logger().info(f'goal msg {self.joint_statesmsg}')
 
     def get_ik(self, pose_vec):
+        self.get_logger().info(f'\nPoses\n{pose_vec}')
+        if pose_vec.x==0.0 and pose_vec.y==0.0 and pose_vec.z==0.0:
+            # self.get_logger().info(f'\nPoses\n{pose_vec}')
+            print("ahh")
+            pose_vec.x,pose_vec.y,pose_vec.z=self.ee_base.transform.translation.x,self.ee_base.transform.translation.y,self.ee_base.transform.translation.z
+
         ikmsg = PositionIKRequest()
         ikmsg.group_name = 'panda_manipulator'
         ikmsg.robot_state.joint_state = self.joint_statesmsg
-        print(self.joint_statesmsg)
+        # print(self.joint_statesmsg)
 
         ikmsg.pose_stamped.header.frame_id = 'panda_link0'
         ikmsg.pose_stamped.header.stamp = self.get_clock().now().to_msg()
@@ -104,7 +124,9 @@ class Testing(Node):
         ikmsg.pose_stamped.pose.orientation.z = quats[2]
         ikmsg.pose_stamped.pose.orientation.w = quats[3]
         ikmsg.timeout.sec = 5
-        
+
+            
+        self.get_logger().info(f'\nIk msg\n{ikmsg}')
         return ikmsg
 
     async def ik_callback(self,request,response):
@@ -114,13 +136,8 @@ class Testing(Node):
         self.ik_response = await self.ik_client.call_async(GetPositionIK.Request(ik_request=msg))
         # self.response=GetPositionIK.Response()
         self.get_logger().info(f'\nIk response\n{self.ik_response}')
-        #self.get_motion_request(self.ik_response)
-        #response=Empty.Response()
-        print("HEHEHEHEHEHE")
-        print(response)
         response.joint_states = self.ik_response.solution
-        print("AGHHHHHHHHHHHHHHHHHHHHH")
-        print(response)
+
         return response
     
     def get_motion_request(self):
@@ -138,7 +155,7 @@ class Testing(Node):
         
         #joint_constraints = JointConstraint()
         for i in range(len(self.joint_statesmsg.name)):
-            print("TEST\n",self.joint_statesmsg.name[i])
+            # print("TEST\n",self.joint_statesmsg.name[i])
             joint_constraints = JointConstraint()
             joint_constraints.joint_name = self.joint_statesmsg.name[i]
             joint_constraints.position = self.ik_response.solution.joint_state.position[i]
@@ -147,7 +164,7 @@ class Testing(Node):
             joint_constraints.weight = 1.0
             goal_constraints.joint_constraints.append(joint_constraints)
             #goal_constraints.joint_constraints[i] = joint_constraints
-        print("GOAL CONSTRAINTS\n", goal_constraints)
+        # print("GOAL CONSTRAINTS\n", goal_constraints)
         motion_req.goal_constraints = [goal_constraints]
         motion_req.pipeline_id = 'move_group'
         motion_req.group_name = 'panda_manipulator'
@@ -168,8 +185,8 @@ class Testing(Node):
         plan_request=MoveGroup.Goal()
         plan_request.request = self.get_motion_request()
         plan_request.planning_options.plan_only = True
-        print("Plan request:\n")
-        print(plan_request)
+        # print("Plan request:\n")
+        # print(plan_request)
         return plan_request
 
     async def plan_callback(self,request,response):
@@ -177,7 +194,7 @@ class Testing(Node):
         self.future_response=await self._plan_client.send_goal_async(plan_msg)
         # self.response=GetPositionIK.Response()
         self.plan_response=await self.future_response.get_result_async()
-        self.get_logger().info(f'\nPlan rRsponse:\n{self.plan_response}')
+        # self.get_logger().info(f'\nPlan rRsponse:\n{self.plan_response}')
         response=Empty.Response()
         return response 
 
@@ -192,13 +209,29 @@ class Testing(Node):
         exec_msg=self.send_execute()
         self.future_response=await self._execute_client.send_goal_async(exec_msg)
         self.execute_response=await self.future_response.get_result_async()
-        self.get_logger().info(f'\nresponse\n{self.execute_response}')
+        # self.get_logger().info(f'\nresponse\n{self.execute_response}')
 
         response=Empty.Response()
         
         return response 
 
+    def timer_callback(self):
+        time = self.get_clock().now().to_msg()
+        # self.ee_base.header.stamp = time
+        # self.broadcaster.sendTransform(self.ee_base)
 
+        try:
+            self.ee_base = self.tf_buffer.lookup_transform('panda_link0','panda_hand',rclpy.time.Time())
+            # self.get_logger().info(f'\n E.E X \n{self.ee_base.transform.translation.x}')
+            # self.get_logger().info(f'\n E.E Y \n{self.ee_base.transform.translation.y}')
+            # self.get_logger().info(f'\n E.E Z \n{self.ee_base.transform.translation.z}')
+        except:
+            pass
+
+
+        # self.get_logger().info(f'\n E.E X \n{self.ee_base.transform.translation.x}')
+        # self.get_logger().info(f'\n E.E Y \n{self.ee_base.transform.translation.y}')
+        # self.get_logger().info(f'\n E.E Z \n{self.ee_base.transform.translation.z}')
 
 
 
