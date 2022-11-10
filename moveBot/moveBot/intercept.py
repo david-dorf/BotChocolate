@@ -200,11 +200,9 @@ class Testing(Node):
         motion_req.max_velocity_scaling_factor = 0.1
         motion_req.max_acceleration_scaling_factor = 0.1
         motion_req.max_cartesian_speed = 0.0
-        self.get_logger().info(f'\n TESTICLES \n')
         plan_request=MoveGroup.Goal()
         plan_request.request = motion_req
         plan_request.planning_options.plan_only = True
-        self.get_logger().info(f'\n BALLS \n')
         return plan_request
 
     async def plan_callback(self,request,response):
@@ -246,7 +244,6 @@ class Testing(Node):
         self.plan_response=await self.future_response.get_result_async()
         # self.get_logger().info(f'\nPlan rRsponse:\n{self.plan_response}')
         # response=Empty.Response()
-        # self.get_logger().info(f'\n PENIS\n')
         # self.get_logger().info(f'\nIk ik callback response\n{response}')
         return response 
 
