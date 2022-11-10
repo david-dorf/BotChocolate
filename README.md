@@ -37,7 +37,8 @@ be passed as empty.
 
 Each pose field also has a position and orientation subfield. Here an end effector configuration
 position may be specified in Cartesian coordinates and the end effector angle may be specified
-as roll, pitch, and yaw in radians.
+as roll, pitch, and yaw in radians. Furthermore, to specify solely a position or solely an 
+orientation, the opposite subfield may be entered as empty in the service call.
 
 Lastly, there are two flags to alter the operation of system. By setting `is_xyzrpy` the user may
 specify that the start and end coordinates being input are in Cartesian coordinates and not a
