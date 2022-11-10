@@ -1,5 +1,5 @@
-float64[] start_pos
-float64[] goal_pos
+movebot_interfaces/IkGoalRqstMsg start_pos
+movebot_interfaces/IkGoalRqstMsg goal_pos
 bool is_xyzrpy
 bool execute_now
 ---
