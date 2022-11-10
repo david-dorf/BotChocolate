@@ -10,17 +10,19 @@ import geometry_msgs
 import octomap_msgs
 import sensor_msgs
 import trajectory_msgs
-from moveit_msgs.msg import PositionIKRequest, MotionPlanRequest, Constraints, JointConstraint, RobotState
+from geometry_msgs.msg import Pose
+from moveit_msgs.msg import PositionIKRequest, MotionPlanRequest, Constraints, JointConstraint, RobotState, CollisionObject,PlanningScene, PlanningSceneComponents
 
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros.buffer import Buffer
 from sensor_msgs.msg import JointState
-from moveit_msgs.srv import GetPositionIK
+from moveit_msgs.srv import GetPositionIK,GetPlanningScene
 from std_srvs.srv import Empty
 from rclpy.callback_groups import ReentrantCallbackGroup
+from shape_msgs.msg import SolidPrimitive
 import math
 import numpy as np
-from movebot_interfaces.srv import IkGoalRqst, GetPlanRqst
+from movebot_interfaces.srv import IkGoalRqst, GetPlanRqst, AddBox
 from movebot_interfaces.msg import IkGoalRqstMsg
 
 def quaternion_from_euler(ai, aj, ak):
@@ -81,6 +83,19 @@ class Testing(Node):
         self.call_plan    = self.create_service(GetPlanRqst,"call_plan",self.plan_callback,callback_group=self.cbgroup)
         self.call_execute   = self.create_service(Empty,"call_execute",self.execute_callback,callback_group=self.cbgroup)
         self.timer = self.create_timer(1/100, self.timer_callback)
+        self.box_publisher = self.create_publisher(PlanningScene,"planning_scene",10)
+        self.call_box = self.create_service(Empty,"call_box",self.box_callback,callback_group=self.cbgroup)
+        self.clear_all_box = self.create_service(Empty,"clear_all_box",self.clear_callback,callback_group=self.cbgroup)
+        self.clear_current_box = self.create_service(Empty,"clear_current_box",self.remove_callback,callback_group=self.cbgroup)
+        self.scene_client = self.create_client(GetPlanningScene,"get_planning_scene",callback_group=self.cbgroup)
+        self.update_box = self.create_service(AddBox,"add_box",self.update_box_callback)
+        self.box_x = 0.2
+        self.box_y = 0.2
+        self.box_z = 0.2
+        self.box_l = 0.2
+        self.box_w = 0.2
+        self.box_h = 0.2
+        self.box_name = "box_0"
 
 
         # self.broadcaster = TransformBroadcaster(self)
@@ -92,6 +107,94 @@ class Testing(Node):
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.time=0
 
+    def update_box_callback(self,request,response):
+
+        self.box_x = request.x
+        self.box_y = request.y
+        self.box_z = request.z
+        self.box_l = request.l
+        self.box_w = request.w
+        self.box_h = request.h
+        self.box_name = str(request.name)
+        return response
+
+    async def box_callback(self,request,response):
+        #Scene = PlanningScene()
+        component = PlanningSceneComponents()
+        Scene_raw = await self.scene_client.call_async(GetPlanningScene.Request(components = component))
+        self.get_logger().info(f'\nresponse\n{Scene_raw}')
+        Scene = Scene_raw.scene
+        box = CollisionObject()
+        box.header.stamp = self.get_clock().now().to_msg()
+        box.header.frame_id = "panda_link0"
+        box.pose.position.x = self.box_x
+        box.pose.position.y = self.box_y
+        box.pose.position.z = self.box_z
+        box.pose.orientation.x = 0.0
+        box.pose.orientation.y = 0.0
+        box.pose.orientation.z = 0.0
+        box.pose.orientation.w = 1.0
+        box.id = self.box_name
+        SP = SolidPrimitive()
+        SP.type = 1
+        SP.dimensions = [self.box_l,self.box_w,self.box_h]
+        box.primitives = [SP]
+
+        SPPose = Pose()
+        box.primitive_poses = [SPPose]
+
+        exist = 0
+        for i in Scene.world.collision_objects:
+            if i.id == self.box_name:
+                i.pose.position.x = self.box_x
+                i.pose.position.y = self.box_y
+                i.pose.position.z = self.box_z
+                i.primitives = [SP]
+                exist = 1
+                break
+        
+        if exist == 0:
+            Scene.world.collision_objects.append(box)
+
+
+        self.get_logger().info(f'\nresponse\n{Scene}')
+
+        self.box_publisher.publish(Scene)
+
+        return Empty.Response()
+
+    async def clear_callback(self,request,response):
+        #Scene = PlanningScene()
+        component = PlanningSceneComponents()
+        Scene_raw = await self.scene_client.call_async(GetPlanningScene.Request(components = component))
+        self.get_logger().info(f'\nresponse\n{Scene_raw}')
+        Scene = Scene_raw.scene
+
+        Scene.world.collision_objects = []
+
+        self.get_logger().info(f'\nresponse\n{Scene}')
+
+        self.box_publisher.publish(Scene)
+
+        return Empty.Response()
+
+    async def remove_callback(self,request,response):
+        #Scene = PlanningScene()
+        component = PlanningSceneComponents()
+        Scene_raw = await self.scene_client.call_async(GetPlanningScene.Request(components = component))
+        self.get_logger().info(f'\nresponse\n{Scene_raw}')
+        Scene = Scene_raw.scene
+
+        for i in Scene.world.collision_objects:
+            if i.id == self.box_name:
+                Scene.world.collision_objects.remove(i)
+                break
+
+        self.get_logger().info(f'\nresponse\n{Scene}')
+
+        self.box_publisher.publish(Scene)
+
+        return Empty.Response()
 
     def js_cb(self, jointstate):
         """ 5
@@ -179,7 +282,7 @@ class Testing(Node):
         motion_req.start_state.joint_state = start.joint_state # TODO pass start stated that is compute ik'd
         
         goal_constraints = Constraints()
-        
+        print("GOALTEST\n", goal)
         #joint_constraints = JointConstraint()
         for i in range(len(self.joint_statesmsg.name)):
             # print("TEST\n",self.joint_statesmsg.name[i])
