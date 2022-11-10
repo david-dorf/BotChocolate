@@ -20,9 +20,10 @@ setup(
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': ['simple_move = moveBot.simple_move:main',
-                            'moveBot = moveBot.moveBot:main',
-                            'intercept_msgs = moveBot.intercept_msgs:main'
-        ],
-    },
-)
+        'console_scripts': [
+            'simple_move = moveBot.simple_move:main',
+            'moveBot = moveBot.moveBot:main',
+            'intercept_msgs = moveBot.intercept_msgs:main'
+            ],
+        },
+    )

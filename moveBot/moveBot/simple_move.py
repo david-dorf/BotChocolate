@@ -6,11 +6,11 @@ from moveit_msgs.action import MoveGroup, ExecuteTrajectory
 from geometry_msgs.msg import Pose
 from moveit_msgs.msg import PositionIKRequest, MotionPlanRequest, \
                             Constraints, JointConstraint, RobotState, \
-                            CollisionObject,PlanningScene, PlanningSceneComponents
+                            CollisionObject, PlanningScene, PlanningSceneComponents
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros.buffer import Buffer
 from sensor_msgs.msg import JointState
-from moveit_msgs.srv import GetPositionIK,GetPlanningScene
+from moveit_msgs.srv import GetPositionIK, GetPlanningScene
 from std_srvs.srv import Empty
 from rclpy.callback_groups import ReentrantCallbackGroup
 from shape_msgs.msg import SolidPrimitive
@@ -18,6 +18,7 @@ import math
 import numpy as np
 from movebot_interfaces.srv import IkGoalRqst, GetPlanRqst, AddBox
 from movebot_interfaces.msg import IkGoalRqstMsg
+
 
 def quaternion_from_euler(ai, aj, ak):
     """
@@ -56,7 +57,10 @@ def quaternion_from_euler(ai, aj, ak):
 
     return q
 
+
 class MoveBot(Node):
+    """MoveBot node."""
+
     """
     Turn a goal end effector position and orientation into a trajectory to be executed by the
     Franka Emika robot arm. The position and orientation of the end effector is given in relation
@@ -66,27 +70,63 @@ class MoveBot(Node):
         super().__init__("simple_move")
         self.cbgroup = ReentrantCallbackGroup()
         self._plan_client = ActionClient(
-            self, 
+            self,
             MoveGroup,
             "move_action",)
 
         self._execute_client = ActionClient(
-            self, 
+            self,
             ExecuteTrajectory,
             "execute_trajectory")
 
-        self.jointpub  = self.create_subscription(JointState, "/joint_states",self.js_cb, 10)
-        self.ik_client= self.create_client(GetPositionIK, "/compute_ik",callback_group=self.cbgroup)
-        self.call_ik    = self.create_service(IkGoalRqst,"call_ik",self.ik_callback,callback_group=self.cbgroup)
-        self.call_plan    = self.create_service(GetPlanRqst,"call_plan",self.plan_callback,callback_group=self.cbgroup)
-        self.call_execute   = self.create_service(Empty,"call_execute",self.execute_callback,callback_group=self.cbgroup)
+        self.jointpub = self.create_subscription(JointState, "/joint_states", self.js_cb, 10)
+        self.ik_client = self.create_client(
+            GetPositionIK,
+            "/compute_ik",
+            callback_group=self.cbgroup)
+        self.call_ik = self.create_service(
+            IkGoalRqst,
+            "call_ik",
+            self.ik_callback,
+            callback_group=self.cbgroup)
+        self.call_plan = self.create_service(
+            GetPlanRqst,
+            "call_plan",
+            self.plan_callback,
+            callback_group=self.cbgroup)
+        self.call_execute = self.create_service(
+            Empty,
+            "call_execute",
+            self.execute_callback,
+            callback_group=self.cbgroup)
         self.timer = self.create_timer(1/100, self.timer_callback)
-        self.box_publisher = self.create_publisher(PlanningScene,"planning_scene",10)
-        self.call_box = self.create_service(Empty,"call_box",self.box_callback,callback_group=self.cbgroup)
-        self.clear_all_box = self.create_service(Empty,"clear_all_box",self.clear_callback,callback_group=self.cbgroup)
-        self.clear_current_box = self.create_service(Empty,"clear_current_box",self.remove_callback,callback_group=self.cbgroup)
-        self.scene_client = self.create_client(GetPlanningScene,"get_planning_scene",callback_group=self.cbgroup)
-        self.update_box = self.create_service(AddBox,"add_box",self.update_box_callback)
+        self.box_publisher = self.create_publisher(
+            PlanningScene,
+            "planning_scene",
+            10)
+        self.call_box = self.create_service(
+            Empty,
+            "call_box",
+            self.box_callback,
+            callback_group=self.cbgroup)
+        self.clear_all_box = self.create_service(
+            Empty,
+            "clear_all_box",
+            self.clear_callback,
+            callback_group=self.cbgroup)
+        self.clear_current_box = self.create_service(
+            Empty,
+            "clear_current_box",
+            self.remove_callback,
+            callback_group=self.cbgroup)
+        self.scene_client = self.create_client(
+            GetPlanningScene,
+            "get_planning_scene",
+            callback_group=self.cbgroup)
+        self.update_box = self.create_service(
+            AddBox,
+            "add_box",
+            self.update_box_callback)
         self.box_x = 0.2
         self.box_y = 0.2
         self.box_z = 0.2
@@ -97,9 +137,9 @@ class MoveBot(Node):
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
-        self.time=0
+        self.time = 0
 
-    def update_box_callback(self,request,response):
+    def update_box_callback(self, request, response):
         """
         Call back fucntion for add_box service.
 
@@ -108,6 +148,9 @@ class MoveBot(Node):
 
         Args:
         ----
+            request (movebot_interface/srv/AddBox.request): Box information.
+            response (movebot_interface/srv/AddBox.response): Empty.
+
             String: id
             float:  x
             float:  y
@@ -116,8 +159,8 @@ class MoveBot(Node):
             float:  w
             float:  h
 
-        Returns:
-        -------
+        Return:
+        ------
             Empty
 
         """
@@ -130,7 +173,7 @@ class MoveBot(Node):
         self.box_name = str(request.name)
         return response
 
-    async def box_callback(self,request,response):
+    async def box_callback(self, request, response):
         """
         Call back fucntion for call_box service.
 
@@ -141,14 +184,18 @@ class MoveBot(Node):
 
         Args:
         ----
+            request (movebot_interface/srv/AddBox.request): Empty.
+            response (movebot_interface/srv/AddBox.response): Empty.
 
-        Returns:
-        -------
+        Return:
+        ------
             Empty
 
         """
         component = PlanningSceneComponents()
-        Scene_raw = await self.scene_client.call_async(GetPlanningScene.Request(components = component))
+        Scene_raw = await self.scene_client.call_async(
+            GetPlanningScene.Request(components=component)
+            )
         Scene = Scene_raw.scene
         box = CollisionObject()
         box.header.stamp = self.get_clock().now().to_msg()
@@ -163,7 +210,7 @@ class MoveBot(Node):
         box.id = self.box_name
         SP = SolidPrimitive()
         SP.type = 1
-        SP.dimensions = [self.box_l,self.box_w,self.box_h]
+        SP.dimensions = [self.box_l, self.box_w, self.box_h]
         box.primitives = [SP]
 
         SPPose = Pose()
@@ -178,7 +225,7 @@ class MoveBot(Node):
                 i.primitives = [SP]
                 exist = 1
                 break
-        
+
         if exist == 0:
             Scene.world.collision_objects.append(box)
 
@@ -186,7 +233,7 @@ class MoveBot(Node):
 
         return Empty.Response()
 
-    async def clear_callback(self,request,response):
+    async def clear_callback(self, request, response):
         """
         Call back fucntion for clear_all_box service.
 
@@ -194,15 +241,18 @@ class MoveBot(Node):
 
         Args:
         ----
-            Empty
+            request (movebot_interface/srv/AddBox.request): Empty.
+            response (movebot_interface/srv/AddBox.response): Empty.
 
-        Returns:
-        -------
+        Return:
+        ------
             Empty
 
         """
         component = PlanningSceneComponents()
-        Scene_raw = await self.scene_client.call_async(GetPlanningScene.Request(components = component))
+        Scene_raw = await self.scene_client.call_async(
+            GetPlanningScene.Request(components=component)
+            )
         Scene = Scene_raw.scene
 
         Scene.world.collision_objects = []
@@ -211,24 +261,27 @@ class MoveBot(Node):
 
         return Empty.Response()
 
-    async def remove_callback(self,request,response):
+    async def remove_callback(self, request, response):
         """
         Call back fucntion for clear_current_box service.
 
-        Clear the box in PlanningScene.world.collision_objects 
+        Clear the box in PlanningScene.world.collision_objects
         with the id which is match the save box information
 
         Args:
         ----
-            Empty
+            request (movebot_interface/srv/AddBox.request): Empty.
+            response (movebot_interface/srv/AddBox.response): Empty.
 
-        Returns:
-        -------
+        Return:
+        ------
             Empty
 
         """
         component = PlanningSceneComponents()
-        Scene_raw = await self.scene_client.call_async(GetPlanningScene.Request(components = component))
+        Scene_raw = await self.scene_client.call_async(
+            GetPlanningScene.Request(components=component)
+            )
         Scene = Scene_raw.scene
 
         for i in Scene.world.collision_objects:
@@ -242,16 +295,19 @@ class MoveBot(Node):
 
     def js_cb(self, jointstate):
         """
-        Callback function of the goal pose subscriber. Stores the GoalPose message received.
+        Call back function of the goal pose subscriber. Stores the GoalPose message received.
 
         Args:
         ----
             jointstate (JointState): Contains the information of the current robot joint angles.
+
         """
-        self.joint_statesmsg=jointstate 
+        self.joint_statesmsg = jointstate
 
     def get_ik_rqst_msg(self, pose_vec):
         """
+        Get IK request message.
+
         Process a pose request message and turn it into a response usable by the inverse
         kinematics callback function.
 
@@ -259,9 +315,10 @@ class MoveBot(Node):
         ----
             pose_vec (ndarray): Contains the request message to be converted into a usable IK msg.
 
-        Returns:
-        -------
+        Return:
+        ------
             ikmsg (PositionIKRequest): Processed version of the pose_vec that can be used by IK.
+
         """
         ikmsg = PositionIKRequest()
         ikmsg.group_name = 'panda_manipulator'
@@ -272,7 +329,7 @@ class MoveBot(Node):
         ikmsg.pose_stamped.pose.position.x = pose_vec[0]
         ikmsg.pose_stamped.pose.position.y = pose_vec[1]
         ikmsg.pose_stamped.pose.position.z = pose_vec[2]
-        quats = quaternion_from_euler(pose_vec[3],pose_vec[4],pose_vec[5])
+        quats = quaternion_from_euler(pose_vec[3], pose_vec[4], pose_vec[5])
         ikmsg.pose_stamped.pose.orientation.x = quats[0]
         ikmsg.pose_stamped.pose.orientation.y = quats[1]
         ikmsg.pose_stamped.pose.orientation.z = quats[2]
@@ -281,30 +338,34 @@ class MoveBot(Node):
 
         return ikmsg
 
-    async def ik_callback(self,request,response):
+    async def ik_callback(self, request, response):
         """
+        IK Callback Function.
+
         Generate the inverse kinematics solution that gives the joint angles to reach a desired
         end effector configuration.
 
         Args:
         ----
             ikmsg (PositionIKRequest): Processed version of the pose_vec that can be used by IK.
+            request (Float64[] position Float64[] orientation): Request pose of initial location.
             response (RobotState): Computes the IK solution for the given ikmsg.
 
-        Returns:
-        -------
+        Return:
+        ------
             RobotState: The computed joint angles from the inverse kinematics function.
+
         """
         if not request.position and not request.orientation:
-            current_position = [self.ee_base.transform.translation.x, \
-                                self.ee_base.transform.translation.y, \
+            current_position = [self.ee_base.transform.translation.x,
+                                self.ee_base.transform.translation.y,
                                 self.ee_base.transform.translation.z]
             current_orientation = [0.0, 0.0, 0.0]
             pose_vec = np.hstack([current_position, current_orientation])
 
         elif not request.position:
-            current_position = [self.ee_base.transform.translation.x, \
-                                self.ee_base.transform.translation.y, \
+            current_position = [self.ee_base.transform.translation.x,
+                                self.ee_base.transform.translation.y,
                                 self.ee_base.transform.translation.z]
 
             pose_vec = np.hstack([current_position, request.orientation])
@@ -313,28 +374,32 @@ class MoveBot(Node):
             current_orientation = [0.0, 0.0, 0.0]
             pose_vec = np.hstack([request.position, current_orientation])
 
-        else: 
+        else:
             pose_vec = np.hstack([request.position, request.orientation])
 
-        msg=self.get_ik_rqst_msg(pose_vec)
+        msg = self.get_ik_rqst_msg(pose_vec)
         self.ik_response = await self.ik_client.call_async(GetPositionIK.Request(ik_request=msg))
         response.joint_state = self.ik_response.solution.joint_state
 
         return response
-    
+
     def get_motion_request(self, start, goal, execute):
         """
-        Process a motion request message into a response usable by the motion planning
+        Process a motion request message into a response usable by the motion planning.
+
         callback function.
 
         Args:
         ----
             start (RobotState): Start configuration of the robot.
             goal (RobotState): End goal configuration of the robot.
+            execute (Boolean): Start execute immediately or manually.
 
-        Returns:
-        -------
+        Return:
+        ------
             plan_request (MoveGroup_Goal): Request to generate the trajectory in the callback.
+
+
         """
         motion_req = MotionPlanRequest()
         motion_req.workspace_parameters.header.stamp = self.get_clock().now().to_msg()
@@ -345,7 +410,7 @@ class MoveBot(Node):
         motion_req.workspace_parameters.max_corner.y = 1.0
         motion_req.workspace_parameters.max_corner.z = 1.0
         motion_req.workspace_parameters.header.frame_id = 'panda_link0'
-        motion_req.start_state.joint_state = start.joint_state # TODO pass start stated that is compute ik'd
+        motion_req.start_state.joint_state = start.joint_state
         goal_constraints = Constraints()
 
         for i in range(len(self.joint_statesmsg.name)):
@@ -365,20 +430,21 @@ class MoveBot(Node):
         motion_req.max_velocity_scaling_factor = 0.1
         motion_req.max_acceleration_scaling_factor = 0.1
         motion_req.max_cartesian_speed = 0.0
-        plan_request=MoveGroup.Goal()
+        plan_request = MoveGroup.Goal()
         plan_request.request = motion_req
 
         if execute:
             plan_request.planning_options.plan_only = False
         else:
             plan_request.planning_options.plan_only = True
-        
+
         return plan_request
 
-    async def plan_callback(self,request,response):
+    async def plan_callback(self, request, response):
         """
-        Plan the cartesian trajectory path that the robot arm will follow. This path will be
-        followed by the robot upon execution.
+        Plan the cartesian trajectory path that the robot arm will follow.
+
+        This path will be followed by the robot upon execution.
 
         Args:
         ----
@@ -387,13 +453,15 @@ class MoveBot(Node):
             as a flag that determines if it should execute immediately or not.
             response (MotionPlanRequest): Message to send to the move_action client.
 
-        Returns:
-        -------
+        Return:
+        ------
             response (MotionPlanRequest): Message to send to the move_action client.
+
         """
-        if request.is_xyzrpy: # If start pos was given as X,Y,Z, R, P, Y
-            if len(request.start_pos.position) <= 0: # IF there is no given start position, use current joint config as start
-                request.start_pos.position=self.joint_statesmsg.position
+        if request.is_xyzrpy:  # If start pos was given as X,Y,Z, R, P, Y
+            if len(request.start_pos.position) <= 0:
+                # IF there is no given start position, use current joint config as start
+                request.start_pos.position = self.joint_statesmsg.position
                 start_in_joint_config = RobotState()
                 start_in_joint_config.joint_state = self.joint_statesmsg
             else:
@@ -402,77 +470,77 @@ class MoveBot(Node):
                 ik_request_message_start.position = request.start_pos.position
                 ik_request_message_start.orientation = request.start_pos.orientation
                 start_in_joint_config = RobotState()
-                start_in_joint_config = await self.ik_callback(ik_request_message_start, start_in_joint_config)
+                start_in_joint_config = await self.ik_callback(
+                    ik_request_message_start,
+                    start_in_joint_config)
 
             ik_request_message_goal = IkGoalRqstMsg()
             ik_request_message_goal.position = request.goal_pos.position
             ik_request_message_goal.orientation = request.goal_pos.orientation
             goal_in_joint_config = RobotState()
-            goal_in_joint_config = await self.ik_callback(ik_request_message_goal, goal_in_joint_config)
+            goal_in_joint_config = await self.ik_callback(
+                ik_request_message_goal,
+                goal_in_joint_config)
 
-        plan_msg=self.get_motion_request(start_in_joint_config, goal_in_joint_config, request.execute_now)
-        self.future_response=await self._plan_client.send_goal_async(plan_msg)
-        self.plan_response=await self.future_response.get_result_async()
+        plan_msg = self.get_motion_request(
+            start_in_joint_config,
+            goal_in_joint_config,
+            request.execute_now)
+        self.future_response = await self._plan_client.send_goal_async(plan_msg)
+        self.plan_response = await self.future_response.get_result_async()
 
-        return response 
+        return response
 
     def send_execute(self):
         """
         Make the execute message to be used by the execute callback.
 
-        Returns:
-        -------
+        Return:
+        ------
             ExecuteTrajectory_Goal: Message to send to the callback function to execute the
             planned trajectory.
+
         """
-        execute_msg=ExecuteTrajectory.Goal()
+        execute_msg = ExecuteTrajectory.Goal()
         execute_msg.trajectory = self.plan_response.result.planned_trajectory
 
         return execute_msg
 
-    async def execute_callback(self,request,response):
+    async def execute_callback(self, request, response):
         """
-        Set the robot arm along the trajectory path generated by the plan callback. The robot
-        will move in RViz and the physical robot will follow this movement.
+        Set the robot arm along the trajectory path generated by the plan callback.
+
+        The robot will move in RViz and the physical robot will follow this movement.
 
         Args:
         ----
             request (Empty): Empty message to execute the planned trajectory.
             response (Empty_Response): Returns an empty value.
 
-        Returns:
-        -------
+        Return:
+        ------
             Empty_Response: Returns an empty value.
-        """
-        exec_msg=self.send_execute()
-        self.future_response2=await self._execute_client.send_goal_async(exec_msg)
-        self.execute_response=await self.future_response2.get_result_async()
-        response=Empty.Response()
 
-        return response 
+        """
+        exec_msg = self.send_execute()
+        self.future_response2 = await self._execute_client.send_goal_async(exec_msg)
+        self.execute_response = await self.future_response2.get_result_async()
+        response = Empty.Response()
+
+        return response
 
     def timer_callback(self):
-        """
-        Set up the transform listener to get the end effector position information at all times.
-        """
-        time = self.get_clock().now().to_msg()
-
+        """Set up the transform listener to get the end effector position information."""
         try:
-            self.ee_base = self.tf_buffer.lookup_transform('panda_link0','panda_hand',rclpy.time.Time())
+            self.ee_base = self.tf_buffer.lookup_transform(
+                'panda_link0',
+                'panda_hand',
+                rclpy.time.Time())
         except:
             pass
-
-
-
-
 
 
 def main(args=None):
     rclpy.init(args=args)
     newp = MoveBot()
     rclpy.spin(newp)
-
-
-
-
-
