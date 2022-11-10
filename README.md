@@ -8,32 +8,65 @@ The moveBot package offers a sequence of three services that allow the Franka Em
 plan and execute a trajectory through space while avoiding stationary obstacles. RViz must first be
 initialized for the Franka robot with the command `ros2 launch franka_moveit_config moveit.launch.py robot_ip:=dont-care use_fake_hardware:=true` in the built and sourced nuws directory.
 
-## Services
+## Operation
 Package calls services in the order create a trajectory to a goal position.
 
-Call launch file to start node
+### Call Launch File
+`ros2 launch moveBot simple_move.launch.py`
 
-Command to get plan without execute
--with a specified start pose
--without specifiing anything in general
--plan and execute
--just execute
+### Create and Execute a Trajectory
+The template to create trajectroy plans is given below:
 
-Adding box to planning scene
+`
+    ros2 service call /call_plan movebot_interfaces/srv/GetPlanRqst 
+    "start_pos:
+    position: []
+    orientation: []
+    goal_pos:
+    position: []
+    orientation: []
+    is_xyzrpy: true
+    execute_now: true 
+    "
+`
+The `start_pos` and `goal_pos` fields are where different trajectory start and end points can be 
+specified. 
 
+To use the current position of the end effector as a start position, the `start_pos` field can
+be passed as empty.
 
-call_ik - `ros2 service call /call_ik movebot_interfaces/srv/IkGoalRqst`
-Optional arguments:
-`x: float y: float z: float roll: float pitch: float yaw: float`
+Each pose field also has a position and orientation subfield. Here an end effector configuration
+position may be specified in Cartesian coordinates and the end effector angle may be specified
+as roll, pitch, and yaw in radians.
 
-Description: Computes the inverse kinematics solution for a desired end effector position.
+Lastly, there are two flags to alter the operation of system. By setting `is_xyzrpy` the user may
+specify that the start and end coordinates being input are in Cartesian coordinates and not a
+joint state vector. By setting `execute_now` to true, the robot will immediately execute the planned
+trajectory. Otherwise, a separate service must be called to execute the trajectory.
 
-call_plan - `ros2 service call /call_plan std_srvs/srv/Empty`
-Description: Generates a trajectory plan for the robot arm to follow to reach the goal position.
-The planned path is shown in RViz after the service is called.
+By setting `execute_now` to false, the user can then execute a trajectroy by calling the following
+service:
+`ros2 service call /call_execute std_srvs/srv/Empty`
 
-call_execute - `ros2 service call /call_execute std_srvs/srv/Empty`
-Description: Executes the planned trajectory. The robot will move in RViz to the goal position and
-send commands to the physical robot to mimic the simulated trajectory.
+### Adding Obstacles to the Planning Scene
+It is possible to add boxes of different sizes to the plannning scene for the robot to navigate 
+around.
 
+The following command will add a box to the planning scene:
+`
+        ros2 service call /add_box movebot_interfaces/srv/AddBox "name: '<obstacle_name>'
+        x: 0.2
+        y: 0.2
+        z: 0.2
+        l: 0.2
+        w: 0.2
+        h: 0.2
+`
 
+'ros2 service call /call_box std_srvs/srv/Empty'
+
+To delete the last added box the following command may be used:
+`ros2 service call /clear_current_box std_srvs/srv/Empty `
+
+To clear all obstacle from the planning scene:
+`ros2 service call /clear_all_box std_srvs/srv/Empty`
