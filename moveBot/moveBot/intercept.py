@@ -102,7 +102,7 @@ class Testing(Node):
         #self.get_logger().info(f'goal msg {self.joint_statesmsg}')
 
     def get_ik_rqst_msg(self, pose_vec):
-        self.get_logger().info(f'\nPose_VEC IN GET_IK_RQST\n{pose_vec}')
+        # self.get_logger().info(f'\nPose_VEC IN GET_IK_RQST\n{pose_vec}')
         # if pose_vec[0]==0.0 and pose_vec[1]==0.0 and pose_vec[2]==0.0:
         #     # self.get_logger().info(f'\nPoses\n{pose_vec}')
         #     print("ahh")
@@ -111,7 +111,7 @@ class Testing(Node):
         ikmsg = PositionIKRequest()
         ikmsg.group_name = 'panda_manipulator'
         ikmsg.robot_state.joint_state = self.joint_statesmsg
-        print("\nANGLES\n", pose_vec[3], pose_vec[4], pose_vec[5])
+        # print("\nANGLES\n", pose_vec[3], pose_vec[4], pose_vec[5])
 
         # print(self.joint_statesmsg)
 
@@ -127,7 +127,7 @@ class Testing(Node):
         ikmsg.pose_stamped.pose.orientation.w = quats[3]
         ikmsg.timeout.sec = 5
 
-        self.get_logger().info(f'\nIk msg Request\n{ikmsg}')
+        # self.get_logger().info(f'\nIk msg Request\n{ikmsg}')
         return ikmsg
 
     async def ik_callback(self,request,response):
@@ -137,21 +137,22 @@ class Testing(Node):
                                 self.ee_base.transform.translation.z]
 
             pose_vec = np.hstack([current_position, request.orientation])
-            print("POSE VEC AFTER POSITION\n", pose_vec)
+            # print("POSE VEC AFTER POSITION\n", pose_vec)
         elif not request.orientation:
             current_orientation = [0.1, 0.1, 0.1] # TODO make so that orientation doesn't change
             pose_vec = np.hstack([request.position, current_orientation])
-            print("POSE VEC AFTER ORIENT\n", pose_vec)
+            # print("POSE VEC AFTER ORIENT\n", pose_vec)
         else: 
             pose_vec = np.hstack([request.position, request.orientation])
-            print("POSE VEC NO CHANGE\n", pose_vec)
+            # print("POSE VEC NO CHANGE\n", pose_vec)
 
         msg=self.get_ik_rqst_msg(pose_vec)
         
         self.ik_response = await self.ik_client.call_async(GetPositionIK.Request(ik_request=msg))
         # self.response=GetPositionIK.Response()
         self.get_logger().info(f'\nIk response\n{self.ik_response}')
-        response.joint_state = self.ik_response.solution
+        self.get_logger().info(f'\nIk ik callback response\n{response}')
+        response.joint_state = self.ik_response.solution.joint_state
 
         return response
     
@@ -165,7 +166,7 @@ class Testing(Node):
         motion_req.workspace_parameters.max_corner.y = 1.0
         motion_req.workspace_parameters.max_corner.z = 1.0
         motion_req.workspace_parameters.header.frame_id = 'panda_link0'
-        motion_req.start_state.joint_state = start.solution.joint_state # TODO pass start stated that is compute ik'd
+        motion_req.start_state.joint_state = start.joint_state # TODO pass start stated that is compute ik'd
         
         goal_constraints = Constraints()
         
@@ -174,7 +175,7 @@ class Testing(Node):
             # print("TEST\n",self.joint_statesmsg.name[i])
             joint_constraints = JointConstraint()
             joint_constraints.joint_name = self.joint_statesmsg.name[i]
-            joint_constraints.position = goal.solution.joint_state.position[i] # TODO instead of self.ik_response itll just joint goal position
+            joint_constraints.position = goal.joint_state.position[i] # TODO instead of self.ik_response itll just joint goal position
             joint_constraints.tolerance_above = 0.0001
             joint_constraints.tolerance_below = 0.0001
             joint_constraints.weight = 1.0
@@ -189,11 +190,11 @@ class Testing(Node):
         motion_req.max_velocity_scaling_factor = 0.1
         motion_req.max_acceleration_scaling_factor = 0.1
         motion_req.max_cartesian_speed = 0.0
-        
+        self.get_logger().info(f'\n TESTICLES \n')
         plan_request=MoveGroup.Goal()
         plan_request.request = motion_req
         plan_request.planning_options.plan_only = True
-        
+        self.get_logger().info(f'\n BALLS \n')
         return plan_request
 
     async def plan_callback(self,request,response):
@@ -202,10 +203,11 @@ class Testing(Node):
         #If so is it xzy or joints
         # If xyz do compute_Ik
         #If joints start_pose = joints (be careful of msg types)
+        self.get_logger().info(f'\nIk ik callback response\n{response}')
 
         if request.is_xyzrpy: # If start pos was given as X,Y,Z, R, P, Y
             if not request.start_pos: # IF there is no given start position, use current joint config as start
-                print("NO GIVEN START POSE, USING CURRENT POSE AS START")
+                # print("NO GIVEN START POSE, USING CURRENT POSE AS START")
                 request.start_pos=self.joint_statesmsg.position
                 # TODO if goal is given as joint states, put as correct msg type to pass to motion request
                 # else:
@@ -224,11 +226,14 @@ class Testing(Node):
             goal_in_joint_config = await self.ik_callback(ik_request_message_goal, goal_in_joint_config)
         
         plan_msg=self.get_motion_request(start_in_joint_config, goal_in_joint_config) # TODO we want to send the start pos we get from the service
+        self.get_logger().info(f'\n SACKK \n')
         self.future_response=await self._plan_client.send_goal_async(plan_msg)
         # self.response=GetPositionIK.Response()
         self.plan_response=await self.future_response.get_result_async()
         # self.get_logger().info(f'\nPlan rRsponse:\n{self.plan_response}')
-        response=Empty.Response()
+        # response=Empty.Response()
+        self.get_logger().info(f'\n PENIS\n')
+        self.get_logger().info(f'\nIk ik callback response\n{response}')
         return response 
 
     def send_execute(self):
