@@ -1,5 +1,5 @@
 
-## Interface Package Description
+# Interface Package Description
 The movebot_interfaces package contains all the services and messages necessary for interacting with the Franka Emika robot arm.
 There are three services and one message:
 
