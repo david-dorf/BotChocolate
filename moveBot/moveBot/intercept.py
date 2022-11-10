@@ -11,9 +11,8 @@ import octomap_msgs
 import sensor_msgs
 import trajectory_msgs
 from moveit_msgs.msg import PositionIKRequest, MotionPlanRequest, Constraints, JointConstraint, RobotState
-from geometry_msgs.msg import TransformStamped
+
 from tf2_ros.transform_listener import TransformListener
-from tf2_ros import TransformBroadcaster
 from tf2_ros.buffer import Buffer
 from sensor_msgs.msg import JointState
 from moveit_msgs.srv import GetPositionIK
@@ -103,17 +102,10 @@ class Testing(Node):
 
     def get_ik(self, pose_vec):
         self.get_logger().info(f'\nPoses\n{pose_vec}')
-<<<<<<< HEAD
         if pose_vec[0]==0.0 and pose_vec[1]==0.0 and pose_vec[2]==0.0:
             # self.get_logger().info(f'\nPoses\n{pose_vec}')
             print("ahh")
             pose_vec[0],pose_vec[1],pose_vec[2]=self.ee_base.transform.translation.x,self.ee_base.transform.translation.y,self.ee_base.transform.translation.z
-=======
-        if pose_vec.x==0.0 and pose_vec.y==0.0 and pose_vec.z==0.0:
-            # self.get_logger().info(f'\nPoses\n{pose_vec}')
-            print("ahh")
-            pose_vec.x,pose_vec.y,pose_vec.z=self.ee_base.transform.translation.x,self.ee_base.transform.translation.y,self.ee_base.transform.translation.z
->>>>>>> 0596c66 (Added listener)
 
         ikmsg = PositionIKRequest()
         ikmsg.group_name = 'panda_manipulator'
@@ -132,10 +124,6 @@ class Testing(Node):
         ikmsg.pose_stamped.pose.orientation.w = quats[3]
         ikmsg.timeout.sec = 5
 
-<<<<<<< HEAD
-=======
-            
->>>>>>> 0596c66 (Added listener)
         self.get_logger().info(f'\nIk msg\n{ikmsg}')
         return ikmsg
 
@@ -232,15 +220,9 @@ class Testing(Node):
 
         try:
             self.ee_base = self.tf_buffer.lookup_transform('panda_link0','panda_hand',rclpy.time.Time())
-<<<<<<< HEAD
             self.get_logger().info(f'\n E.E X \n{self.ee_base.transform.translation.x}')
             self.get_logger().info(f'\n E.E Y \n{self.ee_base.transform.translation.y}')
             self.get_logger().info(f'\n E.E Z \n{self.ee_base.transform.translation.z}')
-=======
-            # self.get_logger().info(f'\n E.E X \n{self.ee_base.transform.translation.x}')
-            # self.get_logger().info(f'\n E.E Y \n{self.ee_base.transform.translation.y}')
-            # self.get_logger().info(f'\n E.E Z \n{self.ee_base.transform.translation.z}')
->>>>>>> 0596c66 (Added listener)
         except:
             pass
 
