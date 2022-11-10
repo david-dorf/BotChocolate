@@ -9,7 +9,7 @@ plan and execute a trajectory through space while avoiding stationary obstacles.
 initialized for the Franka robot with the command `ros2 launch franka_moveit_config moveit.launch.py robot_ip:=dont-care use_fake_hardware:=true` in the built and sourced nuws directory.
 
 ## Operation
-Package calls services in the order create a trajectory to a goal position.
+Package calls services in the order create a trajectory to a goal position. More information on the messages and services used can be found [here](https://github.com/ME495-EmbeddedSystems/hw3group-botchocolate/files/9979783/README.md) 
 
 ### Call Launch File
 `ros2 launch moveBot simple_move.launch.py`
