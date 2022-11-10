@@ -79,7 +79,6 @@ class Testing(Node):
         self.jointpub  = self.create_subscription(JointState, "/joint_states",self.js_cb, 10)
         self.ik_client= self.create_client(GetPositionIK, "/compute_ik",callback_group=self.cbgroup)
         self.call_ik    = self.create_service(IkGoalRqst,"call_ik",self.ik_callback,callback_group=self.cbgroup)
-        self.call_ik_client    = self.create_service(IkGoalRqst,"call_ik",callback_group=self.cbgroup)
         self.call_plan    = self.create_service(GetPlanRqst,"call_plan",self.plan_callback,callback_group=self.cbgroup)
         self.call_execute   = self.create_service(Empty,"call_execute",self.execute_callback,callback_group=self.cbgroup)
         self.timer = self.create_timer(1/100, self.timer_callback)
@@ -153,7 +152,7 @@ class Testing(Node):
         self.ik_response = await self.ik_client.call_async(GetPositionIK.Request(ik_request=msg))
         # self.response=GetPositionIK.Response()
         self.get_logger().info(f'\nIk response\n{self.ik_response}')
-        response.joint_states = self.ik_response.solution
+        response.joint_state = self.ik_response.solution
 
         return response
     
@@ -216,12 +215,14 @@ class Testing(Node):
             ik_request_message_start = IkGoalRqstMsg()
             ik_request_message_start.position = [request.start_pos[0], request.start_pos[1], request.start_pos[2]]
             ik_request_message_start.orientation = [request.start_pos[3], request.start_pos[4], request.start_pos[5]]
-            start_in_joint_config = await self.ik_callback.call_async(ik_request_message_start)
+            start_in_joint_config = RobotState()
+            start_in_joint_config = await self.ik_callback(ik_request_message_start, start_in_joint_config)
             
             ik_request_message_goal = IkGoalRqstMsg()
             ik_request_message_goal.position = [request.goal_pos[0], request.goal_pos[1], request.goal_pos[2]]
             ik_request_message_goal.orientation = [request.goal_pos[3], request.goal_pos[4], request.goal_pos[5]]
-            goal_in_joint_config = await self.ik_callback.call_async(ik_request_message_goal)
+            goal_in_joint_config = RobotState()
+            goal_in_joint_config = await self.ik_callback(ik_request_message_goal, goal_in_joint_config)
         
         plan_msg=self.get_motion_request(start_in_joint_config, goal_in_joint_config) # TODO we want to send the start pos we get from the service
         self.future_response=await self._plan_client.send_goal_async(plan_msg)
