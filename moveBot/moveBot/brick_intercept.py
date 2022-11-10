@@ -6,7 +6,7 @@ import moveit_msgs
 import std_msgs
 import builtin_interfaces.msg
 import geometry_msgs
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, Twist
 import octomap_msgs
 import sensor_msgs
 import trajectory_msgs
@@ -44,6 +44,7 @@ class Brick(Node):
         self.box_publisher = self.create_publisher(PlanningScene,"planning_scene",10)
         self.call_box = self.create_service(Empty,"call_box",self.box_callback,callback_group=self.cbgroup)
         self.clear_all_box = self.create_service(Empty,"clear_all_box",self.clear_callback,callback_group=self.cbgroup)
+        self.clear_current_box = self.create_service(Empty,"clear_current_box",self.remove_callback,callback_group=self.cbgroup)
         self.scene_client = self.create_client(GetPlanningScene,"get_planning_scene",callback_group=self.cbgroup)
         self.update_box = self.create_service(AddBox,"add_box",self.update_box_callback)
         self.box_x = 0.2
@@ -90,7 +91,19 @@ class Brick(Node):
         SPPose = Pose()
         box.primitive_poses = [SPPose]
 
-        Scene.world.collision_objects.append(box)
+        exist = 0
+        for i in Scene.world.collision_objects:
+            if i.id == self.box_name:
+                i.pose.position.x = self.box_x
+                i.pose.position.y = self.box_y
+                i.pose.position.z = self.box_z
+                i.primitives = [SP]
+                exist = 1
+                break
+        
+        if exist == 0:
+            Scene.world.collision_objects.append(box)
+
 
         self.get_logger().info(f'\nresponse\n{Scene}')
 
@@ -113,16 +126,29 @@ class Brick(Node):
 
         return Empty.Response()
 
+    async def remove_callback(self,request,response):
+        #Scene = PlanningScene()
+        component = PlanningSceneComponents()
+        Scene_raw = await self.scene_client.call_async(GetPlanningScene.Request(components = component))
+        self.get_logger().info(f'\nresponse\n{Scene_raw}')
+        Scene = Scene_raw.scene
+
+        for i in Scene.world.collision_objects:
+            if i.id == self.box_name:
+                Scene.world.collision_objects.remove(i)
+                break
+
+        self.get_logger().info(f'\nresponse\n{Scene}')
+
+        self.box_publisher.publish(Scene)
+
+        return Empty.Response()
+
 
     # async def brick_callback(self,request,response):
     #     self.get_logger().info(f'\nbrick_request:\n{request}')
 
     #     return ApplyPlanningScene.Response()
-
-
-            
-
-
 
 
 
