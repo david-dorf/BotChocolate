@@ -21,6 +21,27 @@ from movebot_interfaces.srv import AddBox
 class Brick(Node):
     def __init__(self):
         super().__init__("Brick")
+
+
+        """
+        Topics.
+        Publishers:
+        planning_scene (moveit_msgs/msg/PlanningScene) - publish planning scene to update the box
+
+        Services:
+        add_box (movebot_interfaces/srv/AddBox) - Set up one box (id, position, size)
+        call_box (std_srvs/srv/Empty) - Send planning scene to Rviz with update box infomation
+        clear_all_box (std_srvs/srv/Empty) - Clear all box in planning scene
+        clear_current_box (std_srvs/srv/Empty) - Clear current saved box in planning scene
+
+        Client:
+        get_planning_scene (moveit_msgs/srv/GetPlanningScene) - Get current planning Scene in Rviz
+
+        Others:
+        Set up defalt box infomation
+        """
+
+
         self.cbgroup = ReentrantCallbackGroup()
         # self._plan_client = ActionClient(
         #     self, 
@@ -56,7 +77,25 @@ class Brick(Node):
         self.box_name = "box_0"
 
     def update_box_callback(self,request,response):
+        """
+        Call back fucntion for add_box service.
 
+        Update the box infomation
+        (id, position, size)
+
+        Input:
+            String: id
+            float:  x
+            float:  y
+            float:  z
+            float:  l
+            float:  w
+            float:  h
+
+        Return_value:
+            Empty
+
+        """
         self.box_x = request.x
         self.box_y = request.y
         self.box_z = request.z
@@ -68,6 +107,21 @@ class Brick(Node):
 
     async def box_callback(self,request,response):
         #Scene = PlanningScene()
+        """
+        Call back fucntion for call_box service.
+
+        Publish saved box information to Planning Scene.
+        Get current Planning Scene from get_planning_scene.
+        Add/Update box in the world.collision_objects.
+        Publish updated Planning Scene.
+
+        Input:
+            Empty
+
+        Return_value:
+            Empty
+
+        """
         component = PlanningSceneComponents()
         Scene_raw = await self.scene_client.call_async(GetPlanningScene.Request(components = component))
         self.get_logger().info(f'\nresponse\n{Scene_raw}')
@@ -113,6 +167,18 @@ class Brick(Node):
 
     async def clear_callback(self,request,response):
         #Scene = PlanningScene()
+        """
+        Call back fucntion for clear_all_box service.
+
+        Clear all collision_objects in PlanningScene.world
+
+        Input:
+            Empty
+
+        Return_value:
+            Empty
+
+        """
         component = PlanningSceneComponents()
         Scene_raw = await self.scene_client.call_async(GetPlanningScene.Request(components = component))
         self.get_logger().info(f'\nresponse\n{Scene_raw}')
@@ -128,6 +194,19 @@ class Brick(Node):
 
     async def remove_callback(self,request,response):
         #Scene = PlanningScene()
+        """
+        Call back fucntion for clear_current_box service.
+
+        Clear the box in PlanningScene.world.collision_objects 
+        with the id which is match the save box information
+
+        Input:
+            Empty
+
+        Return_value:
+            Empty
+
+        """
         component = PlanningSceneComponents()
         Scene_raw = await self.scene_client.call_async(GetPlanningScene.Request(components = component))
         self.get_logger().info(f'\nresponse\n{Scene_raw}')
