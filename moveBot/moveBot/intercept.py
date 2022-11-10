@@ -207,7 +207,7 @@ class Testing(Node):
         self.get_logger().info(f'\n BALLS \n')
         return plan_request
 
-    async def plan_callback(self,request,response):
+    async def plan_callback(self,request):
         # TODO did you suply start pos
         # if not start_pos = current pos
         #If so is it xzy or joints
@@ -219,6 +219,8 @@ class Testing(Node):
             if not request.start_pos: # IF there is no given start position, use current joint config as start
                 # print("NO GIVEN START POSE, USING CURRENT POSE AS START")
                 request.start_pos=self.joint_statesmsg.position
+                self.get_logger().info(f'\nSETTING START:\n{request.start_pos}')
+                self.get_logger().info(f'\nMAIN LOOP:\n{self.joint_statesmsg}')
                 # TODO if goal is given as joint states, put as correct msg type to pass to motion request
                 # else:
                 
@@ -241,6 +243,7 @@ class Testing(Node):
         
         plan_msg=self.get_motion_request(start_in_joint_config, goal_in_joint_config) # TODO we want to send the start pos we get from the service
         # self.get_logger().info(f'\n SACKK \n')
+        # self.get_logger().info(f'\nPlan rRsponse:\n{plan_msg}')
         self.future_response=await self._plan_client.send_goal_async(plan_msg)
         # self.response=GetPositionIK.Response()
         self.plan_response=await self.future_response.get_result_async()
@@ -248,7 +251,9 @@ class Testing(Node):
         # response=Empty.Response()
         # self.get_logger().info(f'\n PENIS\n')
         # self.get_logger().info(f'\nIk ik callback response\n{response}')
-        return response 
+        # self.user_planresp=response
+        # self.get_logger().info(f'\nPlan RESPONSE FINAL:\n{self.user_planresp}')
+        # return self.user_planresp
 
     def send_execute(self):
         execute_msg=ExecuteTrajectory.Goal()
@@ -259,9 +264,11 @@ class Testing(Node):
     async def execute_callback(self,request,response):
  
         exec_msg=self.send_execute()
+        self.get_logger().info(f'\nEXEC MSG\n{exec_msg}')
         self.future_response=await self._execute_client.send_goal_async(exec_msg)
+        self.get_logger().info(f'\nEXEC MSG FUTURE\n{self.future_response}')
         self.execute_response=await self.future_response.get_result_async()
-        # self.get_logger().info(f'\nresponse\n{self.execute_response}')
+        self.get_logger().info(f'\nresponse\n{self.execute_response}')
 
         response=Empty.Response()
         
