@@ -21,7 +21,8 @@ setup(
     entry_points={
         'console_scripts': ['intercept = moveBot.intercept:main',
                             'moveBot = moveBot.moveBot:main',
-                            'brick_intercept = moveBot.brick_intercept:main'
+                            'brick_intercept = moveBot.brick_intercept:main',
+                            'intercept_msgs = moveBot.intercept_msgs:main'
         ],
     },
 )
