@@ -71,3 +71,7 @@ To delete the last added box the following command may be used:
 
 To clear all obstacle from the planning scene:
 `ros2 service call /clear_all_box std_srvs/srv/Empty`
+
+# Demonstration
+
+[robot_move.webm](https://user-images.githubusercontent.com/46512429/201226143-f7d638e7-5f5c-4de6-9c8c-1f0e36112dcc.webm)
