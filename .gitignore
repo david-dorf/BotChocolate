@@ -1,1 +1,4 @@
 __pycache__
+movebot_interfaces/build/
+movebot_interfaces/install/
+movebot_interfaces/log/
