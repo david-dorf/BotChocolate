@@ -1,0 +1,6 @@
+float64[] start_pos
+float64[] goal_pos
+bool is_xyzrpy
+bool execute_now
+---
+moveit_msgs/MotionPlanRequest motion_request

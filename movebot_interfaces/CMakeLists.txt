@@ -16,6 +16,8 @@ find_package(moveit_msgs REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/IkGoalRqst.srv"
   "srv/AddBox.srv"
+  "srv/GetPlanRqst.srv"
+  "msg/IkGoalRqstMsg.msg"
   DEPENDENCIES moveit_msgs
  )
 if(BUILD_TESTING)
