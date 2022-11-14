@@ -1,4 +1,3 @@
-
 import rclpy
 from rclpy.node import Node
 from enum import Enum, auto
