@@ -23,7 +23,8 @@ setup(
         'console_scripts': [
             'simple_move = moveBot.simple_move:main',
             'moveBot = moveBot.moveBot:main',
-            'intercept_msgs = moveBot.intercept_msgs:main'
+            'intercept_msgs = moveBot.intercept_msgs:main',
+            'trajectory = moveBot.trajectory:main'
             ],
         },
     )
