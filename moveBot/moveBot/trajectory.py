@@ -15,13 +15,17 @@ class TrajectoryCaller(Node):
     def __init__(self):
         super().__init__("trajectory_node")
         self.cbgroup = ReentrantCallbackGroup()
-        self.plan_client = self.create_client(GetPlanRqst,"call_plan")
+        self.plan_client = self.create_client(IkGoalRqst,"call_plan")
         self.execute_client = self.create_client(Empty,"call_execute")
 
     async def send_request(self, request, response):
-        request = IkGoalRqstMsg()
-        request.position = [0.5, 0.5, 0.5] # placeholder values, replace with CV
-        request.orientation = [0.0, 0.0, 0.0]
+        start_pos = IkGoalRqstMsg()
+        goal_pos = IkGoalRqstMsg()
+        request = IkGoalRqst().Request(start_pos,goal_pos)
+        request.start_pos.position = []
+        request.start_pos.orientation = []
+        request.goal_pos.position = [0.5, 0.5, 0.5] # placeholder values, replace with CV
+        request.goal_pos.orientation = [0.0, 0.0, 0.0]
         # find gripper flag in interface proto for GetPlanRqst
         response = await self.plan_client.call_async(request)
         return response
@@ -30,7 +34,7 @@ class TrajectoryCaller(Node):
 def main(args=None):
     rclpy.init(args=args)
     trajectory_client = TrajectoryCaller()
-    # trajectory_client.send_request()
+    trajectory_client.send_request()
     trajectory_client.destroy_node()
     rclpy.shutdown()
 
