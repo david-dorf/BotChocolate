@@ -3,7 +3,7 @@ from rclpy.node import Node
 from enum import Enum, auto
 from rclpy.callback_groups import ReentrantCallbackGroup
 from std_srvs.srv import Empty
-from movebot_interfaces.srv import IkGoalRqst, GetPlanRqst, AddBox
+from movebot_interfaces.srv import IkGoalRqst, AddBox
 from movebot_interfaces.msg import IkGoalRqstMsg
 
 # class State(Enum):
@@ -12,13 +12,17 @@ from movebot_interfaces.msg import IkGoalRqstMsg
 #     MOVEMENT2 = auto()
 
 class TrajectoryCaller(Node):
+    """Call the plan and execute services from simple_move."""
     def __init__(self):
         super().__init__("trajectory_node")
         self.cbgroup = ReentrantCallbackGroup()
         self.plan_client = self.create_client(IkGoalRqst,"call_plan")
         self.execute_client = self.create_client(Empty,"call_execute")
 
-    async def send_request(self, request, response):
+    async def send_request(self):
+        """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
+        execute a trajectory.
+        """
         start_pos = IkGoalRqstMsg()
         goal_pos = IkGoalRqstMsg()
         request = IkGoalRqst().Request(start_pos,goal_pos)
