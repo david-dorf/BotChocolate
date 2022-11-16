@@ -20,26 +20,25 @@ class TrajectoryCaller(Node):
         self.execute_client = self.create_client(Empty,"call_execute",callback_group=self.cbgroup)
         self.request = GetPlanRqst.Request()
 
-    async def send_request(self):
+    def send_request(self):
         """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
         execute a trajectory.
         """
-        self.request.start_pos = IkGoalRqstMsg()
-        self.request.goal_pos = IkGoalRqstMsg()
         self.request.start_pos.position = []
         self.request.start_pos.orientation = []
         self.request.goal_pos.position = [0.5, 0.5, 0.5] # placeholder values, replace with CV
         self.request.goal_pos.orientation = [0.0, 0.0, 0.0]
-        # find gripper flag in interface proto for GetPlanRqst
-        response = await self.plan_client.call_async(self.request)
-        return response
+        self.request.is_xyzrpy = True
+        self.request.execute_now = True
+        self.future = self.plan_client.call_async(self.request)
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
 
 
 def main(args=None):
     rclpy.init(args=args)
     trajectory_client = TrajectoryCaller()
     trajectory_client.send_request()
-    # rclpy.spin(trajectory_client)
     trajectory_client.destroy_node()
     rclpy.shutdown()
 

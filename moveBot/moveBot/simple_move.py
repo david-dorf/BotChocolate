@@ -458,6 +458,7 @@ class MoveBot(Node):
             response (MotionPlanRequest): Message to send to the move_action client.
 
         """
+        self.get_logger().info(f"{request}")
         if request.is_xyzrpy:  # If start pos was given as X,Y,Z, R, P, Y
             if len(request.start_pos.position) <= 0:
                 # IF there is no given start position, use current joint config as start
