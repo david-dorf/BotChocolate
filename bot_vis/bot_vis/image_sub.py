@@ -7,10 +7,10 @@
 # Import the necessary libraries
 import rclpy # Python library for ROS 2
 from rclpy.node import Node # Handles the creation of nodes
-from sensor_msgs.msg import Image # Image is the message type
+from sensor_msgs.msg import Image, CameraInfo # Image is the message type
 from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Images
 import cv2 # OpenCV library
- 
+
 class ImageSubscriber(Node):
   """
   Create an ImageSubscriber class, which is a subclass of the Node class.
@@ -32,10 +32,16 @@ class ImageSubscriber(Node):
     self.subscription # prevent unused variable warning
     
     self.publisher_ = self.create_publisher(Image, 'video_frames', 10)
+    self.april_pub = self.create_publisher(Image, 'image_rect', 10)
+    self.cam_info = self.create_subscription(CameraInfo, '/camera/color/camera_info', self.cam_info_CB, 10)
+    self.april_info_pub = self.create_publisher(CameraInfo, 'camera_info', 10)
 
     # Used to convert between ROS and OpenCV images
     self.br = CvBridge()
    
+  def cam_info_CB(self, data):
+    self.april_info_pub.publish(data)
+    
   def listener_callback(self, data):
     """
     Callback function.
@@ -48,6 +54,7 @@ class ImageSubscriber(Node):
     im_rgb = cv2.cvtColor(current_frame, cv2.COLOR_RGB2BGR)
     im_cann = cv2.Canny(im_rgb, 100, 100)
     self.publisher_.publish(self.br.cv2_to_imgmsg(im_cann))
+    self.april_pub.publish(data)
     # Display image
     cv2.imshow("camera", im_rgb)
     
