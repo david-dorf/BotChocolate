@@ -24,15 +24,11 @@ def quaternion_from_euler(ai, aj, ak):
     """
     Take in Euler angles and converts them to quaternions. Function taken from link above.
 
-    Args:
-    ----
-        ai (float): Roll angle.
-        aj (float): Pitch angle.
-        ak (float): Yaw angle.
+    :param ai: (float) Roll angle.
+    :param aj: (float) Pitch angle.
+    :param ak: (float) Yaw angle.
 
-    Return:
-    ------
-        float array: Array of quaternion angles.
+    :return: Array of quaternion angles.
 
     """
     ai /= 2.0
@@ -59,12 +55,13 @@ def quaternion_from_euler(ai, aj, ak):
 
 
 class MoveBot(Node):
-    """MoveBot node."""
-
     """
+    MoveBot node.
+    ------------
     Turn a goal end effector position and orientation into a trajectory to be executed by the
     Franka Emika robot arm. The position and orientation of the end effector is given in relation
     to the frame located at the base of the robot.
+
     """
     def __init__(self):
         super().__init__("simple_move")
