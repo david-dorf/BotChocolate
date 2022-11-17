@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>moveBot package &mdash; move_bot 1.0.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="moveBot" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> move_bot
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">moveBot</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">moveBot package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-moveBot.simple_move">moveBot.simple_move module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#moveBot.simple_move.MoveBot"><code class="docutils literal notranslate"><span class="pre">MoveBot</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#moveBot.simple_move.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#moveBot.simple_move.quaternion_from_euler"><code class="docutils literal notranslate"><span class="pre">quaternion_from_euler()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-moveBot">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">move_bot</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">moveBot</a></li>
+      <li class="breadcrumb-item active">moveBot package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/moveBot.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="movebot-package">
+<h1>moveBot package<a class="headerlink" href="#movebot-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-moveBot.simple_move">
+<span id="movebot-simple-move-module"></span><h2>moveBot.simple_move module<a class="headerlink" href="#module-moveBot.simple_move" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="moveBot.simple_move.MoveBot">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">moveBot.simple_move.</span></span><span class="sig-name descname"><span class="pre">MoveBot</span></span><a class="reference internal" href="_modules/moveBot/simple_move.html#MoveBot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.MoveBot" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></p>
+<section id="movebot-node">
+<h3>MoveBot node.<a class="headerlink" href="#movebot-node" title="Permalink to this heading"></a></h3>
+<p>Turn a goal end effector position and orientation into a trajectory to be executed by the
+Franka Emika robot arm. The position and orientation of the end effector is given in relation
+to the frame located at the base of the robot.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="moveBot.simple_move.MoveBot.box_callback">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">box_callback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">response</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/moveBot/simple_move.html#MoveBot.box_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.MoveBot.box_callback" title="Permalink to this definition"></a></dt>
+<dd><p>Call back fucntion for call_box service.</p>
+<p>Publish saved box information to Planning Scene.
+Get current Planning Scene from get_planning_scene.
+Add/Update box in the world.collision_objects.
+Publish updated Planning Scene.</p>
+<section id="args">
+<h4>Args:<a class="headerlink" href="#args" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>request (movebot_interface/srv/AddBox.request): Empty.
+response (movebot_interface/srv/AddBox.response): Empty.</p>
+</div></blockquote>
+</section>
+<section id="return">
+<h4>Return:<a class="headerlink" href="#return" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>Empty</p>
+</div></blockquote>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="moveBot.simple_move.MoveBot.clear_callback">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clear_callback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">response</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/moveBot/simple_move.html#MoveBot.clear_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.MoveBot.clear_callback" title="Permalink to this definition"></a></dt>
+<dd><p>Call back fucntion for clear_all_box service.</p>
+<p>Clear all collision_objects in PlanningScene.world</p>
+<section id="id1">
+<h4>Args:<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>request (movebot_interface/srv/AddBox.request): Empty.
+response (movebot_interface/srv/AddBox.response): Empty.</p>
+</div></blockquote>
+</section>
+<section id="id2">
+<h4>Return:<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>Empty</p>
+</div></blockquote>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="moveBot.simple_move.MoveBot.execute_callback">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute_callback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">response</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/moveBot/simple_move.html#MoveBot.execute_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.MoveBot.execute_callback" title="Permalink to this definition"></a></dt>
+<dd><p>Set the robot arm along the trajectory path generated by the plan callback.</p>
+<p>The robot will move in RViz and the physical robot will follow this movement.</p>
+<section id="id3">
+<h4>Args:<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>request (Empty): Empty message to execute the planned trajectory.
+response (Empty_Response): Returns an empty value.</p>
+</div></blockquote>
+</section>
+<section id="id4">
+<h4>Return:<a class="headerlink" href="#id4" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>Empty_Response: Returns an empty value.</p>
+</div></blockquote>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="moveBot.simple_move.MoveBot.get_ik_rqst_msg">
+<span class="sig-name descname"><span class="pre">get_ik_rqst_msg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pose_vec</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/moveBot/simple_move.html#MoveBot.get_ik_rqst_msg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.MoveBot.get_ik_rqst_msg" title="Permalink to this definition"></a></dt>
+<dd><p>Get IK request message.</p>
+<p>Process a pose request message and turn it into a response usable by the inverse
+kinematics callback function.</p>
+<section id="id5">
+<h4>Args:<a class="headerlink" href="#id5" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>pose_vec (ndarray): Contains the request message to be converted into a usable IK msg.</p>
+</div></blockquote>
+</section>
+<section id="id6">
+<h4>Return:<a class="headerlink" href="#id6" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>ikmsg (PositionIKRequest): Processed version of the pose_vec that can be used by IK.</p>
+</div></blockquote>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="moveBot.simple_move.MoveBot.get_motion_request">
+<span class="sig-name descname"><span class="pre">get_motion_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">goal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/moveBot/simple_move.html#MoveBot.get_motion_request"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.MoveBot.get_motion_request" title="Permalink to this definition"></a></dt>
+<dd><p>Process a motion request message into a response usable by the motion planning.</p>
+<p>callback function.</p>
+<section id="id7">
+<h4>Args:<a class="headerlink" href="#id7" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>start (RobotState): Start configuration of the robot.
+goal (RobotState): End goal configuration of the robot.
+execute (Boolean): Start execute immediately or manually.</p>
+</div></blockquote>
+</section>
+<section id="id8">
+<h4>Return:<a class="headerlink" href="#id8" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>plan_request (MoveGroup_Goal): Request to generate the trajectory in the callback.</p>
+</div></blockquote>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="moveBot.simple_move.MoveBot.ik_callback">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ik_callback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">response</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/moveBot/simple_move.html#MoveBot.ik_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.MoveBot.ik_callback" title="Permalink to this definition"></a></dt>
+<dd><p>IK Callback Function.</p>
+<p>Generate the inverse kinematics solution that gives the joint angles to reach a desired
+end effector configuration.</p>
+<section id="id9">
+<h4>Args:<a class="headerlink" href="#id9" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>ikmsg (PositionIKRequest): Processed version of the pose_vec that can be used by IK.
+request (Float64[] position Float64[] orientation): Request pose of initial location.
+response (RobotState): Computes the IK solution for the given ikmsg.</p>
+</div></blockquote>
+</section>
+<section id="id10">
+<h4>Return:<a class="headerlink" href="#id10" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>RobotState: The computed joint angles from the inverse kinematics function.</p>
+</div></blockquote>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="moveBot.simple_move.MoveBot.js_cb">
+<span class="sig-name descname"><span class="pre">js_cb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jointstate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/moveBot/simple_move.html#MoveBot.js_cb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.MoveBot.js_cb" title="Permalink to this definition"></a></dt>
+<dd><p>Call back function of the goal pose subscriber. Stores the GoalPose message received.</p>
+<section id="id11">
+<h4>Args:<a class="headerlink" href="#id11" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>jointstate (JointState): Contains the information of the current robot joint angles.</p>
+</div></blockquote>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="moveBot.simple_move.MoveBot.plan_callback">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">plan_callback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">response</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/moveBot/simple_move.html#MoveBot.plan_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.MoveBot.plan_callback" title="Permalink to this definition"></a></dt>
+<dd><p>Plan the cartesian trajectory path that the robot arm will follow.</p>
+<p>This path will be followed by the robot upon execution.</p>
+<section id="id12">
+<h4>Args:<a class="headerlink" href="#id12" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>request (GetPlanRqst): Message that includes the start position, goal position of the
+trajectory, and a flag that indicates if its in XYZ coords or joint positions, as well
+as a flag that determines if it should execute immediately or not.
+response (MotionPlanRequest): Message to send to the move_action client.</p>
+</div></blockquote>
+</section>
+<section id="id13">
+<h4>Return:<a class="headerlink" href="#id13" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>response (MotionPlanRequest): Message to send to the move_action client.</p>
+</div></blockquote>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="moveBot.simple_move.MoveBot.remove_callback">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">remove_callback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">response</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/moveBot/simple_move.html#MoveBot.remove_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.MoveBot.remove_callback" title="Permalink to this definition"></a></dt>
+<dd><p>Call back fucntion for clear_current_box service.</p>
+<p>Clear the box in PlanningScene.world.collision_objects
+with the id which is match the save box information</p>
+<section id="id14">
+<h4>Args:<a class="headerlink" href="#id14" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>request (movebot_interface/srv/AddBox.request): Empty.
+response (movebot_interface/srv/AddBox.response): Empty.</p>
+</div></blockquote>
+</section>
+<section id="id15">
+<h4>Return:<a class="headerlink" href="#id15" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>Empty</p>
+</div></blockquote>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="moveBot.simple_move.MoveBot.send_execute">
+<span class="sig-name descname"><span class="pre">send_execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/moveBot/simple_move.html#MoveBot.send_execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.MoveBot.send_execute" title="Permalink to this definition"></a></dt>
+<dd><p>Make the execute message to be used by the execute callback.</p>
+<section id="id16">
+<h4>Return:<a class="headerlink" href="#id16" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>ExecuteTrajectory_Goal: Message to send to the callback function to execute the
+planned trajectory.</p>
+</div></blockquote>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="moveBot.simple_move.MoveBot.timer_callback">
+<span class="sig-name descname"><span class="pre">timer_callback</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/moveBot/simple_move.html#MoveBot.timer_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.MoveBot.timer_callback" title="Permalink to this definition"></a></dt>
+<dd><p>Set up the transform listener to get the end effector position information.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="moveBot.simple_move.MoveBot.update_box_callback">
+<span class="sig-name descname"><span class="pre">update_box_callback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">response</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/moveBot/simple_move.html#MoveBot.update_box_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.MoveBot.update_box_callback" title="Permalink to this definition"></a></dt>
+<dd><p>Call back fucntion for add_box service.</p>
+<p>Update the box infomation
+(id, position, size)</p>
+<section id="id17">
+<h4>Args:<a class="headerlink" href="#id17" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>request (movebot_interface/srv/AddBox.request): Box information.
+response (movebot_interface/srv/AddBox.response): Empty.</p>
+<p>String: id
+float:  x
+float:  y
+float:  z
+float:  l
+float:  w
+float:  h</p>
+</div></blockquote>
+</section>
+<section id="id18">
+<h4>Return:<a class="headerlink" href="#id18" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p>Empty</p>
+</div></blockquote>
+</section>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="moveBot.simple_move.main">
+<span class="sig-prename descclassname"><span class="pre">moveBot.simple_move.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/moveBot/simple_move.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.main" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="moveBot.simple_move.quaternion_from_euler">
+<span class="sig-prename descclassname"><span class="pre">moveBot.simple_move.</span></span><span class="sig-name descname"><span class="pre">quaternion_from_euler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ai</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ak</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/moveBot/simple_move.html#quaternion_from_euler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#moveBot.simple_move.quaternion_from_euler" title="Permalink to this definition"></a></dt>
+<dd><p>Take in Euler angles and converts them to quaternions. Function taken from link above.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ai</strong> – (float) Roll angle.</p></li>
+<li><p><strong>aj</strong> – (float) Pitch angle.</p></li>
+<li><p><strong>ak</strong> – (float) Yaw angle.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Array of quaternion angles.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-moveBot">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-moveBot" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="moveBot" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Nick.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
