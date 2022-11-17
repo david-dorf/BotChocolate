@@ -24,11 +24,15 @@ def quaternion_from_euler(ai, aj, ak):
     """
     Take in Euler angles and converts them to quaternions. Function taken from link above.
 
-    :param ai: (float) Roll angle.
-    :param aj: (float) Pitch angle.
-    :param ak: (float) Yaw angle.
+    :param ai: Roll angle.
+    :type ai: float
+    :param aj: Pitch angle.
+    :type aj: float
+    :param ak: Yaw angle. 
+    :type ak: float
 
     :return: Array of quaternion angles.
+    :rtype: ndarray
 
     """
     ai /= 2.0
@@ -56,11 +60,9 @@ def quaternion_from_euler(ai, aj, ak):
 
 class MoveBot(Node):
     """
-    MoveBot node.
-    ------------
-    Turn a goal end effector position and orientation into a trajectory to be executed by the
-    Franka Emika robot arm. The position and orientation of the end effector is given in relation
-    to the frame located at the base of the robot.
+    Turn a goal end effector position and orientation into a trajectory to be
+    executed by the Franka Emika robot arm. The position and orientation of the
+    end effector is given in relation to the frame located at the base of the robot.
 
     """
     def __init__(self):
@@ -143,22 +145,12 @@ class MoveBot(Node):
         Update the box infomation
         (id, position, size)
 
-        Args:
-        ----
-            request (movebot_interface/srv/AddBox.request): Box information.
-            response (movebot_interface/srv/AddBox.response): Empty.
-
-            String: id
-            float:  x
-            float:  y
-            float:  z
-            float:  l
-            float:  w
-            float:  h
-
-        Return:
-        ------
-            Empty
+        :param request: Box information
+        :type request: movebot_interface/srv/AddBox.request 
+        :param response: Empty
+        :type response: movebot_interface/srv/AddBox.response
+        
+        :returns: Empty
 
         """
         self.box_x = request.x
@@ -179,15 +171,13 @@ class MoveBot(Node):
         Add/Update box in the world.collision_objects.
         Publish updated Planning Scene.
 
-        Args:
-        ----
-            request (movebot_interface/srv/AddBox.request): Empty.
-            response (movebot_interface/srv/AddBox.response): Empty.
-
-        Return:
-        ------
-            Empty
-
+        :param request: Empty
+        :type request: movebot_interface/srv/AddBox.request
+        :param response: Empty
+        :type response: movebot_interface/srv/AddBox.response
+        
+        :rtype: std_srvs.srv.Empty.Response()
+        
         """
         component = PlanningSceneComponents()
         Scene_raw = await self.scene_client.call_async(
@@ -236,14 +226,12 @@ class MoveBot(Node):
 
         Clear all collision_objects in PlanningScene.world
 
-        Args:
-        ----
-            request (movebot_interface/srv/AddBox.request): Empty.
-            response (movebot_interface/srv/AddBox.response): Empty.
+        :param request: Empty.
+        :type request: movebot_interface/srv/AddBox.request
+        :param response: Empty
+        :type response: movebot_interface/srv/AddBox.response
 
-        Return:
-        ------
-            Empty
+        :rtype: std_srvs.srv.Empty.Response()
 
         """
         component = PlanningSceneComponents()
@@ -260,19 +248,17 @@ class MoveBot(Node):
 
     async def remove_callback(self, request, response):
         """
-        Call back fucntion for clear_current_box service.
+        Call back function for clear_current_box service.
 
         Clear the box in PlanningScene.world.collision_objects
         with the id which is match the save box information
 
-        Args:
-        ----
-            request (movebot_interface/srv/AddBox.request): Empty.
-            response (movebot_interface/srv/AddBox.response): Empty.
-
-        Return:
-        ------
-            Empty
+        :param request: Empty.
+        :type request: movebot_interface/srv/AddBox.request
+        :param response: Empty.
+        :type response: movebot_interface/srv/AddBox.response
+    
+        :rtype: std_srvs.srv.Empty.Response()
 
         """
         component = PlanningSceneComponents()
@@ -294,9 +280,8 @@ class MoveBot(Node):
         """
         Call back function of the goal pose subscriber. Stores the GoalPose message received.
 
-        Args:
-        ----
-            jointstate (JointState): Contains the information of the current robot joint angles.
+        :param jointstate: Contains the information of the current robot joint angles.
+        :type joinstate: sensor_msgs/msg/JointState
 
         """
         self.joint_statesmsg = jointstate
@@ -308,13 +293,11 @@ class MoveBot(Node):
         Process a pose request message and turn it into a response usable by the inverse
         kinematics callback function.
 
-        Args:
-        ----
-            pose_vec (ndarray): Contains the request message to be converted into a usable IK msg.
+        :param pose_vec: Contains the request message to be converted into a usable IK msg.
+        :type pose_vec: ndarray
 
-        Return:
-        ------
-            ikmsg (PositionIKRequest): Processed version of the pose_vec that can be used by IK.
+        :return: Processed version of the pose_vec that can be used by IK.
+        :rtype: moveit_msgs/msg/PositionIKRequest 
 
         """
         ikmsg = PositionIKRequest()
@@ -344,15 +327,13 @@ class MoveBot(Node):
         Generate the inverse kinematics solution that gives the joint angles to reach a desired
         end effector configuration.
 
-        Args:
-        ----
-            ikmsg (PositionIKRequest): Processed version of the pose_vec that can be used by IK.
-            request (Float64[] position Float64[] orientation): Request pose of initial location.
-            response (RobotState): Computes the IK solution for the given ikmsg.
+        :param request: Request pose of initial location
+        :type request: Float64[] position Float64[] orientation
+        :param response: Computes the IK solution for the given ikmsg.
+        :type response: moveit_msgs/msg/RobotState
 
-        Return:
-        ------
-            RobotState: The computed joint angles from the inverse kinematics function.
+        :return: The computed joint angles from the inverse kinematics function.
+        :rtype: moveit_msgs/msg/RobotState
 
         """
         if not request.position and not request.orientation:
@@ -392,20 +373,18 @@ class MoveBot(Node):
 
     def get_motion_request(self, start, goal, execute):
         """
+
         Process a motion request message into a response usable by the motion planning.
 
-        callback function.
+        :param start: Start configuration of the robot.
+        :type start: moveit_msgs/msg/RobotState
+        :param goal: End goal configuration of the robot.
+        :type goal: moveit_msgs/msg/RobotState
+        :param execute: Start execute immediately or manually.
+        :type execute: bool 
 
-        Args:
-        ----
-            start (RobotState): Start configuration of the robot.
-            goal (RobotState): End goal configuration of the robot.
-            execute (Boolean): Start execute immediately or manually.
-
-        Return:
-        ------
-            plan_request (MoveGroup_Goal): Request to generate the trajectory in the callback.
-
+        :return: Request to generate the trajectory in the callback.
+        :rtype: MoveGroup_Goal
 
         """
         motion_req = MotionPlanRequest()
@@ -456,16 +435,16 @@ class MoveBot(Node):
 
         This path will be followed by the robot upon execution.
 
-        Args:
-        ----
-            request (GetPlanRqst): Message that includes the start position, goal position of the
-            trajectory, and a flag that indicates if its in XYZ coords or joint positions, as well
-            as a flag that determines if it should execute immediately or not.
-            response (MotionPlanRequest): Message to send to the move_action client.
+        :param request: Message that includes the start position, goal position of the
+        trajectory, and a flag that indicates if its in XYZ coords or joint positions, as well
+        as a flag that determines if it should execute immediately or not.
+        :type request: GetPlanRqst
 
-        Return:
-        ------
-            response (MotionPlanRequest): Message to send to the move_action client.
+        :param response: Message to send to the move_action client.
+        :type response: MotionPlanRequest
+
+        :return: Message to send to the move_action client.
+        :rtype: MotionPlanRequest
 
         """
         if request.is_xyzrpy:  # If start pos was given as X,Y,Z, R, P, Y
@@ -509,10 +488,9 @@ class MoveBot(Node):
         """
         Make the execute message to be used by the execute callback.
 
-        Return:
-        ------
-            ExecuteTrajectory_Goal: Message to send to the callback function to execute the
-            planned trajectory.
+        :return: Message to send to the callback function to execute the
+        planned trajectory.
+        :rtype: ExecuteTrajectory_Goal
 
         """
         execute_msg = ExecuteTrajectory.Goal()
@@ -526,14 +504,10 @@ class MoveBot(Node):
 
         The robot will move in RViz and the physical robot will follow this movement.
 
-        Args:
-        ----
-            request (Empty): Empty message to execute the planned trajectory.
-            response (Empty_Response): Returns an empty value.
+        :param request: Empty message to execute the planned trajectory.
+        :param response: Returns an empty value.
 
-        Return:
-        ------
-            Empty_Response: Returns an empty value.
+        :rtype: std_srvs.srv.Empty.Response()
 
         """
         exec_msg = self.send_execute()
@@ -544,7 +518,9 @@ class MoveBot(Node):
         return response
 
     def timer_callback(self):
-        """Set up the transform listener to get the end effector position information."""
+        """
+        Set up the transform listener to get the end effector position information.
+        """
         try:
             self.ee_base = self.tf_buffer.lookup_transform(
                 'panda_link0',
