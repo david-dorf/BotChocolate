@@ -11,6 +11,7 @@ Welcome to move_bot's documentation!
    :caption: Contents:
 
    modules
+   pages/usage
 
 Indices and tables
 ==================
