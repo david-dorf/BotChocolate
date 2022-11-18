@@ -1,4 +1,3 @@
-
 apriltag:
     ros__parameters:
         image_transport: raw    # image format
