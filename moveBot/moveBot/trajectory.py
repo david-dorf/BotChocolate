@@ -49,25 +49,38 @@ class TrajectoryCaller(Node):
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
 
-    def send_execute_request(self):
-        self.future = self.execute_client.call_async(Empty.Request())
+    def send_move_up_request(self):
+        """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
+        execute a trajectory.
+        """
+        self.request.start_pos.position = [0.5, 0.5, 0.2]
+        self.request.start_pos.orientation = [0.0, 3.1, 0.0]
+        self.request.goal_pos.position = [0.5, 0.5, 0.4] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = [0.0, 3.1, 0.0]
+        self.request.is_xyzrpy = True
+        self.request.execute_now = False
+        self.future = self.plan_client.call_async(self.request)
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
 
-
-    # def send_move_up_request(self):
-    #     """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
-    #     execute a trajectory.
+    # def send_move_home_request(self):
+    #     """Generate the trajectory plan for moving down to eventually grip the object.
     #     """
-    #     self.request.start_pos.position = [0.5, 0.5, 0.2]
+    #     self.request.start_pos.position = [0.5, 0.5, 0.4]
     #     self.request.start_pos.orientation = [0.0, 3.1, 0.0]
-    #     self.request.goal_pos.position = [0.5, 0.5, 0.4] # placeholder values, replace with CV
+    #     self.request.goal_pos.position = [0.5, 0.3, 0.4] # placeholder values, replace with CV
     #     self.request.goal_pos.orientation = [0.0, 3.1, 0.0]
     #     self.request.is_xyzrpy = True
     #     self.request.execute_now = False
     #     self.future = self.plan_client.call_async(self.request)
     #     rclpy.spin_until_future_complete(self, self.future)
     #     return self.future.result()
+
+    def send_execute_request(self):
+        self.future = self.execute_client.call_async(Empty.Request())
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -76,7 +89,10 @@ def main(args=None):
     trajectory_client.send_execute_request()
     trajectory_client.send_move_down_request()
     trajectory_client.send_execute_request()
-    # trajectory_client.send_move_up_request()
+    trajectory_client.send_move_up_request()
+    trajectory_client.send_execute_request()
+    # trajectory_client.send_move_home_request()
+    # trajectory_client.send_execute_request()
     trajectory_client.destroy_node()
     rclpy.shutdown()
 
