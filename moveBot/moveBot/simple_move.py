@@ -329,6 +329,8 @@ class MoveBot(Node):
         ikmsg.pose_stamped.pose.position.x = pose_vec[0]
         ikmsg.pose_stamped.pose.position.y = pose_vec[1]
         ikmsg.pose_stamped.pose.position.z = pose_vec[2]
+        
+   
         quats = quaternion_from_euler(pose_vec[3], pose_vec[4], pose_vec[5])
         ikmsg.pose_stamped.pose.orientation.x = quats[0]
         ikmsg.pose_stamped.pose.orientation.y = quats[1]
@@ -371,15 +373,23 @@ class MoveBot(Node):
             pose_vec = np.hstack([current_position, request.orientation])
 
         elif not request.orientation:
+
             current_orientation = [0.0, 0.0, 0.0]
+
             pose_vec = np.hstack([request.position, current_orientation])
 
         else:
             pose_vec = np.hstack([request.position, request.orientation])
 
+        self.get_logger().info(f"goal pose vec {pose_vec}")
+
         msg = self.get_ik_rqst_msg(pose_vec)
+
+        self.get_logger().info(f"goal ik req msg {msg}")
         self.ik_response = await self.ik_client.call_async(GetPositionIK.Request(ik_request=msg))
         response.joint_state = self.ik_response.solution.joint_state
+        self.get_logger().info(f"goal ik response {response}")
+
 
         return response
 
@@ -413,12 +423,15 @@ class MoveBot(Node):
         motion_req.start_state.joint_state = start.joint_state
         goal_constraints = Constraints()
 
+
+        # self.get_logger().info(f"goal {goal}")
+
         for i in range(len(self.joint_statesmsg.name)):
             joint_constraints = JointConstraint()
             joint_constraints.joint_name = self.joint_statesmsg.name[i]
             joint_constraints.position = goal.joint_state.position[i]
-            joint_constraints.tolerance_above = 0.0002
-            joint_constraints.tolerance_below = 0.0002
+            joint_constraints.tolerance_above = 0.002
+            joint_constraints.tolerance_below = 0.002
             joint_constraints.weight = 1.0
             goal_constraints.joint_constraints.append(joint_constraints)
 
@@ -477,10 +490,14 @@ class MoveBot(Node):
             ik_request_message_goal = IkGoalRqstMsg()
             ik_request_message_goal.position = request.goal_pos.position
             ik_request_message_goal.orientation = request.goal_pos.orientation
+
+            self.get_logger().info(f"goal ik callback msg{ik_request_message_goal}")
             goal_in_joint_config = RobotState()
             goal_in_joint_config = await self.ik_callback(
                 ik_request_message_goal,
                 goal_in_joint_config)
+            
+            # self.get_logger().info(f"goal ik callback resp {goal_in_joint_config}")
 
         plan_msg = self.get_motion_request(
             start_in_joint_config,
