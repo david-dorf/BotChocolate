@@ -21,7 +21,8 @@ setup(
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': ['image_sub = bot_vis.image_sub:main'
+        'console_scripts': ['image_sub = bot_vis.image_sub:main',
+        'april_rec = bot_vis.april_rec:main'
         ],
     },
 )
