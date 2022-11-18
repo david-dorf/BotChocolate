@@ -6,10 +6,10 @@ from std_srvs.srv import Empty
 from movebot_interfaces.srv import IkGoalRqst, AddBox, GetPlanRqst
 from movebot_interfaces.msg import IkGoalRqstMsg
 
-# class State(Enum):
-#     OFF = auto(),
-#     MOVEMENT1 = auto(),
-#     MOVEMENT2 = auto()
+class State(Enum):
+    IDLE = auto(),
+    PLAN = auto(),
+    EXECUTE = auto()
 
 class TrajectoryCaller(Node):
     """Call the plan and execute services from simple_move."""
@@ -19,10 +19,11 @@ class TrajectoryCaller(Node):
         self.plan_client = self.create_client(GetPlanRqst,"call_plan",callback_group=self.cbgroup)
         self.execute_client = self.create_client(Empty,"call_execute",callback_group=self.cbgroup)
         self.request = GetPlanRqst.Request()
+        self.state = State.IDLE
 
     def send_move_above_request(self):
         """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
-        execute a trajectory.
+        execute a trajectory. This request is the trajectory plan for moving above the object."
         """
         self.request.start_pos.position = []
         self.request.start_pos.orientation = []
@@ -30,13 +31,13 @@ class TrajectoryCaller(Node):
         self.request.goal_pos.orientation = [0.0, 3.1, 0.0]
         self.request.is_xyzrpy = True
         self.request.execute_now = False
+        # self.future contains the plan request
         self.future = self.plan_client.call_async(self.request)
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
 
     def send_move_down_request(self):
-        """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
-        execute a trajectory.
+        """Generate the trajectory plan for moving down to eventually grip the object.
         """
         self.request.start_pos.position = [0.5, 0.5, 0.4]
         self.request.start_pos.orientation = [0.0, 3.1, 0.0]
@@ -47,6 +48,12 @@ class TrajectoryCaller(Node):
         self.future = self.plan_client.call_async(self.request)
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
+
+    def send_execute_request(self):
+        self.future = self.execute_client.call_async(Empty.Request())
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
 
     # def send_move_up_request(self):
     #     """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
@@ -66,7 +73,9 @@ def main(args=None):
     rclpy.init(args=args)
     trajectory_client = TrajectoryCaller()
     trajectory_client.send_move_above_request()
+    trajectory_client.send_execute_request()
     trajectory_client.send_move_down_request()
+    trajectory_client.send_execute_request()
     # trajectory_client.send_move_up_request()
     trajectory_client.destroy_node()
     rclpy.shutdown()
