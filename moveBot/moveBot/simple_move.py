@@ -3,21 +3,22 @@ import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from moveit_msgs.action import MoveGroup, ExecuteTrajectory
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, Point
 from moveit_msgs.msg import PositionIKRequest, MotionPlanRequest, \
                             Constraints, JointConstraint, RobotState, \
                             CollisionObject, PlanningScene, PlanningSceneComponents
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros.buffer import Buffer
 from sensor_msgs.msg import JointState
-from moveit_msgs.srv import GetPositionIK, GetPlanningScene
+from moveit_msgs.srv import GetPositionIK, GetPlanningScene, GetCartesianPath
 from std_srvs.srv import Empty
 from rclpy.callback_groups import ReentrantCallbackGroup
 from shape_msgs.msg import SolidPrimitive
 import math
 import numpy as np
 from movebot_interfaces.srv import IkGoalRqst, GetPlanRqst, AddBox
-from movebot_interfaces.msg import IkGoalRqstMsg
+from movebot_interfaces.msg import IkGoalRqstMsg, SimpleCartPath
+from enum import Enum, auto
 
 
 def quaternion_from_euler(ai, aj, ak):
@@ -57,6 +58,33 @@ def quaternion_from_euler(ai, aj, ak):
 
     return q
 
+def euler_from_quaternion(x, y, z, w):
+    """
+    Convert a quaternion into euler angles (roll, pitch, yaw)
+    roll is rotation around x in radians (counterclockwise)
+    pitch is rotation around y in radians (counterclockwise)
+    yaw is rotation around z in radians (counterclockwise)
+    """
+    t0 = +2.0 * (w * x + y * z)
+    t1 = +1.0 - 2.0 * (x * x + y * y)
+    roll_x = math.atan2(t0, t1)
+      
+    t2 = +2.0 * (w * y - z * x)
+    t2 = +1.0 if t2 > +1.0 else t2
+    t2 = -1.0 if t2 < -1.0 else t2
+    pitch_y = math.asin(t2)
+     
+    t3 = +2.0 * (w * z + x * y)
+    t4 = +1.0 - 2.0 * (y * y + z * z)
+    yaw_z = math.atan2(t3, t4)
+     
+    return roll_x, pitch_y, yaw_z
+
+class State(Enum):
+    IDLE     = auto(),
+    CART_EXEC = auto(),
+    PLAN_EXEC= auto()
+
 
 class MoveBot(Node):
     """
@@ -79,45 +107,67 @@ class MoveBot(Node):
             "execute_trajectory")
 
         self.jointpub = self.create_subscription(JointState, "/joint_states", self.js_cb, 10)
+
         self.ik_client = self.create_client(
             GetPositionIK,
             "/compute_ik",
             callback_group=self.cbgroup)
+
+
         self.call_ik = self.create_service(
             IkGoalRqst,
             "call_ik",
             self.ik_callback,
             callback_group=self.cbgroup)
+
+
+        self.cart_client = self.create_client( 
+            GetCartesianPath,
+            "/compute_cartesian_path",
+            callback_group=self.cbgroup)
+
+        self.call_cart = self.create_service(
+            GetPlanRqst,
+            "call_cart",
+            self.cart_callback,
+            callback_group=self.cbgroup)
+
         self.call_plan = self.create_service(
             GetPlanRqst,
             "call_plan",
             self.plan_callback,
             callback_group=self.cbgroup)
+
         self.call_execute = self.create_service(
             Empty,
             "call_execute",
             self.execute_callback,
             callback_group=self.cbgroup)
+
         self.timer = self.create_timer(1/100, self.timer_callback)
         self.box_publisher = self.create_publisher(
             PlanningScene,
             "planning_scene",
             10)
+
         self.call_box = self.create_service(
             Empty,
             "call_box",
             self.box_callback,
             callback_group=self.cbgroup)
+
         self.clear_all_box = self.create_service(
             Empty,
             "clear_all_box",
             self.clear_callback,
             callback_group=self.cbgroup)
+
         self.clear_current_box = self.create_service(
             Empty,
             "clear_current_box",
             self.remove_callback,
             callback_group=self.cbgroup)
+
         self.scene_client = self.create_client(
             GetPlanningScene,
             "get_planning_scene",
@@ -126,6 +176,7 @@ class MoveBot(Node):
             AddBox,
             "add_box",
             self.update_box_callback)
+
         self.box_x = 0.2
         self.box_y = 0.2
         self.box_z = 0.2
@@ -137,6 +188,7 @@ class MoveBot(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.time = 0
+        self.state=State.IDLE
 
     def update_box_callback(self, request, response):
         """
@@ -309,14 +361,16 @@ class MoveBot(Node):
         ikmsg.pose_stamped.pose.position.x = pose_vec[0]
         ikmsg.pose_stamped.pose.position.y = pose_vec[1]
         ikmsg.pose_stamped.pose.position.z = pose_vec[2]
-        
-   
+      
         quats = quaternion_from_euler(pose_vec[3], pose_vec[4], pose_vec[5])
         ikmsg.pose_stamped.pose.orientation.x = quats[0]
         ikmsg.pose_stamped.pose.orientation.y = quats[1]
         ikmsg.pose_stamped.pose.orientation.z = quats[2]
         ikmsg.pose_stamped.pose.orientation.w = quats[3]
         ikmsg.timeout.sec = 5
+
+  
+        self.get_logger().info(f"IK QUATS   {quats}")
 
         return ikmsg
 
@@ -340,7 +394,9 @@ class MoveBot(Node):
             current_position = [self.ee_base.transform.translation.x,
                                 self.ee_base.transform.translation.y,
                                 self.ee_base.transform.translation.z]
-            current_orientation = [0.0, 0.0, 0.0]
+
+
+            current_orientation=[0.0,0.0,0.0]
             pose_vec = np.hstack([current_position, current_orientation])
 
         elif not request.position:
@@ -352,7 +408,7 @@ class MoveBot(Node):
 
         elif not request.orientation:
 
-            current_orientation = [0.0, 0.0, 0.0]
+            current_orientation=[0.0,0.0,0.0]
 
             pose_vec = np.hstack([request.position, current_orientation])
 
@@ -363,11 +419,118 @@ class MoveBot(Node):
 
         msg = self.get_ik_rqst_msg(pose_vec)
 
-        self.get_logger().info(f"goal ik req msg {msg}")
+    
+        
+        # self.get_logger().info(f"goal ik req msg {msg}")
         self.ik_response = await self.ik_client.call_async(GetPositionIK.Request(ik_request=msg))
         response.joint_state = self.ik_response.solution.joint_state
-        self.get_logger().info(f"goal ik response {response}")
+        # self.get_logger().info(f"goal ik response {response}")
 
+
+        return response
+
+
+
+    def create_cart_msg(self,start,goal,exc):
+
+        cart_req = SimpleCartPath()
+        cart_req.cart_request.header.stamp = self.get_clock().now().to_msg()
+        cart_req.cart_request.header.frame_id = 'panda_link0'
+        cart_req.cart_request.start_state.joint_state = start.joint_state
+        # print(f"\n START STATE {cart_req.cart_request.start_state.joint_state}")
+        
+
+        cart_req.cart_request.group_name = 'panda_manipulator'
+        cart_req.cart_request.max_step=0.01
+        cart_req.cart_request.jump_threshold= 0.0
+        cart_req.cart_request.prismatic_jump_threshold= 20.0
+        cart_req.cart_request.revolute_jump_threshold= 20.0 
+
+        wp1=Pose()
+        # print(f"\n GP {goal.position[:]}")
+        wp1.position.x=goal.position[0]
+        wp1.position.y=goal.position[1]
+        wp1.position.z=goal.position[2]
+
+        # print(f"\n OR {goal.orientation}")
+
+        if len(goal.orientation)==3:
+            quats = quaternion_from_euler(goal.orientation[0], goal.orientation[1],goal.orientation[2])
+        else:
+            quats=[goal.orientation[0],goal.orientation[1],goal.orientation[2],goal.orientation[3]]
+        # r,p,y=euler_from_quaternion(goal.orientation[0],goal.orientation[1],goal.orientation[2],goal.orientation[3])
+        # self.get_logger().info(f"LISTENER X ROT {r}", once=True)
+        # self.get_logger().info(f"LISTENER Y ROT {p}", once=True)
+        # self.get_logger().info(f"LISTENER Z ROT {y}", once=True)
+        
+        print(f"\n OR QUATS {quats}")
+        wp1.orientation.x=quats[0]
+        wp1.orientation.y=quats[1]
+        wp1.orientation.z=quats[2]
+        wp1.orientation.w=quats[3]
+
+        print(f"\n WP1 {wp1}")
+        cart_req.cart_request.waypoints= [wp1]
+
+
+        return cart_req
+
+
+    async def cart_callback(self,request,response):
+
+        if request.is_xyzrpy:  # If start pos was given as X,Y,Z, R, P, Y
+            if len(request.start_pos.position) <= 0:
+                # IF there is no given start position, use current joint config as start
+                request.start_pos.position = self.joint_statesmsg.position
+                start_in_joint_config = RobotState()
+                start_in_joint_config.joint_state = self.joint_statesmsg
+            else:
+                # Call compute IK
+                ik_request_message_start = IkGoalRqstMsg()
+                ik_request_message_start.position = request.start_pos.position
+                ik_request_message_start.orientation = request.start_pos.orientation
+                start_in_joint_config = RobotState()
+                start_in_joint_config = await self.ik_callback(
+                    ik_request_message_start,
+                    start_in_joint_config)
+
+        if not request.goal_pos.orientation:
+
+            request.goal_pos.orientation=[self.ee_base.transform.rotation.x,
+                                self.ee_base.transform.rotation.y,
+                                self.ee_base.transform.rotation.z,
+                                self.ee_base.transform.rotation.w]
+
+        if not request.goal_pos.position:
+            request.goal_pos.position= [self.ee_base.transform.translation.x,
+                            self.ee_base.transform.translation.y,
+                            self.ee_base.transform.translation.z]
+
+
+        print(f"\n GOAL POSE {request.goal_pos}")
+
+        plan_msg = self.create_cart_msg(
+            start_in_joint_config,
+            request.goal_pos,
+            request.execute_now)
+
+        print(f"\n CART REQ MSG {plan_msg}")
+
+        
+        # print(f"\n CART PLAN RESP {plan_msg.cart_request}")
+        self.cart_response = await self.cart_client.call_async(GetCartesianPath.Request(header=plan_msg.cart_request.header, 
+                                                                                        start_state=plan_msg.cart_request.start_state,
+                                                                                        group_name=plan_msg.cart_request.group_name,
+                                                                                        max_step=plan_msg.cart_request.max_step,
+                                                                                        jump_threshold=plan_msg.cart_request.jump_threshold,
+                                                                                        prismatic_jump_threshold=plan_msg.cart_request.prismatic_jump_threshold,
+                                                                                        revolute_jump_threshold=plan_msg.cart_request.revolute_jump_threshold,
+                                                                                        waypoints=plan_msg.cart_request.waypoints,))
+        # self.plan_response = await self.future_response.get_result_async()
+        # print(f"\n CART PLAN RESP {self.cart_response}")
+
+        if self.state==State.IDLE:
+            self.state=State.CART_EXEC
 
         return response
 
@@ -467,7 +630,7 @@ class MoveBot(Node):
             ik_request_message_goal.position = request.goal_pos.position
             ik_request_message_goal.orientation = request.goal_pos.orientation
 
-            self.get_logger().info(f"goal ik callback msg{ik_request_message_goal}")
+            self.get_logger().info(f"goal ik callback msg {ik_request_message_goal}")
             goal_in_joint_config = RobotState()
             goal_in_joint_config = await self.ik_callback(
                 ik_request_message_goal,
@@ -475,12 +638,19 @@ class MoveBot(Node):
             
             # self.get_logger().info(f"goal ik callback resp {goal_in_joint_config}")
 
+        ### If orientation empty ---> create cart callback
+        # else ---> get_motion_request
         plan_msg = self.get_motion_request(
             start_in_joint_config,
             goal_in_joint_config,
             request.execute_now)
+
+            
         self.future_response = await self._plan_client.send_goal_async(plan_msg)
         self.plan_response = await self.future_response.get_result_async()
+
+        if self.state==State.IDLE:  
+            self.state=State.PLAN_EXEC
 
         return response
 
@@ -494,7 +664,14 @@ class MoveBot(Node):
 
         """
         execute_msg = ExecuteTrajectory.Goal()
-        execute_msg.trajectory = self.plan_response.result.planned_trajectory
+        self.get_logger().info(f"exec msg {self.cart_response.solution.joint_trajectory}")
+
+        if self.state==State.CART_EXEC:
+            execute_msg.trajectory = self.cart_response.solution
+            self.state=State.IDLE
+        elif self.state==State.PLAN_EXEC:
+            execute_msg.trajectory = self.plan_response.result.planned_trajectory
+            self.state=State.IDLE
 
         return execute_msg
 
@@ -524,10 +701,30 @@ class MoveBot(Node):
         try:
             self.ee_base = self.tf_buffer.lookup_transform(
                 'panda_link0',
-                'panda_hand',
+                'panda_hand_tcp',
                 rclpy.time.Time())
+
+            self.get_logger().info(f"LISTENER X QUAT {self.ee_base.transform.rotation.x}", once=True)
+            self.get_logger().info(f"LISTENER Y QUAT {self.ee_base.transform.rotation.y}", once=True)
+            self.get_logger().info(f"LISTENER Z QUAT {self.ee_base.transform.rotation.z}", once=True)
+            self.get_logger().info(f"LISTENER W QUAT {self.ee_base.transform.rotation.w}", once=True)
+
+
+            self.get_logger().info(f"LISTENER X POS {self.ee_base.transform.translation.x}", once=True)
+            self.get_logger().info(f"LISTENER Y POS {self.ee_base.transform.translation.y}", once=True)
+            self.get_logger().info(f"LISTENER Z POS {self.ee_base.transform.translation.z}", once=True)
+
+            r,p,y=euler_from_quaternion(self.ee_base.transform.rotation.x,self.ee_base.transform.rotation.y,self.ee_base.transform.rotation.z,self.ee_base.transform.rotation.w)
+            self.get_logger().info(f"LISTENER X ROT {r}", once=True)
+            self.get_logger().info(f"LISTENER Y ROT {p}", once=True)
+            self.get_logger().info(f"LISTENER Z ROT {y}", once=True)
+
         except:
             pass
+
+
+
+
 
 
 def main(args=None):

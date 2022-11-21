@@ -18,7 +18,9 @@ rosidl_generate_interfaces(
   "srv/IkGoalRqst.srv"
   "srv/AddBox.srv"
   "srv/GetPlanRqst.srv"
+  "msg/SimpleCartPath.msg"
   "msg/IkGoalRqstMsg.msg"
+  "msg/CartIKRequest.msg"
   DEPENDENCIES moveit_msgs
   )
 if(BUILD_TESTING)
