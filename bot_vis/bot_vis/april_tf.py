@@ -17,6 +17,7 @@ from geometry_msgs.msg import Point
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import TransformStamped
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
+from std_msgs.msg import Bool
 
 class AprilTF(Node):
     """
@@ -57,7 +58,9 @@ class AprilTF(Node):
         self.world_2_cam.header.frame_id = "world"
         self.world_2_cam.child_frame_id = "camera_link"
         self.broadcaster2 = StaticTransformBroadcaster(self)
-        
+        self.calibrate_flag_sub = self.create_subscription(
+            Bool, '/is_calibrating', self.calibrate_flag_cb, 10)
+
         # # Create a broadcaster to link === to ===
         # self.world2panda = TransformStamped()
         # self.world2panda.header.stamp = self.get_clock().now().to_msg()
@@ -66,6 +69,9 @@ class AprilTF(Node):
         # self.broadcaster2 = TransformBroadcaster(self)
 
         self.timer = self.create_timer(1/100, self.timer_callback)
+
+    def calibrate_flag_cb(self, data):
+        self.calibrate_flag = data
 
     def get_april_2_robot(self):
         """See if april tag is in in end eff. If so use its position to get the TF to base from
@@ -79,9 +85,7 @@ class AprilTF(Node):
                 'panda_hand_tcp',
                 rclpy.time.Time())
     # TODO go through this mess and clean it up 
-    # TODO just make camera link the world frame so have a parent and child to camera link with no change
     # TODO then get tf of robot base to world (should be from calibration step (double check its right))
-    # Overall itll be world as main parent with camera_link and panda_link0 as children and world will just be the same as camera
             self.world_2_panda_link0.transform.translation.x = self.panda_hand_tcp_2_panda_link0.transform.translation.x
             self.world_2_panda_link0.transform.translation.y = self.panda_hand_tcp_2_panda_link0.transform.translation.y
             self.world_2_panda_link0.transform.translation.z = self.panda_hand_tcp_2_panda_link0.transform.translation.z
@@ -94,6 +98,7 @@ class AprilTF(Node):
 
         self.broadcaster.sendTransform(self.world_2_panda_link0)
 
+        # World and camera link are at same location
         self.world_2_cam.transform.translation.x = 0.0
         self.world_2_cam.transform.translation.y = 0.0
         self.world_2_cam.transform.translation.z = 0.0
@@ -107,7 +112,9 @@ class AprilTF(Node):
         """
         Callback function.
         """
-        self.get_april_2_robot()
+        if not self.calibrate_flag: # IF not calibrating
+            self.get_april_2_robot()
+
         # Need to broadcast tf from ee to panda_link0
         try:
             scoop_2_base = self.tf_buffer.lookup_transform(

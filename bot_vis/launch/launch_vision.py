@@ -31,7 +31,7 @@ def generate_launch_description():
         description="Flag to launch rviz visualization for seeing April tag tf's"
         )
 
-    DeclareLaunchArgument(
+    calibrate_arg = DeclareLaunchArgument(
         name="calibration",
         default_value='false',
         choices=['true',
@@ -56,7 +56,7 @@ def generate_launch_description():
 
     april_tf_node = Node(
         package='bot_vis',
-        executable='april_tf'
+        executable='april_tf',
         #parameters=[calibration_path]
         )
 
