@@ -22,7 +22,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': ['image_sub = bot_vis.image_sub:main',
-        'april_rec = bot_vis.april_rec:main'
+        'april_rec = bot_vis.april_rec:main',
+        'april_tf = bot_vis.april_tf:main',
+        'calibration = bot_vis.calibration:main'
         ],
     },
 )
