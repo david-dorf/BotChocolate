@@ -119,7 +119,7 @@ class Gripper(Node):
         goal_msg.command.position = 0.04
         goal_msg.command.max_effort = 1.0
         self._gripper_action_client.wait_for_server()
-        return self._gipper_action_client.send_goal_async(goal_msg)
+        return self._gripper_action_client.send_goal_async(goal_msg)
        
 # get command line argument from user
 help_msg = "Missing input argument\nAvailable arguments:\nopen\nclose\ngrasp\nhome"
