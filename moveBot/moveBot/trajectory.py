@@ -7,6 +7,9 @@ from movebot_interfaces.srv import IkGoalRqst, AddBox, GetPlanRqst
 from movebot_interfaces.msg import IkGoalRqstMsg
 
 class State(Enum):
+    """Create a state machine to eventually implement planning the entire stored trajectory plan
+    sequence, for executing it only once at the end.
+    """
     IDLE = auto(),
     PLAN = auto(),
     EXECUTE = auto()
@@ -24,7 +27,7 @@ class TrajectoryCaller(Node):
 
     def send_move_above_request(self):
         """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
-        execute a trajectory. This request is the trajectory plan for moving above the object."
+        execute a trajectory. This request is the trajectory plan for moving above the object.
         """
         # self.request.start_pos.position and orientation already set as last position by API
         self.request.goal_pos.position = [0.5, 0.5, 0.4] # placeholder values, replace with CV
@@ -37,8 +40,7 @@ class TrajectoryCaller(Node):
         return self.future.result()
 
     def send_move_down_request(self):
-        """Generate the trajectory plan for moving down to eventually grip the object.
-        """
+        """Generate the trajectory plan for moving down to eventually grip the object."""
         self.request.goal_pos.position = [0.5, 0.5, 0.2] # placeholder values, replace with CV
         self.request.goal_pos.orientation = []
         self.request.is_xyzrpy = True
@@ -48,9 +50,7 @@ class TrajectoryCaller(Node):
         return self.future.result()
 
     def send_move_up_request(self):
-        """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
-        execute a trajectory.
-        """
+        """Generate the trajectory plan for moving back up after gripping the object."""
         self.request.goal_pos.position = [0.5, 0.5, 0.4] # placeholder values, replace with CV
         self.request.goal_pos.orientation = []
         self.request.is_xyzrpy = True
@@ -60,8 +60,7 @@ class TrajectoryCaller(Node):
         return self.future.result()
 
     def send_move_home_request(self):
-        """Generate the trajectory plan for moving down to eventually grip the object.
-        """
+        """Generate the trajectory plan for returning to the home position."""
         self.request.goal_pos.position = [0.3, 0.0, 0.5] # placeholder values, replace with CV
         self.request.goal_pos.orientation = []
         self.request.is_xyzrpy = True
@@ -71,6 +70,7 @@ class TrajectoryCaller(Node):
         return self.future.result()
 
     def send_execute_request(self):
+        """Execute the trajectory plan - used in each step of the entire trajectory sequence."""
         self.future = self.execute_client.call_async(Empty.Request())
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
