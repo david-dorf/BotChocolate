@@ -28,8 +28,8 @@ class TrajectoryCaller(Node):
         """
         self.request.start_pos.position = []
         self.request.start_pos.orientation = []
-        self.request.goal_pos.position = [0.3,0.0,0.3] # placeholder values, replace with CV
-        self.request.goal_pos.orientation = []
+        self.request.goal_pos.position = [0.5, 0.5, 0.4] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = [0.0, 3.1, 0.0]
         self.request.is_xyzrpy = True
         self.request.execute_now = False
         # self.future contains the plan request
