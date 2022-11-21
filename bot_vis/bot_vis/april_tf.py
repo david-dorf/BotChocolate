@@ -60,7 +60,7 @@ class AprilTF(Node):
         self.broadcaster2 = StaticTransformBroadcaster(self)
         self.calibrate_flag_sub = self.create_subscription(
             Bool, '/is_calibrating', self.calibrate_flag_cb, 10)
-
+        self.calibrate_flag = False
         # # Create a broadcaster to link === to ===
         # self.world2panda = TransformStamped()
         # self.world2panda.header.stamp = self.get_clock().now().to_msg()
