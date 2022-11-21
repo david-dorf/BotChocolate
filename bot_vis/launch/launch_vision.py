@@ -57,7 +57,7 @@ def generate_launch_description():
     april_tf_node = Node(
         package='bot_vis',
         executable='april_tf',
-        #parameters=[calibration_path]
+        parameters=[calibration_path]
         )
 
     rviz_node = Node(

@@ -169,10 +169,10 @@ class Calibration(Node):
             self.get_tf()
         else: # Average TF readings and put the average in a yaml
             x, y, z, x_quat, y_quat, z_quat, w_quat = self.average_points()
-            data = dict(
-            calibration = tuple([
+            data = dict( april_tf = dict(
+            ros__parameters = 
                 self.generate_yaml(x, y, z, x_quat, y_quat, z_quat, w_quat)
-            ]))
+            ))
 
             with open(str(self.calibration_path), 'w') as outfile:
                 outfile.write(yaml.safe_dump(data, default_flow_style=False))
