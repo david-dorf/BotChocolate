@@ -68,7 +68,7 @@ class Gripper(Node):
     def __init__(self):
         super().__init__('gripper_action_client')
         self._gripper_action_client = ActionClient(self, GripperCommand,'/panda_gripper/gripper_action')
-        self._grasp_client = ActionClient(self, GripperCommand,'/panda_gripper/grasp')
+        self._grasp_client = ActionClient(self, Grasp,'/panda_gripper/grasp')
         self._homing_client = ActionClient(self, Homing, '/panda_gripper/homing')
         
     def grasp(self,width,speed=1.0,force=10.0,epsilon=(0.005,0.005)):
@@ -80,8 +80,8 @@ class Gripper(Node):
         goal_msg.width = width
         goal_msg.speed = speed
         goal_msg.force = force
-        #  goal_msg.epsilon.inner = epsilon[0]
-        #  goal_msg.epsilon.outer = epsilon[1]
+        goal_msg.epsilon.inner = epsilon[0]
+        goal_msg.epsilon.outer = epsilon[1]
         self._grasp_client.wait_for_server()
         return self._grasp_client.send_goal_async(goal_msg)
     
