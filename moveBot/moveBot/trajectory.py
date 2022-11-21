@@ -17,6 +17,7 @@ class TrajectoryCaller(Node):
         super().__init__("trajectory_node")
         self.cbgroup = ReentrantCallbackGroup()
         self.plan_client = self.create_client(GetPlanRqst,"call_plan",callback_group=self.cbgroup)
+        self.cart_client = self.create_client(GetPlanRqst,"call_cart",callback_group=self.cbgroup)
         self.execute_client = self.create_client(Empty,"call_execute",callback_group=self.cbgroup)
         self.request = GetPlanRqst.Request()
         self.state = State.IDLE
