@@ -12,7 +12,8 @@ from geometry_msgs.msg import Pose
 from geometry_msgs.msg import TransformStamped
 from ament_index_python.packages import get_package_share_path, get_package_prefix
 import yaml
-
+from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
+from std_msgs.msg import Bool
 
 class Calibration(Node):
     """
@@ -48,6 +49,21 @@ class Calibration(Node):
         self.quat_w_list = []
         self.time_count = 0
         self.done = False
+        
+        self.calibrate_2_panda_link0 = TransformStamped()
+        self.calibrate_2_panda_link0.header.stamp = self.get_clock().now().to_msg()
+        self.calibrate_2_panda_link0.header.frame_id = "calibrate"
+        self.calibrate_2_panda_link0.child_frame_id = "panda_link0"
+        self.broadcaster = StaticTransformBroadcaster(self)
+
+        # Create a broadcaster to link april tag TF's to robot arm TF's
+        self.calibrate_2_cam = TransformStamped()
+        self.calibrate_2_cam.header.stamp = self.get_clock().now().to_msg()
+        self.calibrate_2_cam.header.frame_id = "calibrate"
+        self.calibrate_2_cam.child_frame_id = "camera_link"
+        self.broadcaster2 = StaticTransformBroadcaster(self)
+        self.flag_pub = self.create_publisher(Bool, '/is_calibrating', 10)
+
         self.timer = self.create_timer(0.1, self.timer_callback)
 
 
@@ -61,13 +77,34 @@ class Calibration(Node):
                     w_q = w_quat_in)
 
     def append_list(self):
-        self.x_list.append(self.cam_2_ee.transform.translation.x)
-        self.y_list.append(self.cam_2_ee.transform.translation.y)
-        self.z_list.append(self.cam_2_ee.transform.translation.z)
-        self.quat_x_list.append(self.cam_2_ee.transform.rotation.x)
-        self.quat_y_list.append(self.cam_2_ee.transform.rotation.y)
-        self.quat_z_list.append(self.cam_2_ee.transform.rotation.z)
-        self.quat_w_list.append(self.cam_2_ee.transform.rotation.w)
+        self.x_list.append(self.cam_2_panda_link0.transform.translation.x)
+        self.y_list.append(self.cam_2_panda_link0.transform.translation.y)
+        self.z_list.append(self.cam_2_panda_link0.transform.translation.z)
+        self.quat_x_list.append(self.cam_2_panda_link0.transform.rotation.x)
+        self.quat_y_list.append(self.cam_2_panda_link0.transform.rotation.y)
+        self.quat_z_list.append(self.cam_2_panda_link0.transform.rotation.z)
+        self.quat_w_list.append(self.cam_2_panda_link0.transform.rotation.w)
+
+    def link_frames(self):
+        """_summary_
+        """
+        self.calibrate_2_cam.transform.translation.x = self.cam_2_ee.transform.translation.x
+        self.calibrate_2_cam.transform.translation.y = self.cam_2_ee.transform.translation.y
+        self.calibrate_2_cam.transform.translation.z = self.cam_2_ee.transform.translation.z
+        self.calibrate_2_cam.transform.rotation.x = self.cam_2_ee.transform.rotation.x
+        self.calibrate_2_cam.transform.rotation.y = self.cam_2_ee.transform.rotation.y
+        self.calibrate_2_cam.transform.rotation.z = self.cam_2_ee.transform.rotation.z
+        self.calibrate_2_cam.transform.rotation.w = self.cam_2_ee.transform.rotation.w
+        self.broadcaster.sendTransform(self.calibrate_2_cam)
+        
+        self.calibrate_2_panda_link0.transform.translation.x = self.panda_hand_tcp_2_panda_link0.transform.translation.x
+        self.calibrate_2_panda_link0.transform.translation.y = self.panda_hand_tcp_2_panda_link0.transform.translation.y
+        self.calibrate_2_panda_link0.transform.translation.z = self.panda_hand_tcp_2_panda_link0.transform.translation.z
+        self.calibrate_2_panda_link0.transform.rotation.x = self.panda_hand_tcp_2_panda_link0.transform.rotation.x
+        self.calibrate_2_panda_link0.transform.rotation.y = self.panda_hand_tcp_2_panda_link0.transform.rotation.y
+        self.calibrate_2_panda_link0.transform.rotation.z = self.panda_hand_tcp_2_panda_link0.transform.rotation.z
+        self.calibrate_2_panda_link0.transform.rotation.w = self.panda_hand_tcp_2_panda_link0.transform.rotation.w
+        self.broadcaster2.sendTransform(self.calibrate_2_panda_link0)
 
     def get_tf(self):
         """Obtain the transform from the camera to the end_effector april tag, append it to a list,
@@ -80,6 +117,19 @@ class Calibration(Node):
                 'camera_link',
                 'end_eff_tag',
                 rclpy.time.Time())
+
+            # Get TF from panda_hand_tcp to panda_link0
+            self.panda_hand_tcp_2_panda_link0 = self.tf_buffer.lookup_transform(
+                'panda_link0',
+                'panda_hand_tcp',
+                rclpy.time.Time())
+
+            # Link frames
+            self.link_frames()
+            self.cam_2_panda_link0 = self.tf_buffer.lookup_transform(
+                'camera_link',
+                'panda_link0',
+                rclpy.time.Time())
             self.append_list()
             self.time_count += 1
             self.get_logger().error("Calibrating")
@@ -87,6 +137,10 @@ class Calibration(Node):
             # Get TF from file
             self.get_logger().error("Tag not detected! Make sure tag in camera view.")
             pass
+
+        # Create camera_link to calibrate_frame (equals end_eff_tag pos) and calibrate_frame to 
+        # pandalink0 
+        # Yaml will output camera_link to pandalink0
 
     def average_points(self):
         try:
@@ -105,6 +159,10 @@ class Calibration(Node):
         """
         Callback function.
         """
+        # Let other nodes know that we are calibrating
+        flag = Bool()
+        flag.data = True
+        self.flag_pub.publish(flag)
 
         # Get transforms over a 5 second interval
         if self.time_count < 50:
