@@ -17,7 +17,7 @@ class TrajectoryCaller(Node):
     def __init__(self):
         super().__init__("trajectory_node")
         self.cbgroup = ReentrantCallbackGroup()
-        self.plan_client = self.create_client(GetPlanRqst,"call_cart",callback_group=self.cbgroup)
+        self.plan_client = self.create_client(GetPlanRqst,"call_plan",callback_group=self.cbgroup)
         self.execute_client = self.create_client(Empty,"call_execute",callback_group=self.cbgroup)
         self.request = GetPlanRqst.Request()
 
@@ -27,8 +27,8 @@ class TrajectoryCaller(Node):
         """
         self.request.start_pos.position = []
         self.request.start_pos.orientation = []
-        self.request.goal_pos.position = [0.3,0.0,0.3] # placeholder values, replace with CV
-        self.request.goal_pos.orientation = []
+        self.request.goal_pos.position = [] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = [3.14, 0.0, 1.0]
         self.request.is_xyzrpy = True
         self.request.execute_now = True
         self.future = self.plan_client.call_async(self.request)

@@ -82,6 +82,8 @@ def euler_from_quaternion(x, y, z, w):
 
 class State(Enum):
     IDLE     = auto(),
+    ROT_MSG= auto(),
+    CART_MSG=auto(),
     CART_EXEC = auto(),
     PLAN_EXEC= auto()
 
@@ -129,7 +131,7 @@ class MoveBot(Node):
         self.call_cart = self.create_service(
             GetPlanRqst,
             "call_cart",
-            self.cart_callback,
+            self.plan_callback,
             callback_group=self.cbgroup)
 
         self.call_plan = self.create_service(
@@ -370,7 +372,7 @@ class MoveBot(Node):
         ikmsg.timeout.sec = 5
 
   
-        self.get_logger().info(f"IK QUATS   {quats}")
+        # self.get_logger().info(f"IK QUATS   {quats}")
 
         return ikmsg
 
@@ -415,7 +417,7 @@ class MoveBot(Node):
         else:
             pose_vec = np.hstack([request.position, request.orientation])
 
-        self.get_logger().info(f"goal pose vec {pose_vec}")
+        # self.get_logger().info(f"goal pose vec {pose_vec}")
 
         msg = self.get_ik_rqst_msg(pose_vec)
 
@@ -428,7 +430,6 @@ class MoveBot(Node):
 
 
         return response
-
 
 
     def create_cart_msg(self,start,goal,exc):
@@ -476,63 +477,63 @@ class MoveBot(Node):
         return cart_req
 
 
-    async def cart_callback(self,request,response):
+    # # async def cart_callback(self,request,response):
 
-        if request.is_xyzrpy:  # If start pos was given as X,Y,Z, R, P, Y
-            if len(request.start_pos.position) <= 0:
-                # IF there is no given start position, use current joint config as start
-                request.start_pos.position = self.joint_statesmsg.position
-                start_in_joint_config = RobotState()
-                start_in_joint_config.joint_state = self.joint_statesmsg
-            else:
-                # Call compute IK
-                ik_request_message_start = IkGoalRqstMsg()
-                ik_request_message_start.position = request.start_pos.position
-                ik_request_message_start.orientation = request.start_pos.orientation
-                start_in_joint_config = RobotState()
-                start_in_joint_config = await self.ik_callback(
-                    ik_request_message_start,
-                    start_in_joint_config)
+    #     if request.is_xyzrpy:  # If start pos was given as X,Y,Z, R, P, Y
+    #         if len(request.start_pos.position) <= 0:
+    #             # IF there is no given start position, use current joint config as start
+    #             request.start_pos.position = self.joint_statesmsg.position
+    #             start_in_joint_config = RobotState()
+    #             start_in_joint_config.joint_state = self.joint_statesmsg
+    #         else:
+    #             # Call compute IK
+    #             ik_request_message_start = IkGoalRqstMsg()
+    #             ik_request_message_start.position = request.start_pos.position
+    #             ik_request_message_start.orientation = request.start_pos.orientation
+    #             start_in_joint_config = RobotState()
+    #             start_in_joint_config = await self.ik_callback(
+    #                 ik_request_message_start,
+    #                 start_in_joint_config)
 
-        if not request.goal_pos.orientation:
+    #     if not request.goal_pos.orientation:
 
-            request.goal_pos.orientation=[self.ee_base.transform.rotation.x,
-                                self.ee_base.transform.rotation.y,
-                                self.ee_base.transform.rotation.z,
-                                self.ee_base.transform.rotation.w]
+    #         request.goal_pos.orientation=[self.ee_base.transform.rotation.x,
+    #                             self.ee_base.transform.rotation.y,
+    #                             self.ee_base.transform.rotation.z,
+    #                             self.ee_base.transform.rotation.w]
 
-        if not request.goal_pos.position:
-            request.goal_pos.position= [self.ee_base.transform.translation.x,
-                            self.ee_base.transform.translation.y,
-                            self.ee_base.transform.translation.z]
+    #     if not request.goal_pos.position:
+    #         request.goal_pos.position= [self.ee_base.transform.translation.x,
+    #                         self.ee_base.transform.translation.y,
+    #                         self.ee_base.transform.translation.z]
 
 
-        print(f"\n GOAL POSE {request.goal_pos}")
+    #     print(f"\n GOAL POSE {request.goal_pos}")
 
-        plan_msg = self.create_cart_msg(
-            start_in_joint_config,
-            request.goal_pos,
-            request.execute_now)
+    #     plan_msg = self.create_cart_msg(
+    #         start_in_joint_config,
+    #         request.goal_pos,
+    #         request.execute_now)
 
-        print(f"\n CART REQ MSG {plan_msg}")
+    #     print(f"\n CART REQ MSG {plan_msg}")
 
         
-        # print(f"\n CART PLAN RESP {plan_msg.cart_request}")
-        self.cart_response = await self.cart_client.call_async(GetCartesianPath.Request(header=plan_msg.cart_request.header, 
-                                                                                        start_state=plan_msg.cart_request.start_state,
-                                                                                        group_name=plan_msg.cart_request.group_name,
-                                                                                        max_step=plan_msg.cart_request.max_step,
-                                                                                        jump_threshold=plan_msg.cart_request.jump_threshold,
-                                                                                        prismatic_jump_threshold=plan_msg.cart_request.prismatic_jump_threshold,
-                                                                                        revolute_jump_threshold=plan_msg.cart_request.revolute_jump_threshold,
-                                                                                        waypoints=plan_msg.cart_request.waypoints,))
-        # self.plan_response = await self.future_response.get_result_async()
-        # print(f"\n CART PLAN RESP {self.cart_response}")
+    #     # print(f"\n CART PLAN RESP {plan_msg.cart_request}")
+    #     self.cart_response = await self.cart_client.call_async(GetCartesianPath.Request(header=plan_msg.cart_request.header, 
+    #                                                                                     start_state=plan_msg.cart_request.start_state,
+    #                                                                                     group_name=plan_msg.cart_request.group_name,
+    #                                                                                     max_step=plan_msg.cart_request.max_step,
+    #                                                                                     jump_threshold=plan_msg.cart_request.jump_threshold,
+    #                                                                                     prismatic_jump_threshold=plan_msg.cart_request.prismatic_jump_threshold,
+    #                                                                                     revolute_jump_threshold=plan_msg.cart_request.revolute_jump_threshold,
+    #                                                                                     waypoints=plan_msg.cart_request.waypoints,))
+    #     # self.plan_response = await self.future_response.get_result_async()
+    #     # print(f"\n CART PLAN RESP {self.cart_response}")
 
-        if self.state==State.IDLE:
-            self.state=State.CART_EXEC
+    #     if self.state==State.IDLE:
+    #         self.state=State.CART_EXEC
 
-        return response
+    #     return response
 
     def get_motion_request(self, start, goal, execute):
         """
@@ -610,6 +611,12 @@ class MoveBot(Node):
         :rtype: MotionPlanRequest
 
         """
+
+        # if not request.goal_pos.position and self.state==State.IDLE:
+        #     self.state=State.ROT_MSG
+        # elif not request.goal_pos.orientation and self.state==State.IDLE:
+        #     self.state=State.CART_MSG
+
         if request.is_xyzrpy:  # If start pos was given as X,Y,Z, R, P, Y
             if len(request.start_pos.position) <= 0:
                 # IF there is no given start position, use current joint config as start
@@ -626,31 +633,89 @@ class MoveBot(Node):
                     ik_request_message_start,
                     start_in_joint_config)
 
+
+        if not request.goal_pos.position and self.state==State.IDLE:
+            print('CHANGED TO PLAN ROT')
+            self.state=State.ROT_MSG
+        elif not request.goal_pos.orientation and self.state==State.IDLE:
+            print('CHANGED TO CART TRANS')
+            self.state=State.CART_MSG
+
+        if self.state==State.ROT_MSG:
+            print('MAKING ROT MSG')
             ik_request_message_goal = IkGoalRqstMsg()
             ik_request_message_goal.position = request.goal_pos.position
             ik_request_message_goal.orientation = request.goal_pos.orientation
 
-            self.get_logger().info(f"goal ik callback msg {ik_request_message_goal}")
+            # self.get_logger().info(f"goal ik callback msg {ik_request_message_goal}")
             goal_in_joint_config = RobotState()
             goal_in_joint_config = await self.ik_callback(
                 ik_request_message_goal,
                 goal_in_joint_config)
             
+
             # self.get_logger().info(f"goal ik callback resp {goal_in_joint_config}")
 
         ### If orientation empty ---> create cart callback
         # else ---> get_motion_request
-        plan_msg = self.get_motion_request(
-            start_in_joint_config,
-            goal_in_joint_config,
-            request.execute_now)
+            plan_msg = self.get_motion_request(
+                start_in_joint_config,
+                goal_in_joint_config,
+                request.execute_now)
+
+                
+            self.future_response = await self._plan_client.send_goal_async(plan_msg)
+            self.plan_response = await self.future_response.get_result_async()
+            print(self.plan_response)
+
+            if self.state==State.ROT_MSG:  
+                self.state=State.PLAN_EXEC
+                print('SENDING ROT MSG')
+                print(self.state)
+                if request.execute_now==True:
+                    self.state=State.IDLE
+
+        if self.state==State.CART_MSG:
+            print('MAKING CART MSG')
+            if not request.goal_pos.orientation:
+
+                request.goal_pos.orientation=[self.ee_base.transform.rotation.x,
+                                    self.ee_base.transform.rotation.y,
+                                    self.ee_base.transform.rotation.z,
+                                    self.ee_base.transform.rotation.w]
+
+            if not request.goal_pos.position:
+                request.goal_pos.position= [self.ee_base.transform.translation.x,
+                                self.ee_base.transform.translation.y,
+                                self.ee_base.transform.translation.z]
+
+
+            # print(f"\n GOAL POSE {request.goal_pos}")
+
+            plan_msg = self.create_cart_msg(
+                start_in_joint_config,
+                request.goal_pos,
+                request.execute_now)
+
+            # print(f"\n CART REQ MSG {plan_msg}")
 
             
-        self.future_response = await self._plan_client.send_goal_async(plan_msg)
-        self.plan_response = await self.future_response.get_result_async()
+            # print(f"\n CART PLAN RESP {plan_msg.cart_request}")
+            self.cart_response = await self.cart_client.call_async(GetCartesianPath.Request(header=plan_msg.cart_request.header, 
+                                                                                            start_state=plan_msg.cart_request.start_state,
+                                                                                            group_name=plan_msg.cart_request.group_name,
+                                                                                            max_step=plan_msg.cart_request.max_step,
+                                                                                            jump_threshold=plan_msg.cart_request.jump_threshold,
+                                                                                            prismatic_jump_threshold=plan_msg.cart_request.prismatic_jump_threshold,
+                                                                                            revolute_jump_threshold=plan_msg.cart_request.revolute_jump_threshold,
+                                                                                            waypoints=plan_msg.cart_request.waypoints,))
+            # self.plan_response = await self.future_response.get_result_async()
+            # print(f"\n CART PLAN RESP {self.cart_response}")
 
-        if self.state==State.IDLE:  
-            self.state=State.PLAN_EXEC
+            if self.state==State.CART_MSG:
+                print('SENDING CART MSG')
+                self.state=State.CART_EXEC
+
 
         return response
 
@@ -664,14 +729,19 @@ class MoveBot(Node):
 
         """
         execute_msg = ExecuteTrajectory.Goal()
-        self.get_logger().info(f"exec msg {self.cart_response.solution.joint_trajectory}")
+        # self.get_logger().info(f"exec msg {self.cart_response.solution.joint_trajectory}")
 
         if self.state==State.CART_EXEC:
             execute_msg.trajectory = self.cart_response.solution
             self.state=State.IDLE
-        elif self.state==State.PLAN_EXEC:
+
+        if self.state==State.PLAN_EXEC:
+            print('EXECUTING ROT MSG')
+            print(self.state)
             execute_msg.trajectory = self.plan_response.result.planned_trajectory
+            print('SWITCHED TO IDLE')
             self.state=State.IDLE
+            print(self.state)
 
         return execute_msg
 
@@ -687,6 +757,7 @@ class MoveBot(Node):
         :rtype: std_srvs.srv.Empty.Response()
 
         """
+        print(self.state)
         exec_msg = self.send_execute()
         self.future_response2 = await self._execute_client.send_goal_async(exec_msg)
         self.execute_response = await self.future_response2.get_result_async()
@@ -704,20 +775,20 @@ class MoveBot(Node):
                 'panda_hand_tcp',
                 rclpy.time.Time())
 
-            self.get_logger().info(f"LISTENER X QUAT {self.ee_base.transform.rotation.x}", once=True)
-            self.get_logger().info(f"LISTENER Y QUAT {self.ee_base.transform.rotation.y}", once=True)
-            self.get_logger().info(f"LISTENER Z QUAT {self.ee_base.transform.rotation.z}", once=True)
-            self.get_logger().info(f"LISTENER W QUAT {self.ee_base.transform.rotation.w}", once=True)
+            # self.get_logger().info(f"LISTENER X QUAT {self.ee_base.transform.rotation.x}", once=True)
+            # self.get_logger().info(f"LISTENER Y QUAT {self.ee_base.transform.rotation.y}", once=True)
+            # self.get_logger().info(f"LISTENER Z QUAT {self.ee_base.transform.rotation.z}", once=True)
+            # self.get_logger().info(f"LISTENER W QUAT {self.ee_base.transform.rotation.w}", once=True)
 
 
-            self.get_logger().info(f"LISTENER X POS {self.ee_base.transform.translation.x}", once=True)
-            self.get_logger().info(f"LISTENER Y POS {self.ee_base.transform.translation.y}", once=True)
-            self.get_logger().info(f"LISTENER Z POS {self.ee_base.transform.translation.z}", once=True)
+            # self.get_logger().info(f"LISTENER X POS {self.ee_base.transform.translation.x}", once=True)
+            # self.get_logger().info(f"LISTENER Y POS {self.ee_base.transform.translation.y}", once=True)
+            # self.get_logger().info(f"LISTENER Z POS {self.ee_base.transform.translation.z}", once=True)
 
-            r,p,y=euler_from_quaternion(self.ee_base.transform.rotation.x,self.ee_base.transform.rotation.y,self.ee_base.transform.rotation.z,self.ee_base.transform.rotation.w)
-            self.get_logger().info(f"LISTENER X ROT {r}", once=True)
-            self.get_logger().info(f"LISTENER Y ROT {p}", once=True)
-            self.get_logger().info(f"LISTENER Z ROT {y}", once=True)
+            # r,p,y=euler_from_quaternion(self.ee_base.transform.rotation.x,self.ee_base.transform.rotation.y,self.ee_base.transform.rotation.z,self.ee_base.transform.rotation.w)
+            # self.get_logger().info(f"LISTENER X ROT {r}", once=True)
+            # self.get_logger().info(f"LISTENER Y ROT {p}", once=True)
+            # self.get_logger().info(f"LISTENER Z ROT {y}", once=True)
 
         except:
             pass
