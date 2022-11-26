@@ -21,6 +21,7 @@ class TrajectoryCaller(Node):
         super().__init__("trajectory_node")
         self.cbgroup = ReentrantCallbackGroup()
         self.plan_client = self.create_client(GetPlanRqst,"call_plan",callback_group=self.cbgroup)
+        self.cart_client = self.create_client(GetPlanRqst,"call_cart",callback_group=self.cbgroup)
         self.execute_client = self.create_client(Empty,"call_execute",callback_group=self.cbgroup)
         self.request = GetPlanRqst.Request()
         self.state = State.IDLE
@@ -29,10 +30,40 @@ class TrajectoryCaller(Node):
         """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
         execute a trajectory. This request is the trajectory plan for moving above the object.
         """
-        self.request.start_pos.position = []
-        self.request.start_pos.orientation = []
-        self.request.goal_pos.position = [] # placeholder values, replace with CV
-        self.request.goal_pos.orientation = [3.14, 0.0, 1.0]
+        # self.request.start_pos.position and orientation already set as last position by API
+        self.request.goal_pos.position = [0.5, 0.5, 0.4] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = []
+        self.request.is_xyzrpy = True
+        self.request.execute_now = False
+        # self.future contains the plan request
+        self.future = self.cart_client.call_async(self.request)
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
+    def send_move_down_request(self):
+        """Generate the trajectory plan for moving down to eventually grip the object."""
+        self.request.goal_pos.position = [0.5, 0.5, 0.2] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = []
+        self.request.is_xyzrpy = True
+        self.request.execute_now = False
+        self.future = self.cart_client.call_async(self.request)
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
+    def send_move_up_request(self):
+        """Generate the trajectory plan for moving back up after gripping the object."""
+        self.request.goal_pos.position = [0.5, 0.5, 0.4] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = []
+        self.request.is_xyzrpy = True
+        self.request.execute_now = False
+        self.future = self.cart_client.call_async(self.request)
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
+    def send_move_home_request(self):
+        """Generate the trajectory plan for returning to the home position."""
+        self.request.goal_pos.position = [0.3, 0.0, 0.5] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = []
         self.request.is_xyzrpy = True
         self.request.execute_now = False
         self.future = self.cart_client.call_async(self.request)
