@@ -22,7 +22,8 @@ setup(
     entry_points={
         'console_scripts': [
             'simple_move = moveBot.simple_move:main',
-            'trajectory = moveBot.trajectory:main'
+            'trajectory = moveBot.trajectory:main',
+            'gripper = moveBot.gripper:main'
             ],
         },
     )

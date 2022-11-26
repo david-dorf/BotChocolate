@@ -3,6 +3,7 @@ from rclpy.node import Node
 from enum import Enum, auto
 from rclpy.callback_groups import ReentrantCallbackGroup
 from std_srvs.srv import Empty
+import time
 from movebot_interfaces.srv import IkGoalRqst, AddBox, GetPlanRqst
 from movebot_interfaces.msg import IkGoalRqstMsg
 
@@ -52,6 +53,7 @@ def main(args=None):
     trajectory_client.send_execute_request()
     trajectory_client.send_move_down_request()
     trajectory_client.send_execute_request()
+    time.sleep(1)
     trajectory_client.send_move_up_request()
     trajectory_client.send_execute_request()
     trajectory_client.send_move_home_request()
