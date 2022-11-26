@@ -194,9 +194,9 @@ class MoveBot(Node):
 
     def update_box_callback(self, request, response):
         """
-        Call back fucntion for add_box service.
+        Callback function for add_box service.
 
-        Update the box infomation
+        Update the box information
         (id, position, size)
 
         :param request: Box information
@@ -218,7 +218,7 @@ class MoveBot(Node):
 
     async def box_callback(self, request, response):
         """
-        Call back fucntion for call_box service.
+        Callback function for call_box service.
 
         Publish saved box information to Planning Scene.
         Get current Planning Scene from get_planning_scene.
