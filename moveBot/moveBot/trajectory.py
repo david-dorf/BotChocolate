@@ -82,17 +82,18 @@ class BoxCaller(Node):
         self.cbgroup = ReentrantCallbackGroup()
         self.add_box_client = self.create_client(AddBox,"add_box",callback_group=self.cbgroup)
         self.call_box_client = self.create_client(Empty,"call_box",callback_group=self.cbgroup)
+        self.clear_box_client = self.create_client(Empty,"clear_all_box",callback_group=self.cbgroup)
         self.request = AddBox.Request()
 
     def add_box_request(self):
         """Generate the trajectory plan for returning to the home position."""
         # Make a flat box to simulate the table location for collision avoidance
-        self.request.x = 0.5
-        self.request.y = 0.5
-        self.request.z = 0.5
-        self.request.l = 0.5
-        self.request.w = 0.5
-        self.request.h = 0.5
+        self.request.x = 0.0
+        self.request.y = 0.0
+        self.request.z = 0.0
+        self.request.l = 5.0
+        self.request.w = 5.0
+        self.request.h = 0.2
         self.future = self.add_box_client.call_async(self.request)
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
@@ -100,6 +101,12 @@ class BoxCaller(Node):
     def call_box_request(self):
         """Execute the trajectory plan used in each step of the entire trajectory sequence."""
         self.future = self.call_box_client.call_async(Empty.Request())
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
+    def clear_box_request(self):
+        """Execute the trajectory plan used in each step of the entire trajectory sequence."""
+        self.future = self.clear_box_client.call_async(Empty.Request())
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
 
@@ -123,6 +130,8 @@ def main(args=None):
     trajectory_client.send_move_home_request()
     trajectory_client.send_execute_request()
     trajectory_client.destroy_node()
+
+    box_client.clear_box_request()
     rclpy.shutdown()
 
 if __name__ == '__main__':
