@@ -18,6 +18,7 @@ from geometry_msgs.msg import Pose
 from geometry_msgs.msg import TransformStamped
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 from std_msgs.msg import Bool
+from rcl_interfaces.msg import ParameterDescriptor
 
 class AprilTF(Node):
     """
@@ -61,12 +62,36 @@ class AprilTF(Node):
         self.calibrate_flag_sub = self.create_subscription(
             Bool, '/is_calibrating', self.calibrate_flag_cb, 10)
         self.calibrate_flag = False
-        # # Create a broadcaster to link === to ===
-        # self.world2panda = TransformStamped()
-        # self.world2panda.header.stamp = self.get_clock().now().to_msg()
-        # self.world2panda.header.frame_id = "world"
-        # self.world2panda.child_frame_id = "panda_link0"
-        # self.broadcaster2 = TransformBroadcaster(self)
+
+        # Get transformation params from calibration
+        self.declare_parameter("x", 0.0, ParameterDescriptor(
+            description="The x translation from base to world frame"))
+        self.declare_parameter("y", 0.0, ParameterDescriptor(
+            description="The y translation from base to world frame"))
+        self.declare_parameter("z", 0.0, ParameterDescriptor(
+            description="The z translation from base to world frame"))
+        self.declare_parameter("x_q", 0.0, ParameterDescriptor(
+            description="The x rotation from base to world frame"))
+        self.declare_parameter("y_q", 0.0, ParameterDescriptor(
+            description="The y rotation from base to world frame"))
+        self.declare_parameter("z_q", 0.0, ParameterDescriptor(
+            description="The z rotation from base to world frame"))
+        self.declare_parameter("w_q", 0.0, ParameterDescriptor(
+            description="The w rotation from base to world frame"))
+        self.cali_trans_x = self.get_parameter(
+            "x").get_parameter_value().double_value
+        self.cali_trans_y = self.get_parameter(
+            "y").get_parameter_value().double_value
+        self.cali_trans_z = self.get_parameter(
+            "z").get_parameter_value().double_value
+        self.cali_rot_x = self.get_parameter(
+            "x_q").get_parameter_value().double_value
+        self.cali_rot_y = self.get_parameter(
+            "y_q").get_parameter_value().double_value
+        self.cali_rot_z = self.get_parameter(
+            "z_q").get_parameter_value().double_value
+        self.cali_rot_w = self.get_parameter(
+            "w_q").get_parameter_value().double_value
 
         self.timer = self.create_timer(1/100, self.timer_callback)
 
@@ -77,24 +102,17 @@ class AprilTF(Node):
         """See if april tag is in in end eff. If so use its position to get the TF to base from
         april tag. If not, use saved TF
         """
-        try:
-            # Get tf to end_eff_tag
-            #self.get_logger().error("TEST 1!!!!")
-            self.panda_hand_tcp_2_panda_link0 = self.tf_buffer.lookup_transform(
-                'panda_link0',
-                'panda_hand_tcp',
-                rclpy.time.Time())
-    # TODO go through this mess and clean it up 
-    # TODO then get tf of robot base to world (should be from calibration step (double check its right))
-            self.world_2_panda_link0.transform.translation.x = self.panda_hand_tcp_2_panda_link0.transform.translation.x
-            self.world_2_panda_link0.transform.translation.y = self.panda_hand_tcp_2_panda_link0.transform.translation.y
-            self.world_2_panda_link0.transform.translation.z = self.panda_hand_tcp_2_panda_link0.transform.translation.z
-            self.world_2_panda_link0.transform.rotation.x = self.panda_hand_tcp_2_panda_link0.transform.rotation.x
-            self.world_2_panda_link0.transform.rotation.y = self.panda_hand_tcp_2_panda_link0.transform.rotation.y
-            self.world_2_panda_link0.transform.rotation.z = self.panda_hand_tcp_2_panda_link0.transform.rotation.z
-            self.world_2_panda_link0.transform.rotation.w = self.panda_hand_tcp_2_panda_link0.transform.rotation.w
-        except TransformException:
-            self.get_logger().info("No tf")
+
+        # TODO go through this mess and clean it up 
+        # TODO then get tf of robot base to world (should be from calibration step (double check its right))
+        self.world_2_panda_link0.transform.translation.x = self.cali_trans_x
+        self.world_2_panda_link0.transform.translation.y = self.cali_trans_y
+        self.world_2_panda_link0.transform.translation.z = self.cali_trans_z
+        self.world_2_panda_link0.transform.rotation.x = self.cali_rot_x
+        self.world_2_panda_link0.transform.rotation.y = self.cali_rot_y
+        self.world_2_panda_link0.transform.rotation.z = self.cali_rot_z
+        self.world_2_panda_link0.transform.rotation.w = self.cali_rot_w
+
 
         self.broadcaster.sendTransform(self.world_2_panda_link0)
 
