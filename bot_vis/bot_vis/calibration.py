@@ -50,18 +50,19 @@ class Calibration(Node):
         self.time_count = 0
         self.done = False
         
-        self.calibrate_2_panda_link0 = TransformStamped()
-        self.calibrate_2_panda_link0.header.stamp = self.get_clock().now().to_msg()
-        self.calibrate_2_panda_link0.header.frame_id = "calibrate"
-        self.calibrate_2_panda_link0.child_frame_id = "panda_link0"
+        self.end_eff_tag_2_panda_link0 = TransformStamped()
+        self.end_eff_tag_2_panda_link0.header.stamp = self.get_clock().now().to_msg()
+        #self.calibrate_2_panda_link0.header.frame_id = "calibrate"
+        self.end_eff_tag_2_panda_link0.header.frame_id = "end_eff_tag"
+        self.end_eff_tag_2_panda_link0.child_frame_id = "panda_link0"
         self.broadcaster = StaticTransformBroadcaster(self)
 
         # Create a broadcaster to link april tag TF's to robot arm TF's
-        self.calibrate_2_cam = TransformStamped()
-        self.calibrate_2_cam.header.stamp = self.get_clock().now().to_msg()
-        self.calibrate_2_cam.header.frame_id = "calibrate"
-        self.calibrate_2_cam.child_frame_id = "camera_link"
-        self.broadcaster2 = StaticTransformBroadcaster(self)
+        # self.calibrate_2_cam = TransformStamped()
+        # self.calibrate_2_cam.header.stamp = self.get_clock().now().to_msg()
+        # self.calibrate_2_cam.header.frame_id = "calibrate"
+        # self.calibrate_2_cam.child_frame_id = "camera_link"
+        # self.broadcaster2 = StaticTransformBroadcaster(self)
         self.flag_pub = self.create_publisher(Bool, '/is_calibrating', 10)
 
         self.timer = self.create_timer(0.1, self.timer_callback)
@@ -88,23 +89,23 @@ class Calibration(Node):
     def link_frames(self):
         """_summary_
         """
-        self.calibrate_2_cam.transform.translation.x = self.cam_2_ee.transform.translation.x
-        self.calibrate_2_cam.transform.translation.y = self.cam_2_ee.transform.translation.y
-        self.calibrate_2_cam.transform.translation.z = self.cam_2_ee.transform.translation.z
-        self.calibrate_2_cam.transform.rotation.x = self.cam_2_ee.transform.rotation.x
-        self.calibrate_2_cam.transform.rotation.y = self.cam_2_ee.transform.rotation.y
-        self.calibrate_2_cam.transform.rotation.z = self.cam_2_ee.transform.rotation.z
-        self.calibrate_2_cam.transform.rotation.w = self.cam_2_ee.transform.rotation.w
-        self.broadcaster.sendTransform(self.calibrate_2_cam)
+        # self.calibrate_2_cam.transform.translation.x = self.cam_2_ee.transform.translation.x
+        # self.calibrate_2_cam.transform.translation.y = self.cam_2_ee.transform.translation.y
+        # self.calibrate_2_cam.transform.translation.z = self.cam_2_ee.transform.translation.z
+        # self.calibrate_2_cam.transform.rotation.x = self.cam_2_ee.transform.rotation.x
+        # self.calibrate_2_cam.transform.rotation.y = self.cam_2_ee.transform.rotation.y
+        # self.calibrate_2_cam.transform.rotation.z = self.cam_2_ee.transform.rotation.z
+        # self.calibrate_2_cam.transform.rotation.w = self.cam_2_ee.transform.rotation.w
+        # self.broadcaster2.sendTransform(self.calibrate_2_cam)
         
-        self.calibrate_2_panda_link0.transform.translation.x = self.panda_hand_tcp_2_panda_link0.transform.translation.x
-        self.calibrate_2_panda_link0.transform.translation.y = self.panda_hand_tcp_2_panda_link0.transform.translation.y
-        self.calibrate_2_panda_link0.transform.translation.z = self.panda_hand_tcp_2_panda_link0.transform.translation.z
-        self.calibrate_2_panda_link0.transform.rotation.x = self.panda_hand_tcp_2_panda_link0.transform.rotation.x
-        self.calibrate_2_panda_link0.transform.rotation.y = self.panda_hand_tcp_2_panda_link0.transform.rotation.y
-        self.calibrate_2_panda_link0.transform.rotation.z = self.panda_hand_tcp_2_panda_link0.transform.rotation.z
-        self.calibrate_2_panda_link0.transform.rotation.w = self.panda_hand_tcp_2_panda_link0.transform.rotation.w
-        self.broadcaster2.sendTransform(self.calibrate_2_panda_link0)
+        self.end_eff_tag_2_panda_link0.transform.translation.x = self.panda_hand_tcp_2_panda_link0.transform.translation.x
+        self.end_eff_tag_2_panda_link0.transform.translation.y = self.panda_hand_tcp_2_panda_link0.transform.translation.y
+        self.end_eff_tag_2_panda_link0.transform.translation.z = self.panda_hand_tcp_2_panda_link0.transform.translation.z
+        self.end_eff_tag_2_panda_link0.transform.rotation.x = self.panda_hand_tcp_2_panda_link0.transform.rotation.x
+        self.end_eff_tag_2_panda_link0.transform.rotation.y = self.panda_hand_tcp_2_panda_link0.transform.rotation.y
+        self.end_eff_tag_2_panda_link0.transform.rotation.z = self.panda_hand_tcp_2_panda_link0.transform.rotation.z
+        self.end_eff_tag_2_panda_link0.transform.rotation.w = self.panda_hand_tcp_2_panda_link0.transform.rotation.w
+        self.broadcaster.sendTransform(self.end_eff_tag_2_panda_link0)
 
     def get_tf(self):
         """Obtain the transform from the camera to the end_effector april tag, append it to a list,
@@ -120,8 +121,8 @@ class Calibration(Node):
 
             # Get TF from panda_hand_tcp to panda_link0
             self.panda_hand_tcp_2_panda_link0 = self.tf_buffer.lookup_transform(
-                'panda_link0',
                 'panda_hand_tcp',
+                'panda_link0',
                 rclpy.time.Time())
 
             # Link frames
