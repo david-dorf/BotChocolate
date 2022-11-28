@@ -1,10 +1,7 @@
 # Import the necessary libraries
 import rclpy  # Python library for ROS 2
 from rclpy.node import Node  # Handles the creation of nodes
-from sensor_msgs.msg import Image, CameraInfo  # Image is the message type
-from cv_bridge import CvBridge  # Package to convert between ROS and OpenCV Images
-import cv2  # OpenCV library
-from tf2_ros import TransformException, TransformBroadcaster
+from tf2_ros import TransformBroadcaster
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from geometry_msgs.msg import Point
@@ -38,8 +35,12 @@ class Calibration(Node):
         self.cam_2_ee.header.frame_id = "panda_hand_tcp"
         self.cam_2_ee.child_frame_id = "end_eff_tag"
         self.broadcaster = TransformBroadcaster(self)
+
+        # Path for the calibration file
         self.bot_vis_path = get_package_share_path('bot_vis')
         self.calibration_path = str(self.bot_vis_path) + '/calibration.yaml'
+
+        # Lists to save the x,y,z and quaternions
         self.x_list = []
         self.y_list = []
         self.z_list = []
@@ -49,26 +50,39 @@ class Calibration(Node):
         self.quat_w_list = []
         self.time_count = 0
         self.done = False
-        
+
+        # Define broadcaster from the calibration tag to the base of the robot
         self.end_eff_tag_2_panda_link0 = TransformStamped()
         self.end_eff_tag_2_panda_link0.header.stamp = self.get_clock().now().to_msg()
-        #self.calibrate_2_panda_link0.header.frame_id = "calibrate"
         self.end_eff_tag_2_panda_link0.header.frame_id = "end_eff_tag"
         self.end_eff_tag_2_panda_link0.child_frame_id = "panda_link0"
         self.broadcaster = StaticTransformBroadcaster(self)
 
-        # Create a broadcaster to link april tag TF's to robot arm TF's
-        # self.calibrate_2_cam = TransformStamped()
-        # self.calibrate_2_cam.header.stamp = self.get_clock().now().to_msg()
-        # self.calibrate_2_cam.header.frame_id = "calibrate"
-        # self.calibrate_2_cam.child_frame_id = "camera_link"
-        # self.broadcaster2 = StaticTransformBroadcaster(self)
+        # Create a publisher that indicates if the calibration node is running
         self.flag_pub = self.create_publisher(Bool, '/is_calibrating', 10)
 
         self.timer = self.create_timer(0.1, self.timer_callback)
 
 
     def generate_yaml(self, x_in, y_in, z_in, x_quat_in, y_quat_in, z_quat_in, w_quat_in):
+        """
+        Take in a x, y, z position with a quaternion angle and returns a dictionary that will
+        be used to generate the calibration yaml.
+
+        Args:
+        ----
+            x_in (float): x position of base relative to world frame
+            y_in (float): y position of base relative to world frame
+            z_in (float): z position of base relative to world frame
+            x_quat_in (float): x rotation of base relative to world frame
+            y_quat_in (float): y rotation of base relative to world frame
+            z_quat_in (float): z rotation of base relative to world frame
+            w_quat_in (float): w rotation of base relative to world frame
+
+        Returns:
+        -------
+            dict: Dictionary with values for yaml file
+        """
         return dict(x = x_in,
                     y = y_in,
                     z = z_in,
@@ -78,6 +92,8 @@ class Calibration(Node):
                     w_q = w_quat_in)
 
     def append_list(self):
+        """Add the the current TF locations to a list of position values to be averaged later.
+        """
         self.x_list.append(self.cam_2_panda_link0.transform.translation.x)
         self.y_list.append(self.cam_2_panda_link0.transform.translation.y)
         self.z_list.append(self.cam_2_panda_link0.transform.translation.z)
@@ -87,33 +103,41 @@ class Calibration(Node):
         self.quat_w_list.append(self.cam_2_panda_link0.transform.rotation.w)
 
     def link_frames(self):
-        """_summary_
         """
-        # self.calibrate_2_cam.transform.translation.x = self.cam_2_ee.transform.translation.x
-        # self.calibrate_2_cam.transform.translation.y = self.cam_2_ee.transform.translation.y
-        # self.calibrate_2_cam.transform.translation.z = self.cam_2_ee.transform.translation.z
-        # self.calibrate_2_cam.transform.rotation.x = self.cam_2_ee.transform.rotation.x
-        # self.calibrate_2_cam.transform.rotation.y = self.cam_2_ee.transform.rotation.y
-        # self.calibrate_2_cam.transform.rotation.z = self.cam_2_ee.transform.rotation.z
-        # self.calibrate_2_cam.transform.rotation.w = self.cam_2_ee.transform.rotation.w
-        # self.broadcaster2.sendTransform(self.calibrate_2_cam)
-        
-        self.end_eff_tag_2_panda_link0.transform.translation.x = self.panda_hand_tcp_2_panda_link0.transform.translation.x
-        self.end_eff_tag_2_panda_link0.transform.translation.y = self.panda_hand_tcp_2_panda_link0.transform.translation.y
-        self.end_eff_tag_2_panda_link0.transform.translation.z = self.panda_hand_tcp_2_panda_link0.transform.translation.z
-        self.end_eff_tag_2_panda_link0.transform.rotation.x = self.panda_hand_tcp_2_panda_link0.transform.rotation.x
-        self.end_eff_tag_2_panda_link0.transform.rotation.y = self.panda_hand_tcp_2_panda_link0.transform.rotation.y
-        self.end_eff_tag_2_panda_link0.transform.rotation.z = self.panda_hand_tcp_2_panda_link0.transform.rotation.z
-        self.end_eff_tag_2_panda_link0.transform.rotation.w = self.panda_hand_tcp_2_panda_link0.transform.rotation.w
+        Set the TF from the end effector tag to the panda equal to the TF from the panda hand tcp
+        frame since the end effector tag is in the same place as the panda hand tcp frame.
+        """
+        self.end_eff_tag_2_panda_link0.transform.translation.x = \
+            self.panda_hand_tcp_2_panda_link0.transform.translation.x
+
+        self.end_eff_tag_2_panda_link0.transform.translation.y = \
+            self.panda_hand_tcp_2_panda_link0.transform.translation.y
+
+        self.end_eff_tag_2_panda_link0.transform.translation.z = \
+            self.panda_hand_tcp_2_panda_link0.transform.translation.z
+
+        self.end_eff_tag_2_panda_link0.transform.rotation.x = \
+            self.panda_hand_tcp_2_panda_link0.transform.rotation.x
+
+        self.end_eff_tag_2_panda_link0.transform.rotation.y = \
+            self.panda_hand_tcp_2_panda_link0.transform.rotation.y
+
+        self.end_eff_tag_2_panda_link0.transform.rotation.z = \
+            self.panda_hand_tcp_2_panda_link0.transform.rotation.z
+
+        self.end_eff_tag_2_panda_link0.transform.rotation.w = \
+            self.panda_hand_tcp_2_panda_link0.transform.rotation.w
+
         self.broadcaster.sendTransform(self.end_eff_tag_2_panda_link0)
 
     def get_tf(self):
-        """Obtain the transform from the camera to the end_effector april tag, append it to a list,
+        """
+        Obtain the transform from the camera to the end_effector april tag, append it to a list,
         and average the tfs
         """
         # Listen to TF from camera to end-effector april tag
         try:
-            # Get tf to end_eff_tag
+            # Get tf from camera to end_eff_tag
             self.cam_2_ee = self.tf_buffer.lookup_transform(
                 'camera_link',
                 'end_eff_tag',
@@ -131,7 +155,9 @@ class Calibration(Node):
                 'camera_link',
                 'panda_link0',
                 rclpy.time.Time())
+
             self.append_list()
+
             self.time_count += 1
             self.get_logger().error("Calibrating")
         except:
@@ -139,19 +165,32 @@ class Calibration(Node):
             self.get_logger().error("Tag not detected! Make sure tag in camera view.")
             pass
 
-        # Create camera_link to calibrate_frame (equals end_eff_tag pos) and calibrate_frame to 
-        # pandalink0 
-        # Yaml will output camera_link to pandalink0
+    def average_points(self, x_list, y_list, z_list, quat_x_list, 
+                       quat_y_list, quat_z_list, quat_w_list):
+        """Average several lists of points.
 
-    def average_points(self):
+        Args:
+        ----
+            x_list (list): list of x points to be averaged
+            y_list (list): list of y points to be averaged
+            z_list (list): list of z points to be averaged
+            quat_x_list (list): list of rotation x points to be averaged
+            quat_y_list (list): list of rotation y points to be averaged
+            quat_z_list (list): list of rotation z points to be averaged
+            quat_w_list (list): list of rotation w points to be averaged
+
+        Returns:
+        -------
+            float: the averaged x,y,z and rotation values
+        """
         try:
-            x = sum(self.x_list) / len(self.x_list)
-            y = sum(self.y_list) / len(self.y_list)
-            z = sum(self.z_list) / len(self.z_list)
-            x_quat = sum(self.quat_x_list) / len(self.quat_x_list)
-            y_quat = sum(self.quat_y_list) / len(self.quat_y_list)
-            z_quat = sum(self.quat_z_list) / len(self.quat_z_list)
-            w_quat = sum(self.quat_w_list) / len(self.quat_w_list)
+            x = sum(x_list) / len(x_list)
+            y = sum(y_list) / len(y_list)
+            z = sum(z_list) / len(z_list)
+            x_quat = sum(quat_x_list) / len(quat_x_list)
+            y_quat = sum(quat_y_list) / len(quat_y_list)
+            z_quat = sum(quat_z_list) / len(quat_z_list)
+            w_quat = sum(quat_w_list) / len(quat_w_list)
         except:
             pass
         return x, y, z, x_quat, y_quat, z_quat, w_quat
@@ -169,7 +208,10 @@ class Calibration(Node):
         if self.time_count < 50:
             self.get_tf()
         else: # Average TF readings and put the average in a yaml
-            x, y, z, x_quat, y_quat, z_quat, w_quat = self.average_points()
+            x, y, z, x_quat, y_quat, z_quat, w_quat = \
+                self.average_points(self.x_list, self.y_list, self.z_list, self.quat_x_list, 
+                                    self.quat_y_list, self.quat_z_list, self.quat_w_list)
+
             data = dict( april_tf = dict(
             ros__parameters = 
                 self.generate_yaml(x, y, z, x_quat, y_quat, z_quat, w_quat)
@@ -180,29 +222,12 @@ class Calibration(Node):
             self.get_logger().info("Done Calibrating")
             self.destroy_node()
 
-
-
-
-
 def main(args=None):
-
-    # Initialize the rclpy library
     rclpy.init(args=args)
-
-    # Create the node
     calibration = Calibration()
-
-    # Spin the node so the callback function is called.
     rclpy.spin(calibration)
-
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
     calibration.destroy_node()
-
-    # Shutdown the ROS client library for Python
     rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()
