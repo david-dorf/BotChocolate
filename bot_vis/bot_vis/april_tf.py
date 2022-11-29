@@ -40,6 +40,8 @@ class AprilTF(Node):
         self.kettle_pub = self.create_publisher(Pose, 'kettle_pos', 10)
         self.stirrer_pub = self.create_publisher(Pose, 'stirrer_pos', 10)
 
+
+
         # Create a listener to recieve the TF's from each tag to the camera
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -92,6 +94,25 @@ class AprilTF(Node):
             "z_q").get_parameter_value().double_value
         self.cali_rot_w = self.get_parameter(
             "w_q").get_parameter_value().double_value
+
+        #static broadcaster
+        #static frames for gripper use
+        #self.static_broadcaster = StaticTransformBroadcaster(self)
+        kettle_adapter_tf = TransformStamped()
+        kettle_adapter_tf.header.stamp = self.get_clock().now().to_msg()
+        kettle_adapter_tf.header.frame_id = "kettle"
+        kettle_adapter_tf.child_frame_id = "kettle_adaptor"
+        kettle_adapter_tf.transform.translation.x = 0.1651
+        kettle_adapter_tf.transform.translation.y = 0.1016
+        kettle_adapter_tf.transform.translation.z = -0.0762
+
+        cup_center_tf = TransformStamped()
+        cup_center_tf.header.stamp = self.get_clock().now().to_msg()
+        cup_center_tf.header.frame_id = "cup"
+        cup_center_tf.child_frame_id = "cup_center"
+        #cup_center_tf.transform.translation.x = 0.1651
+        #cup_center_tf.transform.translation.y = 0.1016
+        cup_center_tf.transform.translation.z = -0.0381
 
         self.timer = self.create_timer(1/100, self.timer_callback)
 
