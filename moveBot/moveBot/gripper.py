@@ -23,22 +23,24 @@ from rclpy.node import Node
 from control_msgs.action import GripperCommand
 from franka_msgs.action import Grasp
 from franka_msgs.action import Homing
-import sys
 
-class Gripper(Node):
+
+class Gripper:
     '''
     Node which creates action clients to send goals
     to control the panda gripper.
     '''
 
     def __init__(self):
-        super().__init__('movebot_gripper_client')
+        # super().__init__('movebot_gripper_client')
         self._gripper_action_client = ActionClient(self, GripperCommand,'/panda_gripper/gripper_action')
         self._grasp_client = ActionClient(self, Grasp,'/panda_gripper/grasp')
         self._homing_client = ActionClient(self, Homing, '/panda_gripper/homing')
+
+        self.default_callback_group=
        
 
-    def grasp(self,width,speed=1.0,force=10.0,epsilon=(0.005,0.005)):
+    def grasp(self,width=0.01,speed=1.0,force=30.0,epsilon=(0.005,0.005)):
         '''
         Grasps an object. It can fail if the width is not accurate
 
@@ -101,11 +103,11 @@ class Gripper(Node):
       
 
 
-#  def main(args=None):
-    #  rclpy.init(args=args)
-    #  action_client = Gripper()
-    #  future = action_client.home() # homes the gripper
-    #  rclpy.spin_until_future_complete(action_client, future)
-#
-#  if __name__ == '__main__':
-    #  main()
+# def main(args=None):
+#      rclpy.init(args=args)
+#      action_client = Gripper()
+#      future = action_client.open() # homes the gripper
+#      rclpy.spin_until_future_complete(action_client, future)
+
+# if __name__ == '__main__':
+#      main()

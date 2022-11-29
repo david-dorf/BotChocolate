@@ -18,6 +18,8 @@ import math
 import numpy as np
 from movebot_interfaces.srv import IkGoalRqst, GetPlanRqst, AddBox
 from movebot_interfaces.msg import IkGoalRqstMsg, SimpleCartPath
+
+
 from enum import Enum, auto
 
 
@@ -476,65 +478,6 @@ class MoveBot(Node):
 
         return cart_req
 
-
-    # # async def cart_callback(self,request,response):
-
-    #     if request.is_xyzrpy:  # If start pos was given as X,Y,Z, R, P, Y
-    #         if len(request.start_pos.position) <= 0:
-    #             # IF there is no given start position, use current joint config as start
-    #             request.start_pos.position = self.joint_statesmsg.position
-    #             start_in_joint_config = RobotState()
-    #             start_in_joint_config.joint_state = self.joint_statesmsg
-    #         else:
-    #             # Call compute IK
-    #             ik_request_message_start = IkGoalRqstMsg()
-    #             ik_request_message_start.position = request.start_pos.position
-    #             ik_request_message_start.orientation = request.start_pos.orientation
-    #             start_in_joint_config = RobotState()
-    #             start_in_joint_config = await self.ik_callback(
-    #                 ik_request_message_start,
-    #                 start_in_joint_config)
-
-    #     if not request.goal_pos.orientation:
-
-    #         request.goal_pos.orientation=[self.ee_base.transform.rotation.x,
-    #                             self.ee_base.transform.rotation.y,
-    #                             self.ee_base.transform.rotation.z,
-    #                             self.ee_base.transform.rotation.w]
-
-    #     if not request.goal_pos.position:
-    #         request.goal_pos.position= [self.ee_base.transform.translation.x,
-    #                         self.ee_base.transform.translation.y,
-    #                         self.ee_base.transform.translation.z]
-
-
-    #     print(f"\n GOAL POSE {request.goal_pos}")
-
-    #     plan_msg = self.create_cart_msg(
-    #         start_in_joint_config,
-    #         request.goal_pos,
-    #         request.execute_now)
-
-    #     print(f"\n CART REQ MSG {plan_msg}")
-
-        
-    #     # print(f"\n CART PLAN RESP {plan_msg.cart_request}")
-    #     self.cart_response = await self.cart_client.call_async(GetCartesianPath.Request(header=plan_msg.cart_request.header, 
-    #                                                                                     start_state=plan_msg.cart_request.start_state,
-    #                                                                                     group_name=plan_msg.cart_request.group_name,
-    #                                                                                     max_step=plan_msg.cart_request.max_step,
-    #                                                                                     jump_threshold=plan_msg.cart_request.jump_threshold,
-    #                                                                                     prismatic_jump_threshold=plan_msg.cart_request.prismatic_jump_threshold,
-    #                                                                                     revolute_jump_threshold=plan_msg.cart_request.revolute_jump_threshold,
-    #                                                                                     waypoints=plan_msg.cart_request.waypoints,))
-    #     # self.plan_response = await self.future_response.get_result_async()
-    #     # print(f"\n CART PLAN RESP {self.cart_response}")
-
-    #     if self.state==State.IDLE:
-    #         self.state=State.CART_EXEC
-
-    #     return response
-
     def get_motion_request(self, start, goal, execute):
         """
 
@@ -653,11 +596,6 @@ class MoveBot(Node):
                 ik_request_message_goal,
                 goal_in_joint_config)
             
-
-            # self.get_logger().info(f"goal ik callback resp {goal_in_joint_config}")
-
-        ### If orientation empty ---> create cart callback
-        # else ---> get_motion_request
             plan_msg = self.get_motion_request(
                 start_in_joint_config,
                 goal_in_joint_config,
