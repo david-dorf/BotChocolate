@@ -16,7 +16,12 @@ apriltag:
             debug: false        # write additional debugging images to current working directory
 
         # optional list of tags
+        # Original tags
+        # tag:
+        #     ids: [0, 1, 2, 8]            # tag ID
+        #     frames: [scoop, cup, kettle, end_eff_tag]  # optional frame name
+        #     sizes: [0.0205, 0.0205, 0.0205, 0.055]   # optional tag-specific edge size
         tag:
-            ids: [0, 1, 2, 8]            # tag ID
-            frames: [scoop, cup, kettle, end_eff_tag]  # optional frame name
-            sizes: [0.0205, 0.0205, 0.0205, 0.055]   # optional tag-specific edge size
+            ids: [0, 7, 9, 8, 1]            # tag ID
+            frames: [scoop, cup, kettle, end_eff_tag, stirrer]  # optional frame name
+            sizes: [0.0205, 0.055, 0.055, 0.055, 0.0205]   # optional tag-specific edge size

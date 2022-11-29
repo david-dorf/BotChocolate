@@ -35,10 +35,10 @@ class AprilTF(Node):
 
         # Create publishers to publish the x,y,z,R,P,Y position of each aspect of the botcholate
         # setup
-        self.scoop_pub = self.create_publisher(Pose, 'scoop_pos', 10)
-        self.cup_pub = self.create_publisher(Pose, 'cup_pos', 10)
-        self.kettle_pub = self.create_publisher(Pose, 'kettle_pos', 10)
-        self.stirrer_pub = self.create_publisher(Pose, 'stirrer_pos', 10)
+        self.scoop_pub = self.create_publisher(Pose, 'scoop_xzy', 10)
+        self.cup_pub = self.create_publisher(Pose, 'cup_xyz', 10)
+        self.kettle_pub = self.create_publisher(Pose, 'kettle_xyz', 10)
+        self.stirrer_pub = self.create_publisher(Pose, 'stirrer_xyz', 10)
 
 
 
@@ -97,22 +97,22 @@ class AprilTF(Node):
 
         #static broadcaster
         #static frames for gripper use
-        #self.static_broadcaster = StaticTransformBroadcaster(self)
-        kettle_adapter_tf = TransformStamped()
-        kettle_adapter_tf.header.stamp = self.get_clock().now().to_msg()
-        kettle_adapter_tf.header.frame_id = "kettle"
-        kettle_adapter_tf.child_frame_id = "kettle_adaptor"
-        kettle_adapter_tf.transform.translation.x = 0.1651
-        kettle_adapter_tf.transform.translation.y = 0.1016
-        kettle_adapter_tf.transform.translation.z = -0.0762
+        self.static_broadcaster = StaticTransformBroadcaster(self)
+        self.kettle_adapter_tf = TransformStamped()
+        self.kettle_adapter_tf.header.stamp = self.get_clock().now().to_msg()
+        self.kettle_adapter_tf.header.frame_id = "kettle"
+        self.kettle_adapter_tf.child_frame_id = "kettle_adaptor"
+        self.kettle_adapter_tf.transform.translation.x = 0.1651
+        self.kettle_adapter_tf.transform.translation.y = 0.1016
+        self.kettle_adapter_tf.transform.translation.z = -0.0762
 
-        cup_center_tf = TransformStamped()
-        cup_center_tf.header.stamp = self.get_clock().now().to_msg()
-        cup_center_tf.header.frame_id = "cup"
-        cup_center_tf.child_frame_id = "cup_center"
+        self.cup_center_tf = TransformStamped()
+        self.cup_center_tf.header.stamp = self.get_clock().now().to_msg()
+        self.cup_center_tf.header.frame_id = "cup"
+        self.cup_center_tf.child_frame_id = "cup_center"
         #cup_center_tf.transform.translation.x = 0.1651
         #cup_center_tf.transform.translation.y = 0.1016
-        cup_center_tf.transform.translation.z = -0.0381
+        self.cup_center_tf.transform.translation.z = -0.0381
 
         self.timer = self.create_timer(1/100, self.timer_callback)
 
@@ -124,8 +124,6 @@ class AprilTF(Node):
         april tag. If not, use saved TF
         """
 
-        # TODO go through this mess and clean it up 
-        # TODO then get tf of robot base to world (should be from calibration step (double check its right))
         self.world_2_panda_link0.transform.translation.x = self.cali_trans_x
         self.world_2_panda_link0.transform.translation.y = self.cali_trans_y
         self.world_2_panda_link0.transform.translation.z = self.cali_trans_z
@@ -153,6 +151,8 @@ class AprilTF(Node):
         """
         if not self.calibrate_flag: # IF not calibrating
             self.get_april_2_robot()
+            self.static_broadcaster.sendTransform(self.kettle_adapter_tf)
+            self.static_broadcaster.sendTransform(self.cup_center_tf)
 
         # Need to broadcast tf from ee to panda_link0
         try:
@@ -160,14 +160,24 @@ class AprilTF(Node):
                 'scoop',
                 'panda_link0',
                 rclpy.time.Time())
+            scoop_xzy = Pose()
+            scoop_xzy.position.x = scoop_2_base.transform.translation.x
+            scoop_xzy.position.y = scoop_2_base.transform.translation.y
+            scoop_xzy.position.z = scoop_2_base.transform.translation.z
+            self.scoop_pub.publish(scoop_xzy)
         except:
             pass
 
         try:
             cup_2_base = self.tf_buffer.lookup_transform(
-                'cup',
+                'cup_center',
                 'panda_link0',
                 rclpy.time.Time())
+            cup_xzy = Pose()
+            cup_xzy.position.x = cup_2_base.transform.translation.x
+            cup_xzy.position.y = cup_2_base.transform.translation.y
+            cup_xzy.position.z = cup_2_base.transform.translation.z
+            self.cup_pub.publish(cup_xzy)
         except:
             pass
 
@@ -176,14 +186,25 @@ class AprilTF(Node):
                 'kettle',
                 'panda_link0',
                 rclpy.time.Time())
+            kettle_xzy = Pose()
+            kettle_xzy.position.x = kettle_2_base.transform.translation.x
+            kettle_xzy.position.y = kettle_2_base.transform.translation.y
+            kettle_xzy.position.z = kettle_2_base.transform.translation.z
+            self.kettle_pub.publish(kettle_xzy)
         except:
             pass
 
         try:
+            # TODO
             stirrer_2_base = self.tf_buffer.lookup_transform(
                 'stirrer',
                 'panda_link0',
                 rclpy.time.Time())
+            stirrer_xzy = Pose()
+            stirrer_xzy.position.x = stirrer_2_base.transform.translation.x
+            stirrer_xzy.position.y = stirrer_2_base.transform.translation.y
+            stirrer_xzy.position.z = stirrer_2_base.transform.translation.z
+            self.kettle_pub.publish(stirrer_xzy)
         except:
             pass
 
