@@ -13,6 +13,7 @@ class State(Enum):
     sequence, for executing it only once at the end.
     """
     IDLE = auto(),
+    GO_SCOOP=auto(),
     PLAN = auto(),
     EXECUTE = auto()
 
@@ -21,11 +22,14 @@ class TrajectoryCaller(Node):
     def __init__(self):
         super().__init__("trajectory_node")
         self.cbgroup = ReentrantCallbackGroup()
-        self.scoop_sub =  self.create_subscription(Pose, 'scoop_pose', self.get_pose_callback, 10)
+        self.scoop_sub =  self.create_subscription(Pose, 'scoop_xzy', self.get_pose_callback, 10)
         self.plan_client = self.create_client(GetPlanRqst,"call_plan",callback_group=self.cbgroup)
         self.cart_client = self.create_client(GetPlanRqst,"call_cart",callback_group=self.cbgroup)
         self.execute_client = self.create_client(Empty,"call_execute",callback_group=self.cbgroup)
         self.request = GetPlanRqst.Request()
+        # self.pose=Pose()
+
+        self.timer     = self.create_timer(1/100, self.timer_callback)
         # self.gripper_command=Gripper()
         self.state = State.IDLE
 
@@ -34,8 +38,10 @@ class TrajectoryCaller(Node):
         """" Callback function of the turtle pose subscriber
             Stores the TurtleSimPose message recieved 
         """
+
+        # print(pose_msg)
         self.pose=pose_msg 
-        print(self.pose)
+        # print(self.pose.position.x)/
         
 
     def send_move_above_request(self):
@@ -43,7 +49,7 @@ class TrajectoryCaller(Node):
         execute a trajectory. This request is the trajectory plan for moving above the object.
         """
         # self.request.start_pos.position and orientation already set as last position by the API
-        self.request.goal_pos.position = [self.pose.x,self.pose.y,self.pose.z] # placeholder values, replace with CV
+        self.request.goal_pos.position =  [self.pose.position.x,self.pose.position.y,self.pose.position.z] # placeholder values, replace with CV
         self.request.goal_pos.orientation = []
         self.request.is_xyzrpy = True
         self.request.execute_now = False
@@ -89,6 +95,17 @@ class TrajectoryCaller(Node):
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
 
+
+    def timer_callback(self):
+
+        try:
+            self.send_move_above_request()
+            # print(self.pose)
+        except:
+            pass
+  
+
+
 class BoxCaller(Node):
     """Spawn in box objects for the planning scene."""
     def __init__(self):
@@ -125,6 +142,7 @@ class BoxCaller(Node):
         return self.future.result()
 
 
+
 def main(args=None):
     rclpy.init(args=args)
 
@@ -133,8 +151,10 @@ def main(args=None):
     # box_client.call_box_request()
 
     trajectory_client = TrajectoryCaller()
-    trajectory_client.send_move_above_request()
-    trajectory_client.send_execute_request()
+    rclpy.spin(trajectory_client)
+    # print(trajectory_client.pose)
+    # trajectory_client.send_move_above_request()
+    # trajectory_client.send_execute_request()
     # trajectory_client.send_move_down_request()
     # trajectory_client.send_execute_request()
     # # Add delay for gripper closing (WIP)
