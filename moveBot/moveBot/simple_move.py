@@ -515,13 +515,13 @@ class MoveBot(Node):
             # print(i)
             joint_constraints = JointConstraint()
             joint_constraints.joint_name = self.joint_statesmsg.name[i]
-            joint_constraints.position = self.joint_statesmsg.position[i]
+            joint_constraints.position = goal.joint_state.position[i]
             joint_constraints.tolerance_above = 0.002
             joint_constraints.tolerance_below = 0.002
             joint_constraints.weight = 1.0
             goal_constraints.joint_constraints.append(joint_constraints)
 
-        goal_constraints.joint_constraints[6].position=goal.joint_state.position[6]
+        # goal_constraints.joint_constraints[6].position=goal.joint_state.position[6]
         # self.get_logger().info(f"goal {goal_constraints.joint_constraints[6].position}")    
 
         motion_req.goal_constraints = [goal_constraints]
