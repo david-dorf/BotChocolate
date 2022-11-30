@@ -101,9 +101,9 @@ class AprilTF(Node):
         self.kettle_adapter_tf = TransformStamped()
         self.kettle_adapter_tf.header.stamp = self.get_clock().now().to_msg()
         self.kettle_adapter_tf.header.frame_id = "kettle"
-        self.kettle_adapter_tf.child_frame_id = "kettle_adaptor"
+        self.kettle_adapter_tf.child_frame_id = "kettle_adapter"
         self.kettle_adapter_tf.transform.translation.x = 0.1651
-        self.kettle_adapter_tf.transform.translation.y = 0.1016
+        self.kettle_adapter_tf.transform.translation.y = 0.1416
         self.kettle_adapter_tf.transform.translation.z = -0.0762
 
         self.cup_center_tf = TransformStamped()
@@ -170,8 +170,8 @@ class AprilTF(Node):
 
         try:
             cup_2_base = self.tf_buffer.lookup_transform(
-                'cup_center',
                 'panda_link0',
+                'cup_center',
                 rclpy.time.Time())
             cup_xzy = Pose()
             cup_xzy.position.x = cup_2_base.transform.translation.x
@@ -183,8 +183,8 @@ class AprilTF(Node):
 
         try:
             kettle_2_base = self.tf_buffer.lookup_transform(
-                'kettle',
                 'panda_link0',
+                'kettle_adapter',
                 rclpy.time.Time())
             kettle_xzy = Pose()
             kettle_xzy.position.x = kettle_2_base.transform.translation.x
