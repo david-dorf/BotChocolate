@@ -28,6 +28,11 @@ class TrajectoryCaller(Node):
         self.execute_client = self.create_client(Empty,"call_execute",callback_group=self.cbgroup)
         self.request = GetPlanRqst.Request()
         # self.pose=Pose()
+        
+        # gripper action clients
+        self._gripper_action_client = ActionClient(self, GripperCommand,'/panda_gripper/gripper_action')
+        self._grasp_client = ActionClient(self, Grasp,'/panda_gripper/grasp')
+        self._homing_client = ActionClient(self, Homing, '/panda_gripper/homing')
 
         self.timer     = self.create_timer(1/100, self.timer_callback)
         # self.gripper_command=Gripper()
@@ -40,6 +45,54 @@ class TrajectoryCaller(Node):
         self.home_pitch = 0.0
         self.home_yaw = 0.0
 
+
+    def grasp(self,width,speed=1.0,force=30.0,epsilon=(0.005,0.005)):
+        '''
+        Grasps an object. It can fail if the width is not accurate
+
+        :param width: width of the object you are grasping
+        :param speed: speed the gripper will close
+        :param force: force the gripper will grasp the object
+        :param epsilon: inner and outer tolerance
+
+        '''
+        self.get_logger().info("grasping...")
+        goal_msg = Grasp.Goal()
+        goal_msg.width = width
+        goal_msg.speed = speed
+        goal_msg.force = force
+        goal_msg.epsilon.inner = epsilon[0]
+        goal_msg.epsilon.outer = epsilon[1]
+        self._grasp_client.wait_for_server()
+        return self._grasp_client.send_goal_async(goal_msg)
+
+
+    def open_gripper(self):
+        '''
+        Opens the gripper, position=0.04 is open for some reason
+        
+        :return: A future object from the ActionClient.send_goal_async() function
+       
+        '''
+
+        goal_msg = GripperCommand.Goal()
+        goal_msg.command.position = 0.04
+        goal_msg.command.max_effort = 1.0
+        self._gripper_action_client.wait_for_server()
+        return self._gripper_action_client.send_goal_async(goal_msg)
+
+
+    def home_gripper(self):
+        '''
+        Homes the gripper by first closing the gripper, then opening all the way.
+        
+        :return: A future object from the ActionClient.send_goal_async() function
+
+        '''
+
+        goal_msg = Homing.Goal()
+        self._homing_client.wait_for_server()
+        return self._homing_client.send_goal_async(goal_msg)
 
     def get_pose_callback(self, pose_msg):
         """" Callback function of the turtle pose subscriber
