@@ -61,11 +61,11 @@ class TrajectoryCaller(Node):
 
     def send_move_down_request(self):
         """Generate the trajectory plan for moving down to eventually grip the object."""
-        self.request.goal_pos.position = [self.pose.x, self.pose.y, self.pose.z] # placeholder values, replace with CV
-        self.request.goal_pos.orientation = []
+        self.request.goal_pos.position = [] #[self.pose.x, self.pose.y, self.pose.z] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = [0.0,0.0,0.0]
         self.request.is_xyzrpy = True
-        self.request.execute_now = False
-        self.future = self.cart_client.call_async(self.request)
+        self.request.execute_now = True
+        self.future = self.plan_client.call_async(self.request)
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
 
@@ -99,7 +99,7 @@ class TrajectoryCaller(Node):
     def timer_callback(self):
 
         try:
-            self.send_move_above_request()
+            self.send_move_down_request()
             # print(self.pose)
         except:
             pass

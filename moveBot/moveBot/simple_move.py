@@ -507,16 +507,22 @@ class MoveBot(Node):
         goal_constraints = Constraints()
 
 
-        # self.get_logger().info(f"goal {goal}")
+        # self.get_logger().info(f"joint names {self.joint_statesmsg.name}")
+        # self.get_logger().info(f"goal {goal.joint_state.position}")    
+        # self.get_logger().info(f"goal e.e {goal.joint_state.position[6]}")    
 
         for i in range(len(self.joint_statesmsg.name)):
+            # print(i)
             joint_constraints = JointConstraint()
             joint_constraints.joint_name = self.joint_statesmsg.name[i]
-            joint_constraints.position = goal.joint_state.position[i]
+            joint_constraints.position = self.joint_statesmsg.position[i]
             joint_constraints.tolerance_above = 0.002
             joint_constraints.tolerance_below = 0.002
             joint_constraints.weight = 1.0
             goal_constraints.joint_constraints.append(joint_constraints)
+
+        goal_constraints.joint_constraints[6].position=goal.joint_state.position[6]
+        # self.get_logger().info(f"goal {goal_constraints.joint_constraints[6].position}")    
 
         motion_req.goal_constraints = [goal_constraints]
         motion_req.pipeline_id = 'move_group'
@@ -559,7 +565,7 @@ class MoveBot(Node):
         #     self.state=State.ROT_MSG
         # elif not request.goal_pos.orientation and self.state==State.IDLE:
         #     self.state=State.CART_MSG
-
+        print(self.state)
         if request.is_xyzrpy:  # If start pos was given as X,Y,Z, R, P, Y
             if len(request.start_pos.position) <= 0:
                 # IF there is no given start position, use current joint config as start
@@ -590,12 +596,12 @@ class MoveBot(Node):
             ik_request_message_goal.position = request.goal_pos.position
             ik_request_message_goal.orientation = request.goal_pos.orientation
 
-            # self.get_logger().info(f"goal ik callback msg {ik_request_message_goal}")
             goal_in_joint_config = RobotState()
             goal_in_joint_config = await self.ik_callback(
                 ik_request_message_goal,
                 goal_in_joint_config)
             
+
             plan_msg = self.get_motion_request(
                 start_in_joint_config,
                 goal_in_joint_config,
@@ -604,7 +610,6 @@ class MoveBot(Node):
                 
             self.future_response = await self._plan_client.send_goal_async(plan_msg)
             self.plan_response = await self.future_response.get_result_async()
-            print(self.plan_response)
 
             if self.state==State.ROT_MSG:  
                 self.state=State.PLAN_EXEC
