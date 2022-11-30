@@ -7,6 +7,10 @@ import time
 from movebot_interfaces.srv import AddBox, GetPlanRqst
 from geometry_msgs.msg import Pose
 # from moveBot.gripper import Gripper
+from rclpy.action import ActionClient
+from control_msgs.action import GripperCommand
+from franka_msgs.action import Grasp
+from franka_msgs.action import Homing
 
 class State(Enum):
     """Create a state machine to eventually implement planning the entire stored trajectory plan
@@ -23,6 +27,10 @@ class TrajectoryCaller(Node):
         super().__init__("trajectory_node")
         self.cbgroup = ReentrantCallbackGroup()
         self.scoop_sub =  self.create_subscription(Pose, 'scoop_xzy', self.get_pose_callback, 10)
+        self.stir_sub =  self.create_subscription(Pose, 'stirrer_xyz', self.get_stir_pose_callback, 10)
+        self.cup_sub =  self.create_subscription(Pose, 'cup_xyz', self.get_cup_pose_callback, 10)
+        self.kettle_sub =  self.create_subscription(Pose, 'kettle_xyz', self.get_kettle_pose_callback, 10)
+
         self.plan_client = self.create_client(GetPlanRqst,"call_plan",callback_group=self.cbgroup)
         self.cart_client = self.create_client(GetPlanRqst,"call_cart",callback_group=self.cbgroup)
         self.execute_client = self.create_client(Empty,"call_execute",callback_group=self.cbgroup)
@@ -45,6 +53,41 @@ class TrajectoryCaller(Node):
         self.home_pitch = 0.0
         self.home_yaw = 0.0
 
+    def get_kettle_pose_callback(self, pose_msg):
+        """" Callback function of the turtle pose subscriber
+            Stores the TurtleSimPose message recieved
+        """
+
+        # print(pose_msg)
+        self.kettle_pose=pose_msg
+        # print(self.pose.position.x)/
+
+    def get_pose_callback(self, pose_msg):
+        """" Callback function of the turtle pose subscriber
+            Stores the TurtleSimPose message recieved
+        """
+
+        # print(pose_msg)
+        self.scoop_pose=pose_msg
+        # print(self.pose.position.x)/
+
+    def get_stir_pose_callback(self, pose_msg):
+        """" Callback function of the turtle pose subscriber
+            Stores the TurtleSimPose message recieved
+        """
+
+        # print(pose_msg)
+        self.stir_pose=pose_msg
+        # print(self.pose.position.x)/
+        
+    def get_cup_pose_callback(self, pose_msg):
+        """" Callback function of the turtle pose subscriber
+            Stores the TurtleSimPose message recieved
+        """
+
+        # print(pose_msg)
+        self.cup_pose=pose_msg
+        # print(self.pose.position.x)/
 
     def grasp(self,width,speed=1.0,force=30.0,epsilon=(0.005,0.005)):
         '''
@@ -94,16 +137,8 @@ class TrajectoryCaller(Node):
         self._homing_client.wait_for_server()
         return self._homing_client.send_goal_async(goal_msg)
 
-    def get_pose_callback(self, pose_msg):
-        """" Callback function of the turtle pose subscriber
-            Stores the TurtleSimPose message recieved
-        """
 
-        # print(pose_msg)
-        self.pose=pose_msg
-        # print(self.pose.position.x)/
-
-
+        
     # def send_move_above_request(self):
     #     """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
     #     execute a trajectory. This request is the trajectory plan for moving above the object.
@@ -119,11 +154,91 @@ class TrajectoryCaller(Node):
     #     return self.future.result()
 
 
-    def send_move_above_request(self):
+    def send_move_above_scoop_request(self):
         """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
         execute a trajectory. This request is the trajectory plan for moving above the object.
         """
-        self.request.goal_pos.position = [0.3, 0.5, 0.4] # placeholder values, replace with CV
+        self.request.goal_pos.position = [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z+0.09] #[0.3, 0.5, 0.4] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = []
+        self.request.is_xyzrpy = True
+        self.request.execute_now = False
+        self.future = self.cart_client.call_async(self.request)
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
+    def send_move_kettle_standoff(self):
+        """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
+        execute a trajectory. This request is the trajectory plan for moving above the object.
+        """
+        self.request.goal_pos.position = [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z+0.12] #[0.3, 0.5, 0.4] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = []
+        self.request.is_xyzrpy = True
+        self.request.execute_now = False
+        self.future = self.cart_client.call_async(self.request)
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
+    def send_move_scoop_standoff(self):
+        """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
+        execute a trajectory. This request is the trajectory plan for moving above the object.
+        """
+        self.request.goal_pos.position = [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z+0.09] #[0.3, 0.5, 0.4] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = []
+        self.request.is_xyzrpy = True
+        self.request.execute_now = False
+        self.future = self.cart_client.call_async(self.request)
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
+    def send_move_scoop_handle(self):
+        """Generate the trajectory plan for moving down to eventually grip the object."""
+        self.request.goal_pos.position =  [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z-0.03]#[0.3, 0.5, -0.05] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = []
+        self.request.is_xyzrpy = True
+        self.request.execute_now = False
+        self.future = self.cart_client.call_async(self.request)
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
+    def send_move_above_stir_request(self):
+        """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
+        execute a trajectory. This request is the trajectory plan for moving above the object.
+        """
+        self.request.goal_pos.position = [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.2] #[0.3, 0.5, 0.4] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = []
+        self.request.is_xyzrpy = True
+        self.request.execute_now = False
+        self.future = self.cart_client.call_async(self.request)
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
+    def send_move_stir_standoff(self):
+        """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
+        execute a trajectory. This request is the trajectory plan for moving above the object.
+        """
+        self.request.goal_pos.position = [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.3] #[0.3, 0.5, 0.4] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = []
+        self.request.is_xyzrpy = True
+        self.request.execute_now = False
+        self.future = self.cart_client.call_async(self.request)
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
+    def send_move_stir_handle(self):
+        """Generate the trajectory plan for moving down to eventually grip the object."""
+        self.request.goal_pos.position =  [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.11]#[0.3, 0.5, -0.05] # placeholder values, replace with CV
+        self.request.goal_pos.orientation = []
+        self.request.is_xyzrpy = True
+        self.request.execute_now = False
+        self.future = self.cart_client.call_async(self.request)
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
+    def send_move_cup_standoff(self):
+        """Build the desired IkGoalRqstMsg to be sent over the client to make the robot plan and
+        execute a trajectory. This request is the trajectory plan for moving above the object.
+        """
+        self.request.goal_pos.position = [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.3] #[0.3, 0.5, 0.4] # placeholder values, replace with CV
         self.request.goal_pos.orientation = []
         self.request.is_xyzrpy = True
         self.request.execute_now = False
@@ -134,9 +249,9 @@ class TrajectoryCaller(Node):
     def send_rotate_request(self):
         """Rotate end effector to desired orientation."""
         self.request.goal_pos.position = []
-        self.request.goal_pos.orientation = [self.home_roll, self.home_pitch + 1.0, self.home_yaw]
+        self.request.goal_pos.orientation = [0, 0, 1.7] #[self.home_roll, self.home_pitch + 1.0, self.home_yaw]
         self.request.is_xyzrpy = True
-        self.request.execute_now = False
+        self.request.execute_now = True
         self.future = self.plan_client.call_async(self.request)
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
@@ -153,7 +268,7 @@ class TrajectoryCaller(Node):
 
     def send_move_down_request(self):
         """Generate the trajectory plan for moving down to eventually grip the object."""
-        self.request.goal_pos.position = [0.3, 0.5, -0.05] # placeholder values, replace with CV
+        self.request.goal_pos.position =  [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z-0.03]#[0.3, 0.5, -0.05] # placeholder values, replace with CV
         self.request.goal_pos.orientation = []
         self.request.is_xyzrpy = True
         self.request.execute_now = False
@@ -189,7 +304,7 @@ class TrajectoryCaller(Node):
 
     def send_stir1_request(self):
         """Plan path to the first point in the diamond path for stirring."""
-        self.request.goal_pos.position = [0.33, 0.5, -0.05] # placeholder values, replace with CV
+        self.request.goal_pos.position = [self.cup_pose.position.x+0.03,self.cup_pose.position.y,self.cup_pose.position.z+0.2] #[0.33, 0.5, -0.05] # placeholder values, replace with CV
         self.request.goal_pos.orientation = []
         self.request.is_xyzrpy = True
         self.request.execute_now = False
@@ -199,7 +314,7 @@ class TrajectoryCaller(Node):
 
     def send_stir2_request(self):
         """Plan path to the second point in the diamond path for stirring."""
-        self.request.goal_pos.position = [0.3, 0.53, -0.05] # placeholder values, replace with CV
+        self.request.goal_pos.position = [self.cup_pose.position.x,self.cup_pose.position.y+0.03,self.cup_pose.position.z+0.2] #[0.3, 0.53, -0.05] # placeholder values, replace with CV
         self.request.goal_pos.orientation = []
         self.request.is_xyzrpy = True
         self.request.execute_now = False
@@ -209,7 +324,7 @@ class TrajectoryCaller(Node):
 
     def send_stir3_request(self):
         """Plan path to the third point in the diamond path for stirring."""
-        self.request.goal_pos.position = [0.27, 0.5, -0.05] # placeholder values, replace with CV
+        self.request.goal_pos.position =  [self.cup_pose.position.x-0.03,self.cup_pose.position.y,self.cup_pose.position.z+0.2] # [0.27, 0.5, -0.05] # placeholder values, replace with CV
         self.request.goal_pos.orientation = []
         self.request.is_xyzrpy = True
         self.request.execute_now = False
@@ -219,7 +334,7 @@ class TrajectoryCaller(Node):
 
     def send_stir4_request(self):
         """Plan path to the fourth point in the diamond path for stirring."""
-        self.request.goal_pos.position = [0.3, 0.47, -0.05] # placeholder values, replace with CV
+        self.request.goal_pos.position =  [self.cup_pose.position.x,self.cup_pose.position.y-0.03,self.cup_pose.position.z+0.2] #[0.3, 0.47, -0.05] # placeholder values, replace with CV
         self.request.goal_pos.orientation = []
         self.request.is_xyzrpy = True
         self.request.execute_now = False
@@ -229,7 +344,7 @@ class TrajectoryCaller(Node):
 
     def send_stir5_request(self):
         """Plan path to the center point in the diamond path for stirring."""
-        self.request.goal_pos.position = [0.3, 0.5, -0.05] # placeholder values, replace with CV
+        self.request.goal_pos.position =  [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.2] #[0.3, 0.5, -0.05] # placeholder values, replace with CV
         self.request.goal_pos.orientation = []
         self.request.is_xyzrpy = True
         self.request.execute_now = False
@@ -245,60 +360,124 @@ class TrajectoryCaller(Node):
         box_client.add_box2_request()
         box_client.call_box_request()
         try:
+            ########### Scooop grab ###########
+            
             # Move the end effector above the object
-            self.send_move_above_request()
-            self.send_execute_request()
+            #self.send_rotate_request()
+            self.open_gripper()
+            # self.send_move_scoop_standoff()
+            # self.send_execute_request()
 
-            # Move the end effector down to the object
-            self.send_move_down_request()
-            self.send_execute_request()
+            # # # # Move the end effector down to the object
+            # self.send_move_scoop_handle()
+            # self.send_execute_request()
+            # self.grasp(0.01)
+            
+            ########### Stir grab ###########
+            
+            # Move the end effector above the object
+            #self.send_rotate_request()
+            #self.open_gripper()
+            #Below is the good stuff
+            # self.send_move_stir_standoff()
+            # self.send_execute_request()
 
-            self.send_move_above_request()
-            self.send_execute_request()
-            self.send_rotate_request()
-            self.send_execute_request()
-            time.sleep(2)
-            self.send_rotate_request2()
-            self.send_execute_request()
+            # # # Move the end effector down to the object
+            # self.send_move_stir_handle()
+            # self.send_execute_request()
+            # self.grasp(0.001)
+            
+            # self.send_move_above_stir_request()
+            # time.sleep(3)
+            # self.send_execute_request()
 
-            # Move the end effector down to the object
-            self.send_move_down_request()
-            self.send_execute_request()
+            ########### Stir the stuff ###########
+            
+            # Move the end effector above the object
+            #self.send_rotate_request()
+            #self.open_gripper()
+            #Below is the good stuff
+            # self.send_move_cup_standoff()
+            # self.send_execute_request()
+            # self.send_stir1_request()
+            # self.send_execute_request()
+            # self.send_stir2_request()
+            # self.send_execute_request()
+            # self.send_stir3_request()
+            # self.send_execute_request()
+            # self.send_stir4_request()
+            # self.send_execute_request()
+            # self.send_stir5_request()
+            # self.send_execute_request()
+            # self.send_move_cup_standoff()
+            # self.send_execute_request()
+            # self.send_move_stir_standoff()
+            # self.send_execute_request()
+            # self.send_move_stir_handle()
+            # self.send_execute_request()
+            # self.open_gripper()
 
-            # Add delay for gripper closing (insert gripper service call here)
-            time.sleep(1)
 
-            # Move the end effector back up
-            self.send_move_up_request()
-            self.send_execute_request()
+            ########### Kettle ###########
 
-            # Tilt the object to pour out its contents
-            self.send_rotate_request()
+            self.send_move_kettle_standoff()
             self.send_execute_request()
-            time.sleep(2)
-            self.send_rotate_request2()
-            self.send_execute_request()
+            # # # Move the end effector down to the object
+            # self.send_move_stir_handle()
+            # self.send_execute_request()
+            # self.grasp(0.001)
+            
+            # self.send_move_above_stir_request()
+            # time.sleep(3)
+            # self.send_execute_request()
 
-            # Loop a diamond path stirring action
-            for i in range(4):
-                self.send_stir1_request()
-                self.send_execute_request()
-                self.send_stir2_request()
-                self.send_execute_request()
-                self.send_stir3_request()
-                self.send_execute_request()
-                self.send_stir4_request()
-                self.send_execute_request()
-            self.send_stir5_request()
-            self.send_execute_request()
 
-            # Move the end effector back up
-            self.send_move_up_request()
-            self.send_execute_request()
-            # Return the end effector to its home configuration
-            self.send_move_home_request()
-            self.send_execute_request()
-            box_client.clear_box_request()
+            # self.send_move_above_request()
+            # self.send_execute_request()
+            # c
+            # self.send_execute_request()
+            # time.sleep(2)
+            # self.send_rotate_request2()
+            # self.send_execute_request()
+
+            # # Move the end effector down to the object
+            # self.send_move_down_request()
+            # self.send_execute_request()
+
+            # # Add delay for gripper closing (insert gripper service call here)
+            # time.sleep(1)
+
+            # # Move the end effector back up
+            # self.send_move_up_request()
+            # self.send_execute_request()
+
+            # # Tilt the object to pour out its contents
+            # self.send_rotate_request()
+            # self.send_execute_request()
+            # time.sleep(2)
+            # self.send_rotate_request2()
+            # self.send_execute_request()
+
+            # # Loop a diamond path stirring action
+            # for i in range(4):
+            #     self.send_stir1_request()
+            #     self.send_execute_request()
+            #     self.send_stir2_request()
+            #     self.send_execute_request()
+            #     self.send_stir3_request()
+            #     self.send_execute_request()
+            #     self.send_stir4_request()
+            #     self.send_execute_request()
+            # self.send_stir5_request()
+            # self.send_execute_request()
+
+            # # Move the end effector back up
+            # self.send_move_up_request()
+            # self.send_execute_request()
+            # # Return the end effector to its home configuration
+            # self.send_move_home_request()
+            # self.send_execute_request()
+            # box_client.clear_box_request()
 
         except:
             pass

@@ -119,8 +119,8 @@ class AprilTF(Node):
         self.scoop_tf.header.frame_id = "jig" #jig change
         self.scoop_tf.child_frame_id = "scoop"
         self.scoop_tf.transform.translation.x = -0.5
-        self.scoop_tf.transform.translation.y = 0.0
-        self.scoop_tf.transform.translation.z =  -0.203+(5.0/2+1.0)/1000 # math part to account for handle
+        self.scoop_tf.transform.translation.y = 0.06
+        self.scoop_tf.transform.translation.z =  -0.203 - 0.045#+(5.0/2+1.0)/1000 # math part to account for handle
 
         self.stirrer_tf = TransformStamped()
         self.stirrer_tf.header.stamp = self.get_clock().now().to_msg()
@@ -223,7 +223,7 @@ class AprilTF(Node):
             stirrer_xzy.position.x = stirrer_2_base.transform.translation.x
             stirrer_xzy.position.y = stirrer_2_base.transform.translation.y
             stirrer_xzy.position.z = stirrer_2_base.transform.translation.z
-            self.kettle_pub.publish(stirrer_xzy)
+            self.stirrer_pub.publish(stirrer_xzy)
         except:
             pass
 
