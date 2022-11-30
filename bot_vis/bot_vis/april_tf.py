@@ -108,12 +108,28 @@ class AprilTF(Node):
 
         self.cup_center_tf = TransformStamped()
         self.cup_center_tf.header.stamp = self.get_clock().now().to_msg()
-        self.cup_center_tf.header.frame_id = "cup"
+        self.cup_center_tf.header.frame_id = "jig" #jig change
         self.cup_center_tf.child_frame_id = "cup_center"
-        #cup_center_tf.transform.translation.x = 0.1651
-        #cup_center_tf.transform.translation.y = 0.1016
-        self.cup_center_tf.transform.translation.z = -0.0381
+        self.cup_center_tf.transform.translation.x = -0.25
+        self.cup_center_tf.transform.translation.y = 0.0
+        self.cup_center_tf.transform.translation.z =  -0.203
 
+        self.scoop_tf = TransformStamped()
+        self.scoop_tf.header.stamp = self.get_clock().now().to_msg()
+        self.scoop_tf.header.frame_id = "jig" #jig change
+        self.scoop_tf.child_frame_id = "scoop"
+        self.scoop_tf.transform.translation.x = -0.5
+        self.scoop_tf.transform.translation.y = 0.0
+        self.scoop_tf.transform.translation.z =  -0.203+(5.0/2+1.0)/1000 # math part to account for handle
+
+        self.stirrer_tf = TransformStamped()
+        self.stirrer_tf.header.stamp = self.get_clock().now().to_msg()
+        self.stirrer_tf.header.frame_id = "jig" #jig change
+        self.stirrer_tf.child_frame_id = "stirrer"
+        self.stirrer_tf.transform.translation.x = 0.0
+        self.stirrer_tf.transform.translation.y = (6.0/1000) #TODO change this to where we want robot to grab stirrer
+        self.stirrer_tf.transform.translation.z = -0.203
+        
         self.timer = self.create_timer(1/100, self.timer_callback)
 
     def calibrate_flag_cb(self, data):
@@ -153,6 +169,9 @@ class AprilTF(Node):
             self.get_april_2_robot()
             self.static_broadcaster.sendTransform(self.kettle_adapter_tf)
             self.static_broadcaster.sendTransform(self.cup_center_tf)
+            self.static_broadcaster.sendTransform(self.stirrer_tf)
+            self.static_broadcaster.sendTransform(self.scoop_tf)
+
 
         # Need to broadcast tf from ee to panda_link0
         try:
@@ -197,8 +216,8 @@ class AprilTF(Node):
         try:
             # TODO
             stirrer_2_base = self.tf_buffer.lookup_transform(
-                'stirrer',
                 'panda_link0',
+                'stirrer',
                 rclpy.time.Time())
             stirrer_xzy = Pose()
             stirrer_xzy.position.x = stirrer_2_base.transform.translation.x

@@ -111,7 +111,7 @@ class Calibration(Node):
             self.panda_hand_tcp_2_panda_link0.transform.translation.x
 
         self.end_eff_tag_2_panda_link0.transform.translation.y = \
-            self.panda_hand_tcp_2_panda_link0.transform.translation.y
+            self.panda_hand_tcp_2_panda_link0.transform.translation.y# + 0.015
 
         self.end_eff_tag_2_panda_link0.transform.translation.z = \
             self.panda_hand_tcp_2_panda_link0.transform.translation.z
