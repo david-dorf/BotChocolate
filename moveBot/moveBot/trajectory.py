@@ -6,6 +6,7 @@ from std_srvs.srv import Empty
 import time
 from movebot_interfaces.srv import AddBox, GetPlanRqst
 from geometry_msgs.msg import Pose
+from rclpy.action import ActionClient
 from control_msgs.action import GripperCommand
 from franka_msgs.action import Grasp
 from franka_msgs.action import Homing
@@ -36,7 +37,7 @@ class TrajectoryCaller(Node):
         self._grasp_client = ActionClient(self, Grasp,'/panda_gripper/grasp')
         self._homing_client = ActionClient(self, Homing, '/panda_gripper/homing')
         
-        self.timer = self.create_timer(1/100, self.timer_callback)
+        #  self.timer = self.create_timer(1/100, self.timer_callback)
         self.state = State.IDLE
 
         self.home_x = 0.3
@@ -57,6 +58,7 @@ class TrajectoryCaller(Node):
         :param epsilon: inner and outer tolerance
 
         '''
+        self.get_logger().info("grasping...")
         goal_msg = Grasp.Goal()
         goal_msg.width = width
         goal_msg.speed = speed
@@ -239,6 +241,7 @@ class TrajectoryCaller(Node):
         return self.future.result()
 
 
+<<<<<<< HEAD
     def timer_callback(self):
         box_client = BoxCaller()
         box_client.add_box_request()
@@ -304,6 +307,18 @@ class TrajectoryCaller(Node):
         except:
             pass
 
+=======
+    #  def timer_callback(self):
+#
+        #  try:
+            #  pass
+            #  #  grasp(width=0.01)
+            #  #  self.send_move_down_request()
+            #  # print(self.pose)
+        #  except:
+            #  pass
+  
+>>>>>>> 5d39509 (add action clients for gripper)
 
 
 class BoxCaller(Node):
@@ -359,8 +374,33 @@ class BoxCaller(Node):
 def main(args=None):
     rclpy.init(args=args)
 
+<<<<<<< HEAD
     self = TrajectoryCaller()
     rclpy.spin(self)
+=======
+    # box_client = BoxCaller()
+    # box_client.add_box_request()
+    # box_client.call_box_request()
+
+    trajectory_client = TrajectoryCaller()
+    # rclpy.spin(trajectory_client)
+
+    trajectory_client.grasp(width=0.01)
+    # print(trajectory_client.pose)
+    # trajectory_client.send_move_above_request()
+    # trajectory_client.send_execute_request()
+    # trajectory_client.send_move_down_request()
+    # trajectory_client.send_execute_request()
+    # # Add delay for gripper closing (WIP)
+    # time.sleep(1)
+    # trajectory_client.send_move_up_request()
+    # trajectory_client.send_execute_request()
+    # trajectory_client.send_move_home_request()
+    # trajectory_client.send_execute_request()
+    trajectory_client.destroy_node()
+
+    # box_client.clear_box_request()
+>>>>>>> 5d39509 (add action clients for gripper)
     rclpy.shutdown()
 
 if __name__ == '__main__':
