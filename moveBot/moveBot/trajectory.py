@@ -167,44 +167,40 @@ class TrajectoryCaller(Node):
         Creates a dictionary of waypoints
         '''
         try:
-            waypoints_dict = {
+            {
                 "scoop_standoff": [
-                    [0.5,0.5,0.5+0.09],
+                    [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z+0.09],
                     []
                 ],
-                #  "scoop_standoff": [
-                    #  [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z+0.09],
-                    #  []
-                #  ],
-                #  "scoop_handle": [
-                    #  [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z-0.03],
-                    #  []
-                #  ],
-#
-                #  "kettle_standoff": [
-                    #  [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z+0.12],
-                    #  []
-                #  ],
-#
-                #  "stir_standoff": [
-                    #  [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.3],
-                    #  []
-                #  ],
-#
-                #  "stir_handle": [
-                    #  [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.11],
-                    #  []
-                #  ],
-#
-                #  "cup_standoff": [
-                    #  [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.3],
-                    #  []
-                #  ],
-#
-                #  "cup_handle": [
-                    #  [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.3],
-                    #  []
-                #  ]
+                "scoop_handle": [
+                    [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z-0.03],
+                    []
+                ],
+
+                "kettle_standoff": [
+                    [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z+0.12],
+                    []
+                ],
+
+                "stir_standoff": [
+                    [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.3],
+                    []
+                ],
+
+                "stir_handle": [
+                    [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.11],
+                    []
+                ],
+
+                "cup_standoff": [
+                    [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.3],
+                    []
+                ],
+
+                "cup_handle": [
+                    [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.3],
+                    []
+                ]
             }
 
             # make the dictionary into a SimpleNamespace so we can use the nice dot notation
