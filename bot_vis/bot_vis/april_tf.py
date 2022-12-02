@@ -102,9 +102,9 @@ class AprilTF(Node):
         self.kettle_adapter_tf.header.stamp = self.get_clock().now().to_msg()
         self.kettle_adapter_tf.header.frame_id = "kettle"
         self.kettle_adapter_tf.child_frame_id = "kettle_adapter"
-        self.kettle_adapter_tf.transform.translation.x = 0.1651
-        self.kettle_adapter_tf.transform.translation.y = 0.1416
-        self.kettle_adapter_tf.transform.translation.z = -0.0762
+        self.kettle_adapter_tf.transform.translation.x = 0.1751
+        self.kettle_adapter_tf.transform.translation.y = 0.1216
+        self.kettle_adapter_tf.transform.translation.z = -0.085
 
         self.cup_center_tf = TransformStamped()
         self.cup_center_tf.header.stamp = self.get_clock().now().to_msg()

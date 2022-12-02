@@ -11,6 +11,7 @@ from rclpy.action import ActionClient
 from control_msgs.action import GripperCommand
 from franka_msgs.action import Grasp
 from franka_msgs.action import Homing
+from math import pi
 
 from types import SimpleNamespace
 
@@ -54,6 +55,7 @@ class TrajectoryCaller(Node):
         self.home_pitch = 0.0
         self.home_yaw = 0.0
         
+        self.GRIP = False
 
     def get_kettle_pose_callback(self, pose_msg):
         """" Callback function of the turtle pose subscriber
@@ -148,7 +150,7 @@ class TrajectoryCaller(Node):
         self.request.goal_pos.position = waypoint[0]
         self.request.goal_pos.orientation = waypoint[1]
         self.request.is_xyzrpy = True
-        self.request.execute_now = False
+        self.request.execute_now = True
         self.future = self.cart_client.call_async(self.request)
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
@@ -162,45 +164,58 @@ class TrajectoryCaller(Node):
         return self.future.result()
 
 
+
     def define_waypoints(self):
         '''
         Creates a dictionary of waypoints
         '''
         try:
-            {
-                "scoop_standoff": [
-                    [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z+0.09],
-                    []
-                ],
-                "scoop_handle": [
-                    [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z-0.03],
-                    []
-                ],
+            waypoints_dict = {
+                # "scoop_standoff": [
+                #     [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z+0.09],
+                #     []
+                # ],
+                # "scoop_handle": [
+                #     [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z-0.03],
+                #     []
+                # ],
 
                 "kettle_standoff": [
                     [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z+0.12],
                     []
                 ],
-
-                "stir_standoff": [
-                    [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.3],
+                "kettle": [
+                    [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z+0.01],
                     []
                 ],
-
-                "stir_handle": [
-                    [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.11],
-                    []
-                ],
-
-                "cup_standoff": [
-                    [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.3],
-                    []
-                ],
-
-                "cup_handle": [
-                    [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.3],
-                    []
+                "rotate": [
+                    [],
+                    [0.0,0.0,-pi/4]
                 ]
+                # "kettle_handle": [
+                #     [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z],
+                #     []
+                # ],
+
+                # "stir_standoff": [
+                #     [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.3],
+                #     []
+                # ],
+
+                # "stir_handle": [
+                #     [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.11],
+                #     []
+                # ],
+
+                # "cup_standoff": [
+                #     [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.3],
+                #     []
+                # ],
+
+                # "cup_handle": [
+                #     [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.3],
+                #     []
+                # ]
             }
 
             # make the dictionary into a SimpleNamespace so we can use the nice dot notation
@@ -210,7 +225,7 @@ class TrajectoryCaller(Node):
             self.waypoints = None
             self.get_logger().warn("Failed to construct waypoints. TF data may be missing")
 
-
+    
     def timer_callback(self):
         box_client = BoxCaller()
         box_client.add_box_request()
@@ -220,7 +235,20 @@ class TrajectoryCaller(Node):
 
         self.define_waypoints()
         if self.waypoints is not None:
-            self.plan_to(self.waypoints.scoop_standoff)
+            
+            # self.plan_to(self.waypoints.rotate) 
+            # self.send_execute_request()
+            # self.plan_to(self.waypoints.kettle)
+            # self.send_execute_request()
+
+            # self.plan_to(self.waypoints.kettle)
+            # self.send_execute_request()
+
+            if not self.GRIP:
+                self.grasp(width=0.008,force=90.0)
+                self.GRIP = True
+
+            box_client.clear_box_request()
 
 
 class BoxCaller(Node):
@@ -276,8 +304,8 @@ class BoxCaller(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    self = TrajectoryCaller()
-    rclpy.spin(self)
+    node = TrajectoryCaller()
+    rclpy.spin(node)
     rclpy.shutdown()
 
 if __name__ == '__main__':

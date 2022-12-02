@@ -515,7 +515,7 @@ class MoveBot(Node):
             # print(i)
             joint_constraints = JointConstraint()
             joint_constraints.joint_name = self.joint_statesmsg.name[i]
-            joint_constraints.position = self.joint_state.position[i] #goal.joint_state.position[i]
+            joint_constraints.position = self.joint_statesmsg.position[i] #goal.joint_state.position[i]
             joint_constraints.tolerance_above = 0.002
             joint_constraints.tolerance_below = 0.002
             joint_constraints.weight = 1.0
@@ -728,12 +728,13 @@ class MoveBot(Node):
             # self.get_logger().info(f"LISTENER Y POS {self.ee_base.transform.translation.y}", once=True)
             # self.get_logger().info(f"LISTENER Z POS {self.ee_base.transform.translation.z}", once=True)
 
-            # r,p,y=euler_from_quaternion(self.ee_base.transform.rotation.x,self.ee_base.transform.rotation.y,self.ee_base.transform.rotation.z,self.ee_base.transform.rotation.w)
-            # self.get_logger().info(f"LISTENER X ROT {r}", once=True)
-            # self.get_logger().info(f"LISTENER Y ROT {p}", once=True)
-            # self.get_logger().info(f"LISTENER Z ROT {y}", once=True)
+            r,p,y=euler_from_quaternion(self.ee_base.transform.rotation.x,self.ee_base.transform.rotation.y,self.ee_base.transform.rotation.z,self.ee_base.transform.rotation.w)
+            self.get_logger().info(f"LISTENER X ROT {r}",once=True)
+            self.get_logger().info(f"LISTENER Y ROT {p}",once=True)
+            self.get_logger().info(f"LISTENER Z ROT {y}",once=True)
 
         except:
+            self.get_logger().warn("Error in simple_move timer_callback try block")
             pass
 
 
