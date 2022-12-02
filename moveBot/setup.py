@@ -23,7 +23,7 @@ setup(
         'console_scripts': [
             'simple_move = moveBot.simple_move:main',
             'trajectory = moveBot.trajectory:main',
-            'gripper= moveBot.gripper:main'
+            'plan_scene_objects = moveBot.plan_scene_objects:main'
             ],
         },
     )

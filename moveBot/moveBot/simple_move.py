@@ -728,16 +728,20 @@ class MoveBot(Node):
             # self.get_logger().info(f"LISTENER Y POS {self.ee_base.transform.translation.y}", once=True)
             # self.get_logger().info(f"LISTENER Z POS {self.ee_base.transform.translation.z}", once=True)
 
-            r,p,y=euler_from_quaternion(self.ee_base.transform.rotation.x,self.ee_base.transform.rotation.y,self.ee_base.transform.rotation.z,self.ee_base.transform.rotation.w)
-            self.get_logger().info(f"LISTENER X ROT {r}",once=True)
-            self.get_logger().info(f"LISTENER Y ROT {p}",once=True)
-            self.get_logger().info(f"LISTENER Z ROT {y}",once=True)
+            #  r,p,y = euler_from_quaternion(
+                #  self.ee_base.transform.rotation.x,
+                #  self.ee_base.transform.rotation.y,
+                #  self.ee_base.transform.rotation.z,
+                #  self.ee_base.transform.rotation.w
+            #  )
 
+            #  self.get_logger().info(f"LISTENER X ROT {r}",once=True)
+            #  self.get_logger().info(f"LISTENER Y ROT {p}",once=True)
+            #  self.get_logger().info(f"LISTENER Z ROT {y}",once=True)
+        
+            self.get_logger().info("Panda TF data Status:OK",once=True)
         except:
-            self.get_logger().warn("Error in simple_move timer_callback try block")
-            pass
-
-
+            self.get_logger().warn("Panda TF data Status:MISSING")
 
 
 

@@ -51,9 +51,9 @@ class TrajectoryCaller(Node):
         self.home_x = 0.3
         self.home_y = 0.0
         self.home_z = 0.5
-        self.home_roll = 3.14
+        self.home_roll = 0.0
         self.home_pitch = 0.0
-        self.home_yaw = 0.0
+        self.home_yaw = 0.78
         
         self.GRIP = False
 
@@ -142,17 +142,23 @@ class TrajectoryCaller(Node):
         return self._homing_client.send_goal_async(goal_msg)
 
 
-    def plan_to(self,waypoint):
+    def plan(self,waypoint,execute_now=False):
         '''
         Moves the end-effector the specified waypoint
         '''
-        assert(len(waypoint) == 2)
+        assert(len(waypoint) == 2),'Invalid waypoint recieved'
         self.request.goal_pos.position = waypoint[0]
         self.request.goal_pos.orientation = waypoint[1]
         self.request.is_xyzrpy = True
-        self.request.execute_now = True
+        self.request.execute_now = False
         self.future = self.cart_client.call_async(self.request)
         rclpy.spin_until_future_complete(self, self.future)
+        
+        # TODO: Need to adjust state machine in API 
+        # so we can just set execute_now flag instead of this
+        if execute_now:
+            self.send_execute_request()
+
         return self.future.result()
 
 
@@ -167,7 +173,14 @@ class TrajectoryCaller(Node):
 
     def define_waypoints(self):
         '''
-        Creates a dictionary of waypoints
+        Creates a dictionary of waypoints based on the current TF data 
+        for the different objects. Should be called in timer loop to 
+        get up to date data.
+
+        Each waypoint must be a nested list of length 2. The first element
+        is a list of length 3 corresponding to the waypoint (x,y,z) and the
+        second element is another list of length 2 corresponding to the 
+        (roll, pitch, yaw) of the EE at the waypoint
         '''
         try:
             waypoints_dict = {
@@ -179,18 +192,29 @@ class TrajectoryCaller(Node):
                 #     [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z-0.03],
                 #     []
                 # ],
-
-                "kettle_standoff": [
-                    [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z+0.12],
+                #  "kettle_standoff": [
+                    #  [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z+0.12],
+                    #  []
+                #  ],
+                #  "kettle": [
+                    #  [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z+0.01],
+                    #  []
+                #  ],
+                "move_test": [
+                    [0.3,0.3,0.3], # x,y,z
+                    [] # r,p,y
+                ],
+                "move_home": [
+                    [self.home_x,self.home_y,self.home_z],
                     []
                 ],
-                "kettle": [
-                    [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z+0.01],
-                    []
-                ],
-                "rotate": [
+                "rotate_home": [
                     [],
-                    [0.0,0.0,-pi/4]
+                    [0.0, 0.0, self.home_yaw]
+                ],
+                "rotate_90": [
+                    [],
+                    [0.0,0.0,pi/2]
                 ]
                 # "kettle_handle": [
                 #     [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z],
@@ -227,83 +251,21 @@ class TrajectoryCaller(Node):
 
     
     def timer_callback(self):
-        box_client = BoxCaller()
-        box_client.add_box_request()
-        box_client.call_box_request()
-        box_client.add_box2_request()
-        box_client.call_box_request()
-
-        self.define_waypoints()
+        self.define_waypoints() # updates waypoints based on current TF's
         if self.waypoints is not None:
-            
-            # self.plan_to(self.waypoints.rotate) 
-            # self.send_execute_request()
-            # self.plan_to(self.waypoints.kettle)
-            # self.send_execute_request()
-
-            # self.plan_to(self.waypoints.kettle)
-            # self.send_execute_request()
-
-            if not self.GRIP:
-                self.grasp(width=0.008,force=90.0)
-                self.GRIP = True
-
-            box_client.clear_box_request()
+            self.plan(self.waypoints.rotate_90,execute_now=True)
+            self.plan(self.waypoints.move_test,execute_now=True)
+            self.plan(self.waypoints.move_home,execute_now=True)
 
 
-class BoxCaller(Node):
-    """Spawn in box objects for the planning scene."""
-    def __init__(self):
-        super().__init__("box_node")
-        self.cbgroup = ReentrantCallbackGroup()
-        self.add_box_client = self.create_client(AddBox,"add_box",callback_group=self.cbgroup)
-        self.call_box_client = self.create_client(Empty,"call_box",callback_group=self.cbgroup)
-        self.clear_box_client = self.create_client(Empty,"clear_all_box",callback_group=self.cbgroup)
-        self.request = AddBox.Request()
-
-    def add_box_request(self):
-        """Add in the table underneath the base of the robot for collision avoidance."""
-        self.request.name = "box1"
-        self.request.x = 0.0
-        self.request.y = 0.0
-        self.request.z = -0.1 - 0.1  # minus 0.1 because of extra collision height
-        self.request.l = 0.914
-        self.request.w = 0.610
-        self.request.h = 0.2
-        self.future = self.add_box_client.call_async(self.request)
-        rclpy.spin_until_future_complete(self, self.future)
-        return self.future.result()
-
-    def add_box2_request(self):
-        """Add in the table adjacent to the table underneath the base of the robot."""
-        self.request.name = "box2"
-        self.request.x = 0.37
-        self.request.y = 0.69
-        self.request.z = -0.19 - 0.1 # minus 0.1 because of extra collision height
-        self.request.l = 1.78
-        self.request.w = 0.74
-        self.request.h = 0.2
-        self.future = self.add_box_client.call_async(self.request)
-        rclpy.spin_until_future_complete(self, self.future)
-        return self.future.result()
-
-    def call_box_request(self):
-        """Call the boxes into the environment from the add queue."""
-        self.future = self.call_box_client.call_async(Empty.Request())
-        rclpy.spin_until_future_complete(self, self.future)
-        return self.future.result()
-
-    def clear_box_request(self):
-        """Remove all of the boxes from the simulated environment."""
-        self.future = self.clear_box_client.call_async(Empty.Request())
-        rclpy.spin_until_future_complete(self, self.future)
-        return self.future.result()
-
+            # grasp command doesn't work when called repeatedly
+            #  if not self.GRIP:
+                #  self.grasp(width=0.008,force=90.0)
+                #  self.GRIP = True
 
 
 def main(args=None):
     rclpy.init(args=args)
-
     node = TrajectoryCaller()
     rclpy.spin(node)
     rclpy.shutdown()
