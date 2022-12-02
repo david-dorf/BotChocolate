@@ -366,13 +366,9 @@ class TrajectoryCaller(Node):
         }
         self.waypoints = SimpleNamespace(**waypoints_dict)
 
-    def timer_callback(self):
-        # Add the collision boxes into the simulation
-        box_client = BoxCaller()
-        box_client.add_box_request()
-        box_client.call_box_request()
-        box_client.add_box2_request()
-        box_client.call_box_request()
+        except:
+            self.waypoints = None
+            self.get_logger().warn("Failed to construct waypoints. AprilTag TF data may be missing")
 
         # Update waypoints
         self.define_waypoints()
