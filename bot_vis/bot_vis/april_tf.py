@@ -39,6 +39,7 @@ class AprilTF(Node):
         self.cup_pub = self.create_publisher(Pose, 'cup_xyz', 10)
         self.kettle_pub = self.create_publisher(Pose, 'kettle_xyz', 10)
         self.stirrer_pub = self.create_publisher(Pose, 'stirrer_xyz', 10)
+        self.kettle_switch_pub = self.create_publisher(Pose, 'kettle_switch_xyz', 10)
 
 
 
@@ -102,9 +103,21 @@ class AprilTF(Node):
         self.kettle_adapter_tf.header.stamp = self.get_clock().now().to_msg()
         self.kettle_adapter_tf.header.frame_id = "kettle"
         self.kettle_adapter_tf.child_frame_id = "kettle_adapter"
-        self.kettle_adapter_tf.transform.translation.x = 0.1751
+        self.kettle_adapter_tf.transform.translation.x = 0.1651
         self.kettle_adapter_tf.transform.translation.y = 0.1216
         self.kettle_adapter_tf.transform.translation.z = -0.085
+
+
+        # Need change 
+        # check coordinate in robot
+
+        self.kettle_switch_tf = TransformStamped()
+        self.kettle_switch_tf.header.stamp = self.get_clock().now().to_msg()
+        self.kettle_switch_tf.header.frame_id = "kettle"
+        self.kettle_switch_tf.child_frame_id = "kettle_switch"
+        self.kettle_switch_tf.transform.translation.x = 0.115
+        self.kettle_switch_tf.transform.translation.y = 0.12
+        self.kettle_switch_tf.transform.translation.z = 0.02
 
         self.cup_center_tf = TransformStamped()
         self.cup_center_tf.header.stamp = self.get_clock().now().to_msg()
@@ -168,6 +181,7 @@ class AprilTF(Node):
         if not self.calibrate_flag: # IF not calibrating
             self.get_april_2_robot()
             self.static_broadcaster.sendTransform(self.kettle_adapter_tf)
+            self.static_broadcaster.sendTransform(self.kettle_switch_tf)
             self.static_broadcaster.sendTransform(self.cup_center_tf)
             self.static_broadcaster.sendTransform(self.stirrer_tf)
             self.static_broadcaster.sendTransform(self.scoop_tf)
@@ -224,6 +238,20 @@ class AprilTF(Node):
             stirrer_xzy.position.y = stirrer_2_base.transform.translation.y
             stirrer_xzy.position.z = stirrer_2_base.transform.translation.z
             self.stirrer_pub.publish(stirrer_xzy)
+        except:
+            pass
+
+        try:
+            # TODO
+            switch_2_base = self.tf_buffer.lookup_transform(
+                'panda_link0',
+                'kettle_switch',
+                rclpy.time.Time())
+            switch_xzy = Pose()
+            switch_xzy.position.x = switch_2_base.transform.translation.x
+            switch_xzy.position.y = switch_2_base.transform.translation.y
+            switch_xzy.position.z = switch_2_base.transform.translation.z
+            self.kettle_switch_pub.publish(switch_xzy)
         except:
             pass
 

@@ -33,6 +33,7 @@ class TrajectoryCaller(Node):
         self.stir_sub =  self.create_subscription(Pose, 'stirrer_xyz', self.get_stir_pose_callback, 10)
         self.cup_sub =  self.create_subscription(Pose, 'cup_xyz', self.get_cup_pose_callback, 10)
         self.kettle_sub =  self.create_subscription(Pose, 'kettle_xyz', self.get_kettle_pose_callback, 10)
+        self.kettle_switch_sub =  self.create_subscription(Pose, 'kettle_switch_xyz', self.get_kettle_switch_pose_callback, 10)
 
         self.plan_client = self.create_client(GetPlanRqst,"call_plan",callback_group=self.cbgroup)
         self.cart_client = self.create_client(GetPlanRqst,"call_cart",callback_group=self.cbgroup)
@@ -92,6 +93,9 @@ class TrajectoryCaller(Node):
         # print(pose_msg)
         self.cup_pose=pose_msg
         # print(self.pose.position.x)/
+
+    def get_kettle_switch_pose_callback(self, pose_msg):
+        self.switch_pose=pose_msg
 
     def grasp(self,width,speed=1.0,force=30.0,epsilon=(0.005,0.005)):
         '''
@@ -214,12 +218,16 @@ class TrajectoryCaller(Node):
                 ],
                 "rotate_90": [
                     [],
-                    [0.0,0.0,pi/2]
+                    [0.0,0.0,-pi/4]
+                ],
+                "kettle_switch_standoff": [
+                    [self.switch_pose.position.x,self.switch_pose.position.y,self.switch_pose.position.z+0.1],
+                    []
+                ],
+                "kettle_switch": [
+                    [self.switch_pose.position.x,self.switch_pose.position.y,self.switch_pose.position.z-0.005],
+                    []
                 ]
-                # "kettle_handle": [
-                #     [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z],
-                #     []
-                # ],
 
                 # "stir_standoff": [
                 #     [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.3],
@@ -256,6 +264,23 @@ class TrajectoryCaller(Node):
             self.plan(self.waypoints.rotate_90,execute_now=True)
             self.plan(self.waypoints.move_test,execute_now=True)
             self.plan(self.waypoints.move_home,execute_now=True)
+            
+            # self.plan_to(self.waypoints.rotate) 
+            # self.send_execute_request()
+            # self.plan_to(self.waypoints.kettle_standoff)
+            # self.send_execute_request()
+            # self.plan_to(self.waypoints.kettle_switch_standoff)
+            # self.send_execute_request()
+            # self.plan_to(self.waypoints.kettle_switch)
+            # self.send_execute_request()
+            # self.plan_to(self.waypoints.kettle_switch_standoff)
+            # self.send_execute_request()
+
+            # if not self.GRIP:
+            #     self.grasp(width=0.008,force=90.0)
+            #     self.GRIP = True
+
+            # box_client.clear_box_request()
 
 
             # grasp command doesn't work when called repeatedly
