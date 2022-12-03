@@ -22,9 +22,9 @@ class State(Enum):
     stored trajectory plan sequence, for executing it only once at the end.
     """
 
-    IDLE = (auto(),)
-    GO_SCOOP = (auto(),)
-    PLAN = (auto(),)
+    IDLE = auto(),
+    GO_SCOOP = auto(),
+    PLAN = auto(),
     EXECUTE = auto()
 
 
