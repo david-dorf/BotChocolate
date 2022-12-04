@@ -131,7 +131,7 @@ class AprilTF(Node):
         self.scoop_tf.header.stamp = self.get_clock().now().to_msg()
         self.scoop_tf.header.frame_id = "jig" #jig change
         self.scoop_tf.child_frame_id = "scoop"
-        self.scoop_tf.transform.translation.x = -0.5
+        self.scoop_tf.transform.translation.x = -0.5+0.02
         self.scoop_tf.transform.translation.y = 0.06
         self.scoop_tf.transform.translation.z =  -0.203 - 0.045#+(5.0/2+1.0)/1000 # math part to account for handle
 

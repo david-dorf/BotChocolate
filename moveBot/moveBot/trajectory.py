@@ -155,7 +155,7 @@ class TrajectoryCaller(Node):
         self.request.goal_pos.orientation = waypoint[1]
         self.request.is_xyzrpy = True
         self.request.execute_now = False
-        self.future = self.cart_client.call_async(self.request)
+        self.future = self.plan_client.call_async(self.request)
         rclpy.spin_until_future_complete(self, self.future)
         
         # TODO: Need to adjust state machine in API 
@@ -188,14 +188,14 @@ class TrajectoryCaller(Node):
         '''
         try:
             waypoints_dict = {
-                # "scoop_standoff": [
-                #     [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z+0.09],
-                #     []
-                # ],
-                # "scoop_handle": [
-                #     [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z-0.03],
-                #     []
-                # ],
+                "scoop_standoff": [
+                    [self.scoop_pose.position.x,self.scoop_pose.position.y-0.02,self.scoop_pose.position.z+0.09],
+                    []
+                ],
+                "scoop_handle": [
+                    [self.scoop_pose.position.x,self.scoop_pose.position.y-0.02,self.scoop_pose.position.z-0.04],
+                    []
+                ],
                 #  "kettle_standoff": [
                     #  [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z+0.12],
                     #  []
@@ -216,18 +216,30 @@ class TrajectoryCaller(Node):
                     [],
                     [0.0, 0.0, self.home_yaw]
                 ],
+                "rotate_45": [
+                    [],
+                    [pi,-pi/4,pi/2]
+                ],
+                "rotate_45_again": [
+                    [],
+                    [pi,pi/2.7,pi/2]
+                ],
                 "rotate_90": [
                     [],
-                    [0.0,0.0,-pi/4]
+                    [pi,0.0,pi/2]
                 ],
-                "kettle_switch_standoff": [
-                    [self.switch_pose.position.x,self.switch_pose.position.y,self.switch_pose.position.z+0.1],
-                    []
+                "rotate_90_tilt": [
+                    [],
+                    [-pi/8, 0.0 ,0.0]
                 ],
-                "kettle_switch": [
-                    [self.switch_pose.position.x,self.switch_pose.position.y,self.switch_pose.position.z-0.005],
-                    []
-                ]
+                # "kettle_switch_standoff": [
+                #     [self.switch_pose.position.x,self.switch_pose.position.y,self.switch_pose.position.z+0.1],
+                #     []
+                # ],
+                # "kettle_switch": [
+                #     [self.switch_pose.position.x,self.switch_pose.position.y,self.switch_pose.position.z-0.005],
+                #     []
+                # ]
 
                 # "stir_standoff": [
                 #     [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.3],
@@ -238,16 +250,20 @@ class TrajectoryCaller(Node):
                 #     [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.11],
                 #     []
                 # ],
+                "cup_tilt_standoff": [
+                    [self.cup_pose.position.x,self.cup_pose.position.y-0.04,self.cup_pose.position.z+0.2],
+                    []
+                ],
+                
+                "cup_standoff": [
+                    [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.3],
+                    []
+                ],
 
-                # "cup_standoff": [
-                #     [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.3],
-                #     []
-                # ],
-
-                # "cup_handle": [
-                #     [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.3],
-                #     []
-                # ]
+                "cup_handle": [
+                    [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.3],
+                    []
+                ]
             }
 
             # make the dictionary into a SimpleNamespace so we can use the nice dot notation
@@ -261,9 +277,28 @@ class TrajectoryCaller(Node):
     def timer_callback(self):
         self.define_waypoints() # updates waypoints based on current TF's
         if self.waypoints is not None:
+            # self.plan(self.waypoints.rotate_90,execute_now=True)
+            # self.plan(self.waypoints.rotate_45,execute_now=True)
+
+            # self.plan(self.waypoints.scoop_standoff,execute_now=True)
+            # self.plan(self.waypoints.scoop_handle,execute_now=True)
+            
+            # if not self.GRIP:
+            #     self.grasp(width=0.008,force=50.0)
+            #     self.GRIP = True
+                
+            # time.sleep(3)
+            
+            # # # self.plan(self.waypoints.scoop_standoff,execute_now=True)
+            self.plan(self.waypoints.cup_tilt_standoff,execute_now=True)
             self.plan(self.waypoints.rotate_90,execute_now=True)
-            self.plan(self.waypoints.move_test,execute_now=True)
-            self.plan(self.waypoints.move_home,execute_now=True)
+            self.plan(self.waypoints.rotate_45_again,execute_now=True)
+
+            
+            #self.plan(self.waypoints.rotate_90_tilt,execute_now=True)
+
+            # self.plan(self.waypoints.move_test,execute_now=True)
+            # self.plan(self.waypoints.move_home,execute_now=True)
             
             # self.plan_to(self.waypoints.rotate) 
             # self.send_execute_request()
