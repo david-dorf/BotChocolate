@@ -327,6 +327,42 @@ class TrajectoryCaller(Node):
                 ],
                 [],
             ],
+
+            "stir1": [
+                [
+                    self.cup_pose.position.x + 0.02,
+                    self.cup_pose.position.y,
+                    self.cup_pose.position.z + 0.1,
+                ],
+                [],
+            ],
+
+            "stir2": [
+                [
+                    self.cup_pose.position.x,
+                    self.cup_pose.position.y + 0.02,
+                    self.cup_pose.position.z + 0.1,
+                ],
+                [],
+            ],
+
+            "stir3": [
+                [
+                    self.cup_pose.position.x - 0.02,
+                    self.cup_pose.position.y,
+                    self.cup_pose.position.z + 0.1,
+                ],
+                [],
+            ],
+
+            "stir4": [
+                [
+                    self.cup_pose.position.x,
+                    self.cup_pose.position.y - 0.02,
+                    self.cup_pose.position.z + 0.1,
+                ],
+                [],
+            ],
         }
         self.waypoints = SimpleNamespace(**waypoints_dict)
 
@@ -346,15 +382,18 @@ class TrajectoryCaller(Node):
             # KETTLE SWITCH
             # Move the kettle over the cup and pour, then put kettle back
             self.plan(self.waypoints.kettle_switch_standoff)
+            self.send_execute_request()
             # Close the gripper before pressing down the switch
-            # if not self.GRIP:
-            #     self.grasp(width=0.008,force=90.0)
-            #     self.GRIP = True
+            if not self.GRIP:
+                self.grasp(width=0.008,force=90.0)
+                self.GRIP = True
             self.plan(self.waypoints.kettle_switch)
+            self.send_execute_request()
             self.plan(self.waypoints.kettle_switch_standoff)
-            # if self.GRIP:
-            #     self.open_gripper()
-            #     self.GRIP = False
+            self.send_execute_request()
+            if self.GRIP:
+                self.open_gripper()
+                self.GRIP = False
             # Add a delay here to allow water to heat up
             # heating_time = 10
             # time.sleep(heating_time)
@@ -363,59 +402,58 @@ class TrajectoryCaller(Node):
             # Move the kettle over the cup and pour, then put kettle back
             self.plan(self.waypoints.kettle_standoff)
             self.plan(self.waypoints.kettle)
-            # if not self.GRIP:
-            #     self.grasp(width=0.008,force=90.0)
-            #     self.GRIP = True
+            if not self.GRIP:
+                self.grasp(width=0.008,force=90.0)
+                self.GRIP = True
             self.plan(self.waypoints.kettle_standoff)
             self.plan(self.waypoints.cup_pour)
             # ROTATE TO POUR
             self.plan(self.waypoints.kettle_standoff)
             self.plan(self.waypoints.kettle)
-            # if self.GRIP:
-            #     self.open_gripper()
-            #     self.GRIP = False
+            if self.GRIP:
+                self.open_gripper()
+                self.GRIP = False
             self.plan(self.waypoints.kettle_standoff)
 
             # SCOOP
             # Move the cocoa scoop over the cup and pour, then put scoop back
             self.plan(self.waypoints.scoop_standoff)
             self.plan(self.waypoints.scoop_handle)
-            # if not self.GRIP:
-            #     self.grasp(width=0.008,force=90.0)
-            #     self.GRIP = True
+            if not self.GRIP:
+                self.grasp(width=0.008,force=90.0)
+                self.GRIP = True
             self.plan(self.waypoints.scoop_standoff)
             self.plan(self.waypoints.cup_pour)
             # ROTATE TO POUR
             self.plan(self.waypoints.scoop_standoff)
             self.plan(self.waypoints.scoop_handle)
-            # if self.GRIP:
-            #     self.open_gripper()
-            #     self.GRIP = False
+            if self.GRIP:
+                self.open_gripper()
+                self.GRIP = False
             self.plan(self.waypoints.scoop_standoff)
 
             # STIR
             self.plan(self.waypoints.stir_standoff)
             self.plan(self.waypoints.stir_handle)
-            # if not self.GRIP:
-            #     self.grasp(width=0.008,force=90.0)
-            #     self.GRIP = True
+            if not self.GRIP:
+                self.grasp(width=0.008,force=90.0)
+                self.GRIP = True
             self.plan(self.waypoints.stir_standoff)
             self.plan(self.waypoints.cup_standoff)
             self.plan(self.waypoints.cup_center)
-            # Stir the contents of the cup
             self.stir_duration = 4
             for i in range(self.stir_duration):
-                self.send_stir1_request()
-                self.send_stir2_request()
-                self.send_stir3_request()
-                self.send_stir4_request()
+                self.plan(self.waypoints.stir1)
+                self.plan(self.waypoints.stir2)
+                self.plan(self.waypoints.stir3)
+                self.plan(self.waypoints.stir4)
             self.plan(self.waypoints.cup_center)
             self.plan(self.waypoints.cup_standoff)
             self.plan(self.waypoints.stir_standoff)
             self.plan(self.waypoints.stir_handle)
-            # if self.GRIP:
-            #     self.open_gripper()
-            #     self.GRIP = False
+            if self.GRIP:
+                self.open_gripper()
+                self.GRIP = False
             self.plan(self.waypoints.stir_standoff)
 
             # Could optionally add a TF for the cup handle to serve the user
