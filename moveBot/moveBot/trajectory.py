@@ -250,6 +250,7 @@ class TrajectoryCaller(Node):
 
         Each waypoint must be a nested list of length 2. The first element
         is a list of length 3 corresponding to the waypoint (x,y,z) and the
+<<<<<<< HEAD
         second element is another list of length 2 corresponding to the
         (roll, pitch, yaw) of the EE at the waypoint.
         """
