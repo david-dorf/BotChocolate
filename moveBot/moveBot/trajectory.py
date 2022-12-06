@@ -231,6 +231,7 @@ class TrajectoryCaller(Node):
 
         Each waypoint must be a nested list of length 2. The first element
         is a list of length 3 corresponding to the waypoint (x,y,z) and the
+<<<<<<< HEAD
         second element is another list of length 2 corresponding to the
         (roll, pitch, yaw) of the EE at the waypoint.
         """
@@ -240,6 +241,32 @@ class TrajectoryCaller(Node):
                     self.scoop_pose.position.x,
                     self.scoop_pose.position.y,
                     self.scoop_pose.position.z + 0.09,
+=======
+        second element is another list of length 3 corresponding to the 
+        (roll, pitch, yaw) of the EE at the waypoint
+        '''
+        try:
+            waypoints_dict = {
+                # "scoop_standoff": [
+                #     [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z+0.09],
+                #     []
+                # ],
+                # "scoop_handle": [
+                #     [self.scoop_pose.position.x,self.scoop_pose.position.y,self.scoop_pose.position.z-0.03],
+                #     []
+                # ],
+                #  "kettle_standoff": [
+                    #  [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z+0.12],
+                    #  []
+                #  ],
+                #  "kettle": [
+                    #  [self.kettle_pose.position.x,self.kettle_pose.position.y,self.kettle_pose.position.z+0.01],
+                    #  []
+                #  ],
+                "move_test": [
+                    [0.3,0.3,0.3], # x,y,z
+                    [] # r,p,y
+>>>>>>> 430b309 (fix typo in docstring)
                 ],
                 [],
             ],
