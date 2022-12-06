@@ -139,7 +139,7 @@ class TrajectoryCaller(Node):
         self.home_pitch = 0.0
         self.home_yaw = 0.78
         self.GRIP = False
-
+        
     def get_kettle_pose_callback(self, pose_msg):
         self.kettle_pose = pose_msg
 
@@ -320,21 +320,21 @@ class TrajectoryCaller(Node):
                 ],
             "pour_so_1": [
                 [
-                    self.cup_pose.position.x-0.1,
-                    self.cup_pose.position.y,
+                    self.cup_pose.position.x-0.03,
+                    self.cup_pose.position.y+0.02,
                     self.cup_pose.position.z + 0.45,
                 ],
                 [],
             ],
-            "pour_rot_1": [
+            "pour_rot_2": [
                     [],
                     [pi,pi/2,0.0]
                 ],
             "pour_so_2": [
                 [
-                    self.cup_pose.position.x - 0.17,
-                    self.cup_pose.position.y,
-                    self.cup_pose.position.z + 0.45,
+                    self.cup_pose.position.x -0.03,
+                    self.cup_pose.position.y+0.02,
+                    self.cup_pose.position.z + 0.35,
                 ],
                 [],
             ],
@@ -495,8 +495,8 @@ class TrajectoryCaller(Node):
             self.plan(self.waypoints.cup_pour, execute_now=True)
             self.plan(self.waypoints.pour_rot_1, execute_now=True)
             self.plan(self.waypoints.pour_so_1, execute_now=True)
-            self.plan(self.waypoints.pour_so_2, execute_now=True)
-            self.plan(self.waypoints.pour_rot_1, execute_now=True)
+            # self.plan(self.waypoints.pour_so_2, execute_now=True)
+            self.plan(self.waypoints.pour_rot_2, execute_now=True)
 
             # # ROTATE TO POUR
             # self.plan(self.waypoints.kettle_standoff)
@@ -559,7 +559,7 @@ class TrajectoryCaller(Node):
             #self.plan(self.waypoints.move_home)
 
         # Clear the simulation collision boxes
-        box_client.clear_box_request()
+        #box_client.clear_box_request()
 
 
 def main(args=None):

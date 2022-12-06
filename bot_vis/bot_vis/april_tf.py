@@ -104,7 +104,7 @@ class AprilTF(Node):
         self.kettle_adapter_tf.header.frame_id = "kettle"
         self.kettle_adapter_tf.child_frame_id = "kettle_adapter"
         self.kettle_adapter_tf.transform.translation.x = 0.1651
-        self.kettle_adapter_tf.transform.translation.y = 0.1216-0.028
+        self.kettle_adapter_tf.transform.translation.y = 0.1216-0.026
         self.kettle_adapter_tf.transform.translation.z = -0.085
 
 
