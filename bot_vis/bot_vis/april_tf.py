@@ -117,7 +117,7 @@ class AprilTF(Node):
         self.kettle_switch_tf.header.frame_id = "kettle"
         self.kettle_switch_tf.child_frame_id = "kettle_switch"
         self.kettle_switch_tf.transform.translation.x = 0.115
-        self.kettle_switch_tf.transform.translation.y = 0.12
+        self.kettle_switch_tf.transform.translation.y = 0.1
         self.kettle_switch_tf.transform.translation.z = 0.02
 
         self.cup_center_tf = TransformStamped()
@@ -132,9 +132,9 @@ class AprilTF(Node):
         self.scoop_tf.header.stamp = self.get_clock().now().to_msg()
         self.scoop_tf.header.frame_id = "jig" #jig change
         self.scoop_tf.child_frame_id = "scoop"
-        self.scoop_tf.transform.translation.x = -0.5-0.005
-        self.scoop_tf.transform.translation.y = 0.06-0.06
-        self.scoop_tf.transform.translation.z =  -0.203 - 0.02#+(5.0/2+1.0)/1000 # math part to account for handle
+        self.scoop_tf.transform.translation.x = -0.5#-0.005
+        self.scoop_tf.transform.translation.y = 0.0#0.06-0.055
+        self.scoop_tf.transform.translation.z =  -0.203 - 0.025#+(5.0/2+1.0)/1000 # math part to account for handle
 
         self.stirrer_tf = TransformStamped()
         self.stirrer_tf.header.stamp = self.get_clock().now().to_msg()

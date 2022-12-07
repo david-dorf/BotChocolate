@@ -516,7 +516,7 @@ class MoveBot(Node):
 
         # self.get_logger().info(f'all {goal.joint_state.position}')
 
-        self.get_logger().info(f'joint namess {self.joint_statesmsg}')
+        self.get_logger().info(f'joint namess {goal.joint_state.position}')
 
         for i in range(len(self.joint_statesmsg.name)):
             # print('ajj',goal.joint_state.position[i])
@@ -593,41 +593,6 @@ class MoveBot(Node):
                     ik_request_message_start,
                     start_in_joint_config)
         
-            # self.state=State.HOME_MSG
-            # self.get_logger().info(f"SENDING HOME")
-            # self.get_logger().info(f"CURRENT STATE {self.state}")
-        
-            # # FOR SENDING HOME JOINT STATES 
-            # request.start_pos.position = self.joint_statesmsg.position
-            # start_in_joint_config = RobotState()
-            # start_in_joint_config.joint_state = self.joint_statesmsg
-
-            # goal_in_joint_config = RobotState()
-            # # tmp = JointState()
-            # # tmp.position = request.goal_pos.position
-            # # self.get_logger().info(f'akk {request.goal_pos.position[1]}')
-            # # self.get_logger().info(f'akk {request.goal_pos.position}')
-            # goal_in_joint_config.joint_state.position=request.goal_pos.position ## GOAL POS IS JUST JOINT STATES
-            # self.get_logger().info(f'akk,  {goal_in_joint_config.joint_state.position[1]}')
-            # plan_msg = self.get_motion_request(
-            #         start_in_joint_config,
-            #         goal_in_joint_config,
-            #         request.execute_now)
-
-
-            # self.future_response = await self._plan_client.send_goal_async(plan_msg)
-            # self.plan_response = await self.future_response.get_result_async()
-
-
-            # self.get_logger().info(f"CHANGING TO PLAN EXEC STATE")
-            # self.state=State.PLAN_EXEC
-            # # print('SENDING ROT MSG')
-            # self.get_logger().info(f"CURRENT STATE {self.state}")
-            # # print(self.state)
-            # if request.execute_now==True:
-            #     self.get_logger().info(f" 'EXECUTE NOW' TRUE-- EXECUTING PLAN REQUEST")
-            #     self.get_logger().info(f"CHANGING TO IDLE STATE")
-            #     self.state=State.IDLE
 
 
         if not request.is_xyzrpy:
@@ -739,7 +704,7 @@ class MoveBot(Node):
             # self.get_logger().info(f'akk {request.goal_pos.position[1]}')
             # self.get_logger().info(f'akk {request.goal_pos.position}')
             goal_in_joint_config.joint_state.position=request.goal_pos.position ## GOAL POS IS JUST JOINT STATES
-            self.get_logger().info(f'akk,  {goal_in_joint_config.joint_state.position[1]}')
+            self.get_logger().info(f'akk,  {goal_in_joint_config.joint_state.position}')
             plan_msg = self.get_motion_request(
                     start_in_joint_config,
                     goal_in_joint_config,
