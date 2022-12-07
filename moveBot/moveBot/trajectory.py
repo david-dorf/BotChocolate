@@ -108,6 +108,9 @@ class TrajectoryCaller(Node):
         self.kettle_switch_sub = self.create_subscription(
             Pose, "kettle_switch_xyz", self.get_kettle_switch_pose_callback, 10
         )
+        self.jig_sub = self.create_subscription(
+            Pose, "jig_xyz", self.get_jig_pose_callback, 10
+        )
 
         # Initialize robot trajectory clients
         self.plan_client = self.create_client(
@@ -154,6 +157,9 @@ class TrajectoryCaller(Node):
 
     def get_kettle_switch_pose_callback(self, pose_msg):
         self.switch_pose = pose_msg
+    
+    def get_jig_pose_callback(self, pose_msg):
+        self.jig_pose = pose_msg
 
     def grasp(self, width, speed=1.0, force=30.0, epsilon=(0.005, 0.005)):
         """
@@ -282,7 +288,7 @@ class TrajectoryCaller(Node):
                 [
                     self.kettle_pose.position.x,
                     self.kettle_pose.position.y,
-                    self.kettle_pose.position.z + 0.35,
+                    self.kettle_pose.position.z + 0.15,
                 ],
                 [],
             ],
@@ -290,13 +296,29 @@ class TrajectoryCaller(Node):
                 [
                     self.kettle_pose.position.x,
                     self.kettle_pose.position.y,
-                    self.kettle_pose.position.z + 0.015,
+                    self.kettle_pose.position.z + 0.035,
+                ],
+                [],
+            ],
+            "kettle_return_standoff": [
+                [
+                    self.jig_pose.position.x+0.11,
+                    self.jig_pose.position.y+0.08,
+                    self.jig_pose.position.z + 0.4, #0.4
+                ],
+                [],
+            ],
+            "kettle_return": [
+                [
+                    self.jig_pose.position.x+0.11,
+                    self.jig_pose.position.y+0.08,
+                    self.jig_pose.position.z + 0.175,
                 ],
                 [],
             ],
             "move_test": [[0.3, 0.3, 0.3], []],
             "move_home": [[self.home_x, self.home_y, self.home_z], []],
-            "rotate_home": [[], [0.0, 0.0, self.home_yaw]],
+            "rotate_home": [[], [pi, 0.0, 0.0]],
             "rotate_90": [
                     [],
                     [pi,0.0,pi/2]
@@ -321,8 +343,8 @@ class TrajectoryCaller(Node):
             "pour_so_1": [
                 [
                     self.cup_pose.position.x-0.03,
-                    self.cup_pose.position.y+0.02,
-                    self.cup_pose.position.z + 0.45,
+                    self.cup_pose.position.y+0.01,
+                    self.cup_pose.position.z + 0.40,
                 ],
                 [],
             ],
@@ -332,9 +354,9 @@ class TrajectoryCaller(Node):
                 ],
             "pour_so_2": [
                 [
-                    self.cup_pose.position.x -0.03,
-                    self.cup_pose.position.y+0.02,
-                    self.cup_pose.position.z + 0.35,
+                    self.cup_pose.position.x, #-0.03,
+                    self.cup_pose.position.y,#-0.02,
+                    self.cup_pose.position.z + 0.4,
                 ],
                 [],
             ],
@@ -484,6 +506,7 @@ class TrajectoryCaller(Node):
 
             # KETTLE
             # Move the kettle over the cup and pour, then put kettle back
+
             self.plan(self.waypoints.kettle_standoff, execute_now=True)
             self.plan(self.waypoints.kettle, execute_now=True)
             
@@ -492,11 +515,25 @@ class TrajectoryCaller(Node):
                 self.GRIP = True
             time.sleep(3)
             self.plan(self.waypoints.kettle_standoff, execute_now=True)
+
             self.plan(self.waypoints.cup_pour, execute_now=True)
             self.plan(self.waypoints.pour_rot_1, execute_now=True)
             self.plan(self.waypoints.pour_so_1, execute_now=True)
-            # self.plan(self.waypoints.pour_so_2, execute_now=True)
+            #self.plan(self.waypoints.pour_so_2, execute_now=True)
             self.plan(self.waypoints.pour_rot_2, execute_now=True)
+
+            self.plan(self.waypoints.pour_rot_1, execute_now=True)
+            self.plan(self.waypoints.cup_pour, execute_now=True)
+            #self.plan(self.waypoints.pour_so_1, execute_now=True)
+            self.plan(self.waypoints.rotate_home, execute_now=True)
+            
+
+            # put kettle down
+            self.plan(self.waypoints.kettle_return_standoff,execute_now=True)
+            self.plan(self.waypoints.kettle_return,execute_now=True)
+            self.open_gripper()
+            time.sleep(3)
+            self.plan(self.waypoints.kettle_return_standoff,execute_now=True)
 
             # # ROTATE TO POUR
             # self.plan(self.waypoints.kettle_standoff)

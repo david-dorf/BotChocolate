@@ -40,6 +40,7 @@ class AprilTF(Node):
         self.kettle_pub = self.create_publisher(Pose, 'kettle_xyz', 10)
         self.stirrer_pub = self.create_publisher(Pose, 'stirrer_xyz', 10)
         self.kettle_switch_pub = self.create_publisher(Pose, 'kettle_switch_xyz', 10)
+        self.jig_pub = self.create_publisher(Pose, 'jig_xyz', 10)
 
 
 
@@ -103,9 +104,9 @@ class AprilTF(Node):
         self.kettle_adapter_tf.header.stamp = self.get_clock().now().to_msg()
         self.kettle_adapter_tf.header.frame_id = "kettle"
         self.kettle_adapter_tf.child_frame_id = "kettle_adapter"
-        self.kettle_adapter_tf.transform.translation.x = 0.1651
-        self.kettle_adapter_tf.transform.translation.y = 0.1216-0.026
-        self.kettle_adapter_tf.transform.translation.z = -0.085
+        self.kettle_adapter_tf.transform.translation.x = 0.1651+0.01
+        self.kettle_adapter_tf.transform.translation.y = 0.1216-0.052
+        self.kettle_adapter_tf.transform.translation.z = -0.085+0.01
 
 
         # Need change 
@@ -253,6 +254,20 @@ class AprilTF(Node):
             switch_xzy.position.z = switch_2_base.transform.translation.z
             self.kettle_switch_pub.publish(switch_xzy)
         except:
+            pass
+        try:
+            # TODO
+            jig_2_base = self.tf_buffer.lookup_transform(
+                'panda_link0',
+                'jig',
+                rclpy.time.Time())
+            switch_xzy = Pose()
+            switch_xzy.position.x = jig_2_base.transform.translation.x
+            switch_xzy.position.y = jig_2_base.transform.translation.y
+            switch_xzy.position.z = jig_2_base.transform.translation.z
+            self.jig_pub.publish(switch_xzy)
+        except:
+            #self.get_logger().error("jig missing")
             pass
 
 
