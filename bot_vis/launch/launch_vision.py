@@ -13,7 +13,7 @@ from launch.actions import DeclareLaunchArgument
 def generate_launch_description():
 
     bot_vis_path = get_package_share_path('bot_vis')
-    tag_yaml_path = bot_vis_path / 'tag.yaml'
+    tag_yaml_path = bot_vis_path / 'config/tag.yaml'
     default_rviz_config_path = bot_vis_path / 'april.rviz'
     calibration_path = bot_vis_path / 'calibration.yaml'
     
