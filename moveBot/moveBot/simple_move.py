@@ -526,8 +526,8 @@ class MoveBot(Node):
             joint_constraints.position = goal.joint_state.position[i] #goal.joint_state.position[i]
             
             # joint_constraints.position = self.joint_statesmsg.position[i] 
-            joint_constraints.tolerance_above = 0.002
-            joint_constraints.tolerance_below = 0.002
+            joint_constraints.tolerance_above =0.005# 0.002
+            joint_constraints.tolerance_below = 0.005#0.002
             joint_constraints.weight = 1.0
             goal_constraints.joint_constraints.append(joint_constraints)
 
