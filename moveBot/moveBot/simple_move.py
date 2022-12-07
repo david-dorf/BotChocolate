@@ -86,6 +86,7 @@ class State(Enum):
     IDLE     = auto(),
     ROT_MSG= auto(),
     CART_MSG=auto(),
+    HOME_MSG=auto(),
     CART_EXEC = auto(),
     PLAN_EXEC= auto()
 
@@ -434,7 +435,7 @@ class MoveBot(Node):
         return response
 
 
-    def create_cart_msg(self,start,goal,exc):
+    def create_cart_msg(self,start,goal):
 
         cart_req = SimpleCartPath()
         cart_req.cart_request.header.stamp = self.get_clock().now().to_msg()
@@ -466,13 +467,13 @@ class MoveBot(Node):
         # self.get_logger().info(f"LISTENER Y ROT {p}", once=True)
         # self.get_logger().info(f"LISTENER Z ROT {y}", once=True)
         
-        print(f"\n OR QUATS {quats}")
+        # print(f"\n OR QUATS {quats}")
         wp1.orientation.x=quats[0]
         wp1.orientation.y=quats[1]
         wp1.orientation.z=quats[2]
         wp1.orientation.w=quats[3]
 
-        print(f"\n WP1 {wp1}")
+        # print(f"\n WP1 {wp1}")
         cart_req.cart_request.waypoints= [wp1]
 
 
@@ -511,8 +512,15 @@ class MoveBot(Node):
         # self.get_logger().info(f"goal {goal.joint_state.position}")    
         # self.get_logger().info(f"goal e.e {goal.joint_state.position[6]}")    
 
+        # if goal.joint_state
+
+        # self.get_logger().info(f'all {goal.joint_state.position}')
+
+        self.get_logger().info(f'joint namess {self.joint_statesmsg}')
+
         for i in range(len(self.joint_statesmsg.name)):
-            # print(i)
+            # print('ajj',goal.joint_state.position[i])
+            # self.get_logger().info(f'IIIIII {i}')
             joint_constraints = JointConstraint()
             joint_constraints.joint_name = self.joint_statesmsg.name[i]
             joint_constraints.position = goal.joint_state.position[i] #goal.joint_state.position[i]
@@ -567,7 +575,8 @@ class MoveBot(Node):
         #     self.state=State.ROT_MSG
         # elif not request.goal_pos.orientation and self.state==State.IDLE:
         #     self.state=State.CART_MSG
-        print(self.state)
+    
+        self.get_logger().info(f"READY TO PLAN {self.state}")
         if request.is_xyzrpy:  # If start pos was given as X,Y,Z, R, P, Y
             if len(request.start_pos.position) <= 0:
                 # IF there is no given start position, use current joint config as start
@@ -583,17 +592,60 @@ class MoveBot(Node):
                 start_in_joint_config = await self.ik_callback(
                     ik_request_message_start,
                     start_in_joint_config)
+        
+            # self.state=State.HOME_MSG
+            # self.get_logger().info(f"SENDING HOME")
+            # self.get_logger().info(f"CURRENT STATE {self.state}")
+        
+            # # FOR SENDING HOME JOINT STATES 
+            # request.start_pos.position = self.joint_statesmsg.position
+            # start_in_joint_config = RobotState()
+            # start_in_joint_config.joint_state = self.joint_statesmsg
+
+            # goal_in_joint_config = RobotState()
+            # # tmp = JointState()
+            # # tmp.position = request.goal_pos.position
+            # # self.get_logger().info(f'akk {request.goal_pos.position[1]}')
+            # # self.get_logger().info(f'akk {request.goal_pos.position}')
+            # goal_in_joint_config.joint_state.position=request.goal_pos.position ## GOAL POS IS JUST JOINT STATES
+            # self.get_logger().info(f'akk,  {goal_in_joint_config.joint_state.position[1]}')
+            # plan_msg = self.get_motion_request(
+            #         start_in_joint_config,
+            #         goal_in_joint_config,
+            #         request.execute_now)
 
 
-        if not request.goal_pos.position and self.state==State.IDLE:
-            print('CHANGED TO PLAN ROT')
+            # self.future_response = await self._plan_client.send_goal_async(plan_msg)
+            # self.plan_response = await self.future_response.get_result_async()
+
+
+            # self.get_logger().info(f"CHANGING TO PLAN EXEC STATE")
+            # self.state=State.PLAN_EXEC
+            # # print('SENDING ROT MSG')
+            # self.get_logger().info(f"CURRENT STATE {self.state}")
+            # # print(self.state)
+            # if request.execute_now==True:
+            #     self.get_logger().info(f" 'EXECUTE NOW' TRUE-- EXECUTING PLAN REQUEST")
+            #     self.get_logger().info(f"CHANGING TO IDLE STATE")
+            #     self.state=State.IDLE
+
+
+        if not request.is_xyzrpy:
+            self.get_logger().info(f"CHANGING TO SEND HOME STATE")
+            self.state=State.HOME_MSG
+        elif not request.goal_pos.position and self.state==State.IDLE:
+            # print('CHANGED TO PLAN ROT')
+            self.get_logger().info(f"CHANGING TO PLAN ROT MSG STATE")
             self.state=State.ROT_MSG
         elif not request.goal_pos.orientation and self.state==State.IDLE:
-            print('CHANGED TO CART TRANS')
+            # print('CHANGED TO CART TRANS')
+            self.get_logger().info(f"CHANGING TO CART MSG STATE")
             self.state=State.CART_MSG
 
         if self.state==State.ROT_MSG:
-            print('MAKING ROT MSG')
+            # print('MAKING ROT MSG')
+            self.get_logger().info(f" CURRENT STATE {self.state}")
+            self.get_logger().info(f"MAKING ROT MSG")
             ik_request_message_goal = IkGoalRqstMsg()
             ik_request_message_goal.position = request.goal_pos.position
             ik_request_message_goal.orientation = request.goal_pos.orientation
@@ -613,15 +665,22 @@ class MoveBot(Node):
             self.future_response = await self._plan_client.send_goal_async(plan_msg)
             self.plan_response = await self.future_response.get_result_async()
 
-            if self.state==State.ROT_MSG:  
-                self.state=State.PLAN_EXEC
-                print('SENDING ROT MSG')
-                print(self.state)
-                if request.execute_now==True:
-                    self.state=State.IDLE
+            # if self.state==State.ROT_MSG:  
+            self.get_logger().info(f"CHANGING TO PLAN EXEC STATE")
+            self.state=State.PLAN_EXEC
+            # print('SENDING ROT MSG')
+            self.get_logger().info(f"CURRENT STATE {self.state}")
+            # print(self.state)
+            if request.execute_now==True:
+                self.get_logger().info(f" 'EXECUTE NOW' TRUE-- EXECUTING PLAN REQUEST")
+                self.get_logger().info(f"CHANGING TO IDLE STATE")
+                self.state=State.IDLE
+
+        
 
         if self.state==State.CART_MSG:
-            print('MAKING CART MSG')
+            self.get_logger().info(f" CURRENT STATE {self.state}")
+            self.get_logger().info(f"MAKING CART MSG")
             if not request.goal_pos.orientation:
 
                 request.goal_pos.orientation=[self.ee_base.transform.rotation.x,
@@ -640,7 +699,7 @@ class MoveBot(Node):
             plan_msg = self.create_cart_msg(
                 start_in_joint_config,
                 request.goal_pos,
-                request.execute_now)
+                )
 
             # print(f"\n CART REQ MSG {plan_msg}")
 
@@ -658,8 +717,48 @@ class MoveBot(Node):
             # print(f"\n CART PLAN RESP {self.cart_response}")
 
             if self.state==State.CART_MSG:
-                print('SENDING CART MSG')
+
+                self.get_logger().info(f"CHANGING TO CART EXEC STATE")
+                # print('SENDING CART MSG')
                 self.state=State.CART_EXEC
+
+
+        if self.state==State.HOME_MSG:
+            self.state=State.HOME_MSG
+            self.get_logger().info(f"SENDING HOME")
+            self.get_logger().info(f"CURRENT STATE {self.state}")
+        
+            # FOR SENDING HOME JOINT STATES 
+            request.start_pos.position = self.joint_statesmsg.position
+            start_in_joint_config = RobotState()
+            start_in_joint_config.joint_state = self.joint_statesmsg
+
+            goal_in_joint_config = RobotState()
+            # tmp = JointState()
+            # tmp.position = request.goal_pos.position
+            # self.get_logger().info(f'akk {request.goal_pos.position[1]}')
+            # self.get_logger().info(f'akk {request.goal_pos.position}')
+            goal_in_joint_config.joint_state.position=request.goal_pos.position ## GOAL POS IS JUST JOINT STATES
+            self.get_logger().info(f'akk,  {goal_in_joint_config.joint_state.position[1]}')
+            plan_msg = self.get_motion_request(
+                    start_in_joint_config,
+                    goal_in_joint_config,
+                    request.execute_now)
+
+
+            self.future_response = await self._plan_client.send_goal_async(plan_msg)
+            self.plan_response = await self.future_response.get_result_async()
+
+
+            self.get_logger().info(f"CHANGING TO PLAN EXEC STATE")
+            self.state=State.PLAN_EXEC
+            # print('SENDING ROT MSG')
+            self.get_logger().info(f"CURRENT STATE {self.state}")
+            # print(self.state)
+            if request.execute_now==True:
+                self.get_logger().info(f" 'EXECUTE NOW' TRUE-- EXECUTING PLAN REQUEST")
+                self.get_logger().info(f"CHANGING TO IDLE STATE")
+                self.state=State.IDLE
 
 
         return response
@@ -677,8 +776,11 @@ class MoveBot(Node):
         # self.get_logger().info(f"exec msg {self.cart_response.solution.joint_trajectory}")
 
         if self.state==State.CART_EXEC:
+
+            self.get_logger().info(f" CURRENT STATE {self.state}")
             execute_msg.trajectory = self.cart_response.solution
-            self.state=State.IDLE
+
+            # self.state=State.IDLE
 
         if self.state==State.PLAN_EXEC:
             print('EXECUTING ROT MSG')
@@ -702,10 +804,18 @@ class MoveBot(Node):
         :rtype: std_srvs.srv.Empty.Response()
 
         """
-        print(self.state)
+        # print(self.state)
         exec_msg = self.send_execute()
+
+        if self.state==State.CART_EXEC:
+            self.get_logger().info(f" EXECUTING CART MESSAGE")
+        if self.state==State.PLAN_EXEC:
+            self.get_logger().info(f" EXECUTING PLAN MESSAGE")
+        
         self.future_response2 = await self._execute_client.send_goal_async(exec_msg)
         self.execute_response = await self.future_response2.get_result_async()
+        self.get_logger().info(f" FINISHED EXECUTING- CHANGING TO IDLE")
+        self.state=State.IDLE
         response = Empty.Response()
 
         return response
