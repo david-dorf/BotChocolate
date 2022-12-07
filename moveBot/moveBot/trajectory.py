@@ -335,17 +335,17 @@ class TrajectoryCaller(Node):
             ],
             "kettle_return_standoff": [
                 [
-                    self.jig_pose.position.x+0.11,
-                    self.jig_pose.position.y+0.08,
+                    self.jig_pose.position.x-0.3,
+                    self.jig_pose.position.y-0.02,
                     self.jig_pose.position.z + 0.4, #0.4
                 ],
                 [],
             ],
             "kettle_return": [
                 [
-                    self.jig_pose.position.x+0.11,
-                    self.jig_pose.position.y+0.08,
-                    self.jig_pose.position.z + 0.175,
+                    self.jig_pose.position.x-0.3,
+                    self.jig_pose.position.y-0.02,
+                    self.jig_pose.position.z + 0.17,
                 ],
                 [],
             ],
@@ -374,7 +374,7 @@ class TrajectoryCaller(Node):
                     [],
                     [pi,0.0,-pi/4]
                 ],
-            "rotate_minus_00_yaw": [
+            "rotate_minus_0_yaw": [
                     [],
                     [pi,0.0,0.0]
                 ],
@@ -404,9 +404,9 @@ class TrajectoryCaller(Node):
                 ],
             "pour_so_2": [
                 [
-                    self.cup_pose.position.x, #-0.03,
+                    self.cup_pose.position.x -0.03,
                     self.cup_pose.position.y,#-0.02,
-                    self.cup_pose.position.z + 0.4,
+                    self.cup_pose.position.z + 0.38 ,
                 ],
                 [],
             ],
@@ -574,7 +574,7 @@ class TrajectoryCaller(Node):
         self.open_gripper()
         time.sleep(3)
         self.plan(self.waypoints.scoop_standoff, execute_now=True)
-        self.plan(self.waypoints.rotate_minus_90_yaw, execute_now=True)
+        self.plan(self.waypoints.rotate_minus_0_yaw, execute_now=True)
         
         self.plan(self.waypoints.kettle_standoff, execute_now=True)
         self.plan(self.waypoints.kettle, execute_now=True)
@@ -585,83 +585,55 @@ class TrajectoryCaller(Node):
         time.sleep(3)
         self.GRIP = False
 
-        # self.plan(self.waypoints.rotate_90, execute_now=True)
+        self.plan(self.waypoints.kettle_standoff, execute_now=True)
+        self.plan(self.waypoints.cup_pour, execute_now=True)
+        self.plan(self.waypoints.pour_rot_1, execute_now=True)
+        self.plan(self.waypoints.pour_so_1, execute_now=True)
         
-        # # self.plan(self.waypoints.scoop_standoff, execute_now=True)
-
-        # self.plan(self.waypoints.scoop_handle, execute_now=True)
-
-
-
-        # self.plan(self.waypoints.scoop_standoff, execute_now=True)
-
-
-
-        # # self.plan(self.waypoints.scoop_standoff, execute_now=True)
-        # self.plan(self.waypoints.scoop_handle, execute_now=True)
-        # self.open_gripper()
-        # time.sleep(3)
-        # self.plan(self.waypoints.scoop_standoff, execute_now=True)
-        # self.plan(self.waypoints.straighten, execute_now=True)
-        # # self.plan(self.waypoints.move_home, execute_now=True)
-        # # self.plan(self.waypoints.send_home, execute_now=True)
-
-        # # # Go to kettle
-
-
-        # if not self.GRIP:
-        #     self.grasp(width=0.008,force=90.0)
-        #     self.GRIP = True
-        # time.sleep(3)
-        # self.GRIP = False
-        # self.plan(self.waypoints.kettle_standoff, execute_now=True)
-
-        # self.plan(self.waypoints.cup_pour, execute_now=True)
-        # self.plan(self.waypoints.pour_rot_1, execute_now=True)
+        self.plan(self.waypoints.pour_so_2, execute_now=True)
+        self.plan(self.waypoints.pour_rot_2, execute_now=True)
         # self.plan(self.waypoints.pour_so_1, execute_now=True)
-        # self.plan(self.waypoints.pour_so_2, execute_now=True)
-        # self.plan(self.waypoints.pour_rot_2, execute_now=True)
-        # self.plan(self.waypoints.pour_so_1, execute_now=True)
-        # self.plan(self.waypoints.pour_rot_1, execute_now=True)
-        # self.plan(self.waypoints.cup_pour, execute_now=True)
+        self.plan(self.waypoints.pour_rot_1, execute_now=True)
+        self.plan(self.waypoints.cup_pour, execute_now=True)
         # #self.plan(self.waypoints.pour_so_1, execute_now=True)
         # self.plan(self.waypoints.rotate_home, execute_now=True)
-            
+        self.plan(self.waypoints.rotate_minus_0_yaw, execute_now=True)
 
-        # # # put kettle down
-        # self.plan(self.waypoints.kettle_return_standoff,execute_now=True)
-        # self.plan(self.waypoints.kettle_return,execute_now=True)
-        # self.open_gripper()
-        # time.sleep(3)
-        # self.plan(self.waypoints.kettle_return_standoff,execute_now=True)
-        # # self.plan(self.waypoints.send_home, execute_now=True)
 
-        # # self.plan(self.waypoints.rot_home,execute_now=True)
+        # # put kettle down
+        self.plan(self.waypoints.kettle_return_standoff,execute_now=True)
+        self.plan(self.waypoints.kettle_return,execute_now=True)
+        self.open_gripper()
+        time.sleep(6)
+        self.plan(self.waypoints.kettle_return_standoff,execute_now=True)
+        
+################# ABOVE GOOD ##########################
+########### DO NOT CHANGE UNTIL TUNING #################
 
-        # #   STIR
-        # self.plan(self.waypoints.stir_standoff, execute_now=True)
-        # self.plan(self.waypoints.stir_handle, execute_now=True)
-        # if not self.GRIP:
-        #     self.grasp(width=0.001,force=90.0)
-        #     self.GRIP = True
-        # time.sleep(2)
-        # self.plan(self.waypoints.stir_standoff, execute_now=True)
-        # self.plan(self.waypoints.cup_standoff, execute_now=True)
-        # self.plan(self.waypoints.cup_center, execute_now=True)
-        # self.stir_duration = 4
-        # for i in range(self.stir_duration):
-        #     self.plan(self.waypoints.stir1, execute_now=True)
-        #     self.plan(self.waypoints.stir2, execute_now=True)
-        #     self.plan(self.waypoints.stir3, execute_now=True)
-        #     self.plan(self.waypoints.stir4, execute_now=True)
-        # self.plan(self.waypoints.cup_center, execute_now=True)
-        # self.plan(self.waypoints.cup_standoff, execute_now=True)
-        # self.plan(self.waypoints.stir_standoff, execute_now=True)
-        # self.plan(self.waypoints.stir_handle, execute_now=True)
-        # if self.GRIP:
-        #     self.open_gripper()
-        #     self.GRIP = False
-        # self.plan(self.waypoints.stir_standoff, execute_now=True)
+        #   STIR
+        self.plan(self.waypoints.stir_standoff, execute_now=True)
+        self.plan(self.waypoints.stir_handle, execute_now=True)
+        if not self.GRIP:
+            self.grasp(width=0.001,force=90.0)
+            self.GRIP = True
+        time.sleep(2)
+        self.plan(self.waypoints.stir_standoff, execute_now=True)
+        self.plan(self.waypoints.cup_standoff, execute_now=True)
+        self.plan(self.waypoints.cup_center, execute_now=True)
+        self.stir_duration = 4
+        for i in range(self.stir_duration):
+            self.plan(self.waypoints.stir1, execute_now=True)
+            self.plan(self.waypoints.stir2, execute_now=True)
+            self.plan(self.waypoints.stir3, execute_now=True)
+            self.plan(self.waypoints.stir4, execute_now=True)
+        self.plan(self.waypoints.cup_center, execute_now=True)
+        self.plan(self.waypoints.cup_standoff, execute_now=True)
+        self.plan(self.waypoints.stir_standoff, execute_now=True)
+        self.plan(self.waypoints.stir_handle, execute_now=True)
+        if self.GRIP:
+            self.open_gripper()
+            self.GRIP = False
+        self.plan(self.waypoints.stir_standoff, execute_now=True)
         # self.plan(self.waypoints.send_home, execute_now=True)
 
         return response
