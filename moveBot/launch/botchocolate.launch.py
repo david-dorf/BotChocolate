@@ -13,20 +13,17 @@ def generate_launch_description():
     Launches simple_move, vision stuff, and rviz.
 
     # With the real robot:
-    ros2 launch moveBot botchocolate.launch.py rviz:=real
+    ros2 launch moveBot botchocolate.launch.py real:=true
 
     # With fake hardware/only rviz on your computer:
-    ros2 launch moveBot botchocolate.launch.py rviz:=fake
-
-    # With real robot but do not start rviz
-    ros2 launch moveBot botchocolate.launch.py rviz:=none
+    ros2 launch moveBot botchocolate.launch.py real:=false
 
     '''
     
-    rviz_cmd = DeclareLaunchArgument(
-        "rviz",
-        default_value="real",
-        description="Choose whether to use rviz"
+    real = DeclareLaunchArgument(
+        "real",
+        default_value="true",
+        description="Choose whether to use the real robot"
     )
 
 
@@ -56,7 +53,7 @@ def generate_launch_description():
             "robot_ip:=dont-care",
             "use_fake_hardware:=true"
         ],
-        condition = LaunchConfigurationEquals("rviz","fake")
+        condition = LaunchConfigurationEquals("real","false")
     )
 
 
@@ -69,7 +66,7 @@ def generate_launch_description():
             "rviz.launch.py",
             "robot_ip:=panda0.robot",
         ],
-        condition = LaunchConfigurationEquals("rviz","real")
+        condition = LaunchConfigurationEquals("real","true")
 
     )
 
@@ -79,7 +76,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             [FindPackageShare("bot_vis"),"/launch/","launch_vision.py"]
         ),
-        condition = LaunchConfigurationEquals("rviz","real")
+        condition = LaunchConfigurationEquals("real","true")
     )
     
 
