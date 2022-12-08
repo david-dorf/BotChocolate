@@ -6,14 +6,12 @@ from std_srvs.srv import Empty
 import time
 from movebot_interfaces.srv import AddBox, GetPlanRqst
 from geometry_msgs.msg import Pose
-
 # from moveBot.gripper import Gripper
 from rclpy.action import ActionClient
 from control_msgs.action import GripperCommand
 from franka_msgs.action import Grasp
 from franka_msgs.action import Homing
 from math import pi
-
 from types import SimpleNamespace
 
 
@@ -22,9 +20,19 @@ class State(Enum):
     stored trajectory plan sequence, for executing it only once at the end.
     """
 
-    IDLE = auto(),
-    GO_SCOOP = auto(),
-    PLAN = auto(),
+    IDLE = (auto(),)
+    # MAKE_PLAN_SCENE=auto(),
+    SCOOP_STANDOFF = (auto(),)
+    SCOOP_HANDLE = (auto(),)
+    KETTLE_STANDOFF = (auto(),)
+    KETTLE = (auto(),)
+    KETTLE_SWITCH_STANDOFF = (auto(),)
+    STIR_STANDOFF = (auto(),)
+    STIR_HANDLE = (auto(),)
+
+    KETTLE_SWITCH = (auto(),)
+
+    PLAN = (auto(),)
     EXECUTE = auto()
 
 
@@ -90,7 +98,6 @@ class TrajectoryCaller(Node):
     def __init__(self):
         super().__init__("trajectory_node")
         self.cbgroup = ReentrantCallbackGroup()
-        self.state = State.IDLE
 
         # Subscribe to object positions from computer vision
         self.scoop_sub = self.create_subscription(
@@ -108,6 +115,9 @@ class TrajectoryCaller(Node):
         self.kettle_switch_sub = self.create_subscription(
             Pose, "kettle_switch_xyz", self.get_kettle_switch_pose_callback, 10
         )
+        self.jig_sub = self.create_subscription(
+            Pose, "jig_xyz", self.get_jig_pose_callback, 10
+        )
 
         # Initialize robot trajectory clients
         self.plan_client = self.create_client(
@@ -119,6 +129,11 @@ class TrajectoryCaller(Node):
         self.execute_client = self.create_client(
             Empty, "call_execute", callback_group=self.cbgroup
         )
+
+        self.execute_final_path_client = self.create_service(
+            Empty, "make_hot_chocolate", self.make_chocolate_callback
+        )
+
         self.request = GetPlanRqst.Request()
 
         # Initialize gripper action clients
@@ -129,18 +144,21 @@ class TrajectoryCaller(Node):
         self._homing_client = ActionClient(self, Homing, "/panda_gripper/homing")
 
         # Initialize the timer callback
-        self.timer = self.create_timer(1 / 100, self.timer_callback)
+        self.state = State.IDLE
+        self.plan_scene_flag = 0
+        self.trial_flag = 0
 
         # Define the initial state of the robot
         self.home_x = 0.3
         self.home_y = 0.0
         self.home_z = 0.5
-        self.home_roll = 0.0
+        self.home_roll = pi
         self.home_pitch = 0.0
-        self.home_yaw = 0.78
+        self.home_yaw = 0.0
         self.GRIP = False
 
     def get_kettle_pose_callback(self, pose_msg):
+
         self.kettle_pose = pose_msg
 
     def get_pose_callback(self, pose_msg):
@@ -154,6 +172,9 @@ class TrajectoryCaller(Node):
 
     def get_kettle_switch_pose_callback(self, pose_msg):
         self.switch_pose = pose_msg
+
+    def get_jig_pose_callback(self, pose_msg):
+        self.jig_pose = pose_msg
 
     def grasp(self, width, speed=1.0, force=30.0, epsilon=(0.005, 0.005)):
         """
@@ -172,7 +193,9 @@ class TrajectoryCaller(Node):
         goal_msg.epsilon.inner = epsilon[0]
         goal_msg.epsilon.outer = epsilon[1]
         self._grasp_client.wait_for_server()
-        return self._grasp_client.send_goal_async(goal_msg)
+        self.future_grasp_res = self._grasp_client.send_goal_async(goal_msg)
+        self.get_logger().info("Done Grasping")
+        return self.future_grasp_res
 
     def open_gripper(self):
         """
@@ -186,7 +209,9 @@ class TrajectoryCaller(Node):
         goal_msg.command.position = 0.04
         goal_msg.command.max_effort = 1.0
         self._gripper_action_client.wait_for_server()
-        return self._gripper_action_client.send_goal_async(goal_msg)
+        self.future_open_res = self._gripper_action_client.send_goal_async(goal_msg)
+        self.get_logger().info("Gripper Open")
+        return self.future_open_res
 
     def home_gripper(self):
         """
@@ -201,17 +226,28 @@ class TrajectoryCaller(Node):
         self._homing_client.wait_for_server()
         return self._homing_client.send_goal_async(goal_msg)
 
-    def plan(self, waypoint):
+    def plan(self, waypoint, execute_now):
         """
-        Moves the end-effector the specified waypoint.
+        Moves the end-effector the specified waypoint
         """
         assert len(waypoint) == 2, "Invalid waypoint recieved"
         self.request.goal_pos.position = waypoint[0]
         self.request.goal_pos.orientation = waypoint[1]
-        self.request.is_xyzrpy = True
-        self.request.execute_now = True
-        self.future = self.cart_client.call_async(self.request)
+
+        if len(waypoint[0]) > 3:
+            self.request.is_xyzrpy = False  # SENDING HOME JOINT STATES
+        else:
+            self.request.is_xyzrpy = True
+        self.request.execute_now = False  # execute_now
+
+        self.future = self.plan_client.call_async(self.request)
         rclpy.spin_until_future_complete(self, self.future)
+
+        if execute_now and not self.request.goal_pos.orientation:
+            self.send_execute_request()
+        elif execute_now and not self.request.goal_pos.position:
+            self.get_logger().info("FINISHED EXECUTING- CHANGING STATES")
+            self.send_execute_request()
         return self.future.result()
 
     def send_execute_request(self):
@@ -221,6 +257,9 @@ class TrajectoryCaller(Node):
         """
         self.future = self.execute_client.call_async(Empty.Request())
         rclpy.spin_until_future_complete(self, self.future)
+
+        self.get_logger().info("FINISHED EXECUTING- CHANGING STATES")
+
         return self.future.result()
 
     def define_waypoints(self):
@@ -235,11 +274,39 @@ class TrajectoryCaller(Node):
         (roll, pitch, yaw) of the EE at the waypoint.
         """
         waypoints_dict = {
+            "send_home": [
+                [
+                    -0.001312,
+                    -0.787102,
+                    -0.003124,
+                    -2.357184,
+                    -0.000188,
+                    1.571918,
+                    0.783990,
+                    0.000323,
+                    0.000323,
+                ],
+                [],
+            ],
+            "new_home": [
+                [
+                    pi / 2,
+                    -0.783508,
+                    -0.000244,
+                    -2.356829,
+                    -0.003843,
+                    1.572944,
+                    -0.784056,
+                    0.034865,
+                    0.034865,
+                ],
+                [],
+            ],
             "scoop_standoff": [
                 [
                     self.scoop_pose.position.x,
                     self.scoop_pose.position.y,
-                    self.scoop_pose.position.z + 0.09,
+                    self.scoop_pose.position.z + 0.15,
                 ],
                 [],
             ],
@@ -247,7 +314,7 @@ class TrajectoryCaller(Node):
                 [
                     self.scoop_pose.position.x,
                     self.scoop_pose.position.y,
-                    self.scoop_pose.position.z + 0.06,
+                    self.scoop_pose.position.z,
                 ],
                 [],
             ],
@@ -255,7 +322,7 @@ class TrajectoryCaller(Node):
                 [
                     self.kettle_pose.position.x,
                     self.kettle_pose.position.y,
-                    self.kettle_pose.position.z + 0.12,
+                    self.kettle_pose.position.z + 0.15,
                 ],
                 [],
             ],
@@ -263,14 +330,32 @@ class TrajectoryCaller(Node):
                 [
                     self.kettle_pose.position.x,
                     self.kettle_pose.position.y,
-                    self.kettle_pose.position.z + 0.015,
+                    self.kettle_pose.position.z + 0.035,
+                ],
+                [],
+            ],
+            "kettle_return_standoff": [
+                [
+                    self.jig_pose.position.x - 0.3,
+                    self.jig_pose.position.y - 0.02,
+                    self.jig_pose.position.z + 0.4,  # 0.4
+                ],
+                [],
+            ],
+            "kettle_return": [
+                [
+                    self.jig_pose.position.x - 0.3,
+                    self.jig_pose.position.y - 0.02,
+                    self.jig_pose.position.z + 0.13,
                 ],
                 [],
             ],
             "move_test": [[0.3, 0.3, 0.3], []],
             "move_home": [[self.home_x, self.home_y, self.home_z], []],
-            "rotate_home": [[], [0.0, 0.0, self.home_yaw]],
-            "rotate_90": [[], [0.0, 0.0, pi / 2]],
+            "rot_home": [[], [self.home_roll, self.home_pitch, self.home_yaw]],
+            "rotate_home": [[], [pi, 0.0, 0.0]],
+            "rotate_90": [[], [pi, 0.0, pi / 2]],
+            "straighten": [[], [pi, 0.0, 0.0]],
             "kettle_switch_standoff": [
                 [
                     self.switch_pose.position.x,
@@ -279,6 +364,35 @@ class TrajectoryCaller(Node):
                 ],
                 [],
             ],
+            "rotate_minus_45_yaw": [[], [pi, 0.0, -pi / 4]],
+            "rotate_minus_0_yaw": [[], [pi, 0.0, 0.0]],
+            "rotate_45": [[], [pi, -pi / 5, pi / 2]],
+            "rotate_45_back": [[], [pi, -pi / 4, pi / 2]],
+            "pour_rot_1": [[], [pi, 0.0, pi]],
+            "pour_rot_2": [[], [pi, -pi / 4, pi]],
+            "pour_rot_3": [[], [pi, -pi / 2, pi]],
+            "pour_so_1": [
+                [
+                    self.cup_pose.position.x - 0.03,
+                    self.cup_pose.position.y + 0.01,
+                    self.cup_pose.position.z + 0.45,
+                ],
+                [],
+            ],
+            # "pour_rot_2": [
+            #         [],
+            #         [pi,pi/2,0.0]
+            #     ],
+            "pour_so_2": [
+                [
+                    self.cup_pose.position.x - 0.03,
+                    self.cup_pose.position.y,  # -0.02,
+                    self.cup_pose.position.z + 0.38,
+                ],
+                [],
+            ],
+            "rotate_45_again": [[], [pi, pi / 2.7, pi / 2]],
+            "pour_rot_final": [[], [pi, -0.1, pi]],
             "kettle_switch": [
                 [
                     self.switch_pose.position.x,
@@ -299,15 +413,7 @@ class TrajectoryCaller(Node):
                 [
                     self.stir_pose.position.x,
                     self.stir_pose.position.y,
-                    self.stir_pose.position.z + 0.11,
-                ],
-                [],
-            ],
-            "cup_standoff": [
-                [
-                    self.cup_pose.position.x,
-                    self.cup_pose.position.y,
-                    self.cup_pose.position.z + 0.3,
+                    self.stir_pose.position.z + 0.05,
                 ],
                 [],
             ],
@@ -315,7 +421,7 @@ class TrajectoryCaller(Node):
                 [
                     self.cup_pose.position.x + -0.1,
                     self.cup_pose.position.y,
-                    self.cup_pose.position.z + 0.3,
+                    self.cup_pose.position.z + 0.5,
                 ],
                 [],
             ],
@@ -327,7 +433,6 @@ class TrajectoryCaller(Node):
                 ],
                 [],
             ],
-
             "stir1": [
                 [
                     self.cup_pose.position.x + 0.02,
@@ -336,7 +441,34 @@ class TrajectoryCaller(Node):
                 ],
                 [],
             ],
-
+            # "stir_handle": [
+            #     [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.11],
+            #     []
+            # ],
+            "cup_tilt_standoff": [
+                [
+                    self.cup_pose.position.x,
+                    self.cup_pose.position.y - 0.02,
+                    self.cup_pose.position.z + 0.2,
+                ],
+                [],
+            ],
+            "cup_standoff": [
+                [
+                    self.cup_pose.position.x,
+                    self.cup_pose.position.y,
+                    self.cup_pose.position.z + 0.3,
+                ],
+                [],
+            ],
+            "cup_handle": [
+                [
+                    self.cup_pose.position.x,
+                    self.cup_pose.position.y,
+                    self.cup_pose.position.z + 0.3,
+                ],
+                [],
+            ],
             "stir2": [
                 [
                     self.cup_pose.position.x,
@@ -345,7 +477,6 @@ class TrajectoryCaller(Node):
                 ],
                 [],
             ],
-
             "stir3": [
                 [
                     self.cup_pose.position.x - 0.02,
@@ -354,7 +485,6 @@ class TrajectoryCaller(Node):
                 ],
                 [],
             ],
-
             "stir4": [
                 [
                     self.cup_pose.position.x,
@@ -366,103 +496,129 @@ class TrajectoryCaller(Node):
         }
         self.waypoints = SimpleNamespace(**waypoints_dict)
 
-    def timer_callback(self):
-        # Add the collision boxes into the simulation
-        box_client = BoxCaller()
-        box_client.add_box_request()
-        box_client.call_box_request()
-        box_client.add_box2_request()
-        box_client.call_box_request()
+    def make_chocolate_callback(self, request, response):
 
-        # Update waypoints
+        self.get_logger().info(f"checking trial flag {self.trial_flag}")
+        if self.state == State.IDLE and self.plan_scene_flag == 0:
+            self.get_logger().info(f"checking plan flag {self.plan_scene_flag}")
+            box_client = BoxCaller()
+            box_client.add_box_request()
+            box_client.call_box_request()
+            box_client.add_box2_request()
+            box_client.call_box_request()
+            self.plan_scene_flag += 1
         self.define_waypoints()
+        self.get_logger().info(f" CURRENT STATE {self.state}")
 
-        # Execute the trajectory sequence
-        if self.waypoints is not None:
-            # KETTLE SWITCH
-            # Move the kettle over the cup and pour, then put kettle back
-            self.plan(self.waypoints.kettle_switch_standoff)
-            self.send_execute_request()
-            # Close the gripper before pressing down the switch
-            if not self.GRIP:
-                self.grasp(width=0.008,force=90.0)
-                self.GRIP = True
-            self.plan(self.waypoints.kettle_switch)
-            self.send_execute_request()
-            self.plan(self.waypoints.kettle_switch_standoff)
-            self.send_execute_request()
-            if self.GRIP:
-                self.open_gripper()
-                self.GRIP = False
-            # Add a delay here to allow water to heat up
-            # heating_time = 10
-            # time.sleep(heating_time)
+        # if self.trial_flag==0:
+        #     self.get_logger().info(f"ran already {self.trial_flag}")
 
-            # KETTLE
-            # Move the kettle over the cup and pour, then put kettle back
-            self.plan(self.waypoints.kettle_standoff)
-            self.plan(self.waypoints.kettle)
-            if not self.GRIP:
-                self.grasp(width=0.008,force=90.0)
-                self.GRIP = True
-            self.plan(self.waypoints.kettle_standoff)
-            self.plan(self.waypoints.cup_pour)
-            # ROTATE TO POUR
-            self.plan(self.waypoints.kettle_standoff)
-            self.plan(self.waypoints.kettle)
-            if self.GRIP:
-                self.open_gripper()
-                self.GRIP = False
-            self.plan(self.waypoints.kettle_standoff)
+        self.plan(self.waypoints.new_home, execute_now=True)
 
-            # SCOOP
-            # Move the cocoa scoop over the cup and pour, then put scoop back
-            self.plan(self.waypoints.scoop_standoff)
-            self.plan(self.waypoints.scoop_handle)
-            if not self.GRIP:
-                self.grasp(width=0.008,force=90.0)
-                self.GRIP = True
-            self.plan(self.waypoints.scoop_standoff)
-            self.plan(self.waypoints.cup_pour)
-            # ROTATE TO POUR
-            self.plan(self.waypoints.scoop_standoff)
-            self.plan(self.waypoints.scoop_handle)
-            if self.GRIP:
-                self.open_gripper()
-                self.GRIP = False
-            self.plan(self.waypoints.scoop_standoff)
+        # time.sleep(5)
+        self.plan(self.waypoints.kettle_switch_standoff, execute_now=True)
 
-            # STIR
-            self.plan(self.waypoints.stir_standoff)
-            self.plan(self.waypoints.stir_handle)
-            if not self.GRIP:
-                self.grasp(width=0.008,force=90.0)
-                self.GRIP = True
-            self.plan(self.waypoints.stir_standoff)
-            self.plan(self.waypoints.cup_standoff)
-            self.plan(self.waypoints.cup_center)
-            self.stir_duration = 4
-            for i in range(self.stir_duration):
-                self.plan(self.waypoints.stir1)
-                self.plan(self.waypoints.stir2)
-                self.plan(self.waypoints.stir3)
-                self.plan(self.waypoints.stir4)
-            self.plan(self.waypoints.cup_center)
-            self.plan(self.waypoints.cup_standoff)
-            self.plan(self.waypoints.stir_standoff)
-            self.plan(self.waypoints.stir_handle)
-            if self.GRIP:
-                self.open_gripper()
-                self.GRIP = False
-            self.plan(self.waypoints.stir_standoff)
+        if not self.GRIP:
+            self.grasp(width=0.008, force=90.0)
+            self.GRIP = True
+        time.sleep(3)
+        self.GRIP = False
 
-            # Could optionally add a TF for the cup handle to serve the user
+        self.plan(self.waypoints.kettle_switch, execute_now=True)
+        self.plan(self.waypoints.kettle_switch_standoff, execute_now=True)
+        self.open_gripper()
+        time.sleep(3)
 
-            # RETURN HOME
-            self.plan(self.waypoints.move_home)
+        self.plan(self.waypoints.cup_tilt_standoff, execute_now=True)
+        self.plan(self.waypoints.new_home, execute_now=True)
+        # self.send_execute_request()
+        self.plan(self.waypoints.scoop_standoff, execute_now=True)
+        self.plan(self.waypoints.rotate_90, execute_now=True)
+        self.plan(self.waypoints.rotate_45, execute_now=True)
+        self.plan(self.waypoints.scoop_handle, execute_now=True)
 
-        # Clear the simulation collision boxes
+        self.grasp(width=0.008, force=90.0)
+
+        time.sleep(3)
+
+        self.plan(self.waypoints.scoop_standoff, execute_now=True)
+        self.plan(self.waypoints.cup_tilt_standoff, execute_now=True)
+        self.plan(self.waypoints.rotate_90, execute_now=True)
+        self.plan(self.waypoints.rotate_45_again, execute_now=True)
+        self.plan(self.waypoints.rotate_90, execute_now=True)
+
+        self.plan(self.waypoints.cup_tilt_standoff, execute_now=True)
+
+        self.plan(self.waypoints.scoop_standoff, execute_now=True)
+        self.plan(self.waypoints.rotate_45, execute_now=True)
+        self.plan(self.waypoints.scoop_handle, execute_now=True)
+        self.open_gripper()
+        time.sleep(3)
+        self.plan(self.waypoints.scoop_standoff, execute_now=True)
+        self.plan(self.waypoints.new_home, execute_now=True)
+
+        self.plan(self.waypoints.kettle_standoff, execute_now=True)
+        self.plan(self.waypoints.kettle, execute_now=True)
+
+        self.grasp(width=0.008, force=90.0)
+        time.sleep(3)
+
+        self.plan(self.waypoints.kettle_standoff, execute_now=True)
+        self.plan(self.waypoints.cup_pour, execute_now=True)
+        self.plan(self.waypoints.pour_so_1, execute_now=True)
+        self.plan(self.waypoints.pour_rot_1, execute_now=True)
+        self.plan(self.waypoints.pour_rot_2, execute_now=True)
+        self.plan(self.waypoints.pour_so_2, execute_now=True)
+        self.plan(self.waypoints.pour_rot_3, execute_now=True)
+        time.sleep(5)
+        self.plan(self.waypoints.pour_so_1, execute_now=True)
+        self.plan(self.waypoints.pour_rot_2, execute_now=True)
+        self.plan(self.waypoints.pour_rot_1, execute_now=True)
+
+        # put kettle down
+        self.plan(self.waypoints.kettle_return_standoff, execute_now=True)
+        self.plan(self.waypoints.pour_rot_1, execute_now=True)
+        # self.plan(self.waypoints.pour_rot_final, execute_now=True)
+        self.plan(self.waypoints.kettle_return, execute_now=True)
+        self.open_gripper()
+        time.sleep(6)
+        self.plan(self.waypoints.kettle_return_standoff, execute_now=True)
+
+        # ################# ABOVE GOOD ##########################
+        # ########### DO NOT CHANGE UNTIL TUNING #################
+
+        #   STIR
+        self.plan(self.waypoints.stir_standoff, execute_now=True)
+        self.plan(self.waypoints.stir_handle, execute_now=True)
+        if not self.GRIP:
+            self.grasp(width=0.001, force=90.0)
+            self.GRIP = True
+        time.sleep(2)
+        self.plan(self.waypoints.stir_standoff, execute_now=True)
+        self.plan(self.waypoints.cup_standoff, execute_now=True)
+        self.plan(self.waypoints.cup_center, execute_now=True)
+        self.stir_duration = 4
+        for i in range(self.stir_duration):
+            self.plan(self.waypoints.stir1, execute_now=True)
+            self.plan(self.waypoints.stir2, execute_now=True)
+            self.plan(self.waypoints.stir3, execute_now=True)
+            self.plan(self.waypoints.stir4, execute_now=True)
+        self.plan(self.waypoints.cup_center, execute_now=True)
+        self.plan(self.waypoints.cup_standoff, execute_now=True)
+        self.plan(self.waypoints.stir_standoff, execute_now=True)
+        self.plan(self.waypoints.stir_handle, execute_now=True)
+        if self.GRIP:
+            self.open_gripper()
+            self.GRIP = False
+        self.plan(self.waypoints.stir_standoff, execute_now=True)
+
+        self.plan(self.waypoints.cup_tilt_standoff, execute_now=True)
+        self.plan(self.waypoints.new_home, execute_now=True)
+
+        self.trial_flag += 1
+
         box_client.clear_box_request()
+        return response
 
 
 def main(args=None):
