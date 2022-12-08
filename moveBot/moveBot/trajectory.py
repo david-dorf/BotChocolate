@@ -148,6 +148,7 @@ class TrajectoryCaller(Node):
         # Initialize the timer callback
         self.state = State.IDLE
         self.plan_scene_flag=0
+        self.trial_flag=0
 
         # Define the initial state of the robot
         self.home_x = 0.3
@@ -522,7 +523,10 @@ class TrajectoryCaller(Node):
 
 
     def make_chocolate_callback(self,request,response):
+        
+        self.get_logger().info(f"checking trial flag {self.trial_flag}")
         if self.state==State.IDLE and self.plan_scene_flag==0:
+            self.get_logger().info(f"checking plan flag {self.plan_scene_flag}")
             box_client = BoxCaller()
             box_client.add_box_request()
             box_client.call_box_request()
@@ -532,6 +536,10 @@ class TrajectoryCaller(Node):
 
         self.define_waypoints()
         self.get_logger().info(f" CURRENT STATE {self.state}")
+        
+        # if self.trial_flag==0:
+        #     self.get_logger().info(f"ran already {self.trial_flag}")
+
         self.plan(self.waypoints.new_home, execute_now=True)
 
         # time.sleep(5)
@@ -638,6 +646,10 @@ class TrajectoryCaller(Node):
 
         self.plan(self.waypoints.cup_tilt_standoff, execute_now=True)
         self.plan(self.waypoints.new_home, execute_now=True)
+
+        self.trial_flag+=1
+        
+        box_client.clear_box_request()
         return response
 
 
