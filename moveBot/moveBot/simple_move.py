@@ -167,11 +167,11 @@ class MoveBot(Node):
             self.clear_callback,
             callback_group=self.cbgroup)
 
-        self.clear_current_box = self.create_service(
-            Empty,
-            "clear_current_box",
-            self.remove_callback,
-            callback_group=self.cbgroup)
+        # self.clear_current_box = self.create_service(
+        #     Empty,
+        #     "clear_current_box",
+        #     self.remove_callback,
+        #     callback_group=self.cbgroup)
 
         self.scene_client = self.create_client(
             GetPlanningScene,
@@ -303,35 +303,35 @@ class MoveBot(Node):
 
         return Empty.Response()
 
-    async def remove_callback(self, request, response):
-        """
-        Call back function for clear_current_box service.
+    # async def remove_callback(self, request, response):
+    #     """
+    #     Call back function for clear_current_box service.
 
-        Clear the box in PlanningScene.world.collision_objects
-        with the id which is match the save box information
+    #     Clear the box in PlanningScene.world.collision_objects
+    #     with the id which is match the save box information
 
-        :param request: Empty.
-        :type request: movebot_interface/srv/AddBox.request
-        :param response: Empty.
-        :type response: movebot_interface/srv/AddBox.response
+    #     :param request: Empty.
+    #     :type request: movebot_interface/srv/AddBox.request
+    #     :param response: Empty.
+    #     :type response: movebot_interface/srv/AddBox.response
     
-        :rtype: std_srvs.srv.Empty.Response()
+    #     :rtype: std_srvs.srv.Empty.Response()
 
-        """
-        component = PlanningSceneComponents()
-        Scene_raw = await self.scene_client.call_async(
-            GetPlanningScene.Request(components=component)
-            )
-        Scene = Scene_raw.scene
+    #     """
+    #     component = PlanningSceneComponents()
+    #     Scene_raw = await self.scene_client.call_async(
+    #         GetPlanningScene.Request(components=component)
+    #         )
+    #     Scene = Scene_raw.scene
 
-        for i in Scene.world.collision_objects:
-            if i.id == self.box_name:
-                Scene.world.collision_objects.remove(i)
-                break
+    #     for i in Scene.world.collision_objects:
+    #         if i.id == self.box_name:
+    #             Scene.world.collision_objects.remove(i)
+    #             break
 
-        self.box_publisher.publish(Scene)
+    #     self.box_publisher.publish(Scene)
 
-        return Empty.Response()
+    #     return Empty.Response()
 
     def js_cb(self, jointstate):
         """
@@ -508,24 +508,12 @@ class MoveBot(Node):
         goal_constraints = Constraints()
 
 
-        # self.get_logger().info(f"joint names {self.joint_statesmsg.name}")
-        # self.get_logger().info(f"goal {goal.joint_state.position}")    
-        # self.get_logger().info(f"goal e.e {goal.joint_state.position[6]}")    
-
-        # if goal.joint_state
-
-        # self.get_logger().info(f'all {goal.joint_state.position}')
-
-        self.get_logger().info(f'joint namess {goal.joint_state.position}')
 
         for i in range(len(self.joint_statesmsg.name)):
-            # print('ajj',goal.joint_state.position[i])
-            # self.get_logger().info(f'IIIIII {i}')
             joint_constraints = JointConstraint()
             joint_constraints.joint_name = self.joint_statesmsg.name[i]
             joint_constraints.position = goal.joint_state.position[i] #goal.joint_state.position[i]
             
-            # joint_constraints.position = self.joint_statesmsg.position[i] 
             joint_constraints.tolerance_above =0.002
             joint_constraints.tolerance_below = 0.002
             joint_constraints.weight = 1.0
@@ -593,10 +581,6 @@ class MoveBot(Node):
 
         """
 
-        # if not request.goal_pos.position and self.state==State.IDLE:
-        #     self.state=State.ROT_MSG
-        # elif not request.goal_pos.orientation and self.state==State.IDLE:
-        #     self.state=State.CART_MSG
     
         self.get_logger().info(f"READY TO PLAN {self.state}")
         if request.is_xyzrpy:  # If start pos was given as X,Y,Z, R, P, Y
@@ -652,10 +636,8 @@ class MoveBot(Node):
             self.future_response = await self._plan_client.send_goal_async(plan_msg)
             self.plan_response = await self.future_response.get_result_async()
 
-            # if self.state==State.ROT_MSG:  
             self.get_logger().info(f"CHANGING TO PLAN EXEC STATE")
             self.state=State.PLAN_EXEC
-            # print('SENDING ROT MSG')
             self.get_logger().info(f"CURRENT STATE {self.state}")
             # print(self.state)
             if request.execute_now==True:
@@ -721,12 +703,7 @@ class MoveBot(Node):
             start_in_joint_config.joint_state = self.joint_statesmsg
 
             goal_in_joint_config = RobotState()
-            # tmp = JointState()
-            # tmp.position = request.goal_pos.position
-            # self.get_logger().info(f'akk {request.goal_pos.position[1]}')
-            # self.get_logger().info(f'akk {request.goal_pos.position}')
-            goal_in_joint_config.joint_state.position= self.joint_statesmsg.position #request.goal_pos.position ## GOAL POS IS JUST JOINT STATES
-            # self.get_logger().info(f'akk,  {goal_in_joint_config.joint_state.position}')
+            goal_in_joint_config.joint_state.position= self.joint_statesmsg.position ## GOAL POS IS JUST JOINT STATES
             plan_msg = self.get_motion_request(
                     start_in_joint_config,
                     goal_in_joint_config,
@@ -791,7 +768,6 @@ class MoveBot(Node):
         :rtype: std_srvs.srv.Empty.Response()
 
         """
-        # print(self.state)
         exec_msg = self.send_execute()
 
         if self.state==State.CART_EXEC:
@@ -816,27 +792,6 @@ class MoveBot(Node):
                 'panda_link0',
                 'panda_hand_tcp',
                 rclpy.time.Time())
-
-            # self.get_logger().info(f"LISTENER X QUAT {self.ee_base.transform.rotation.x}", once=True)
-            # self.get_logger().info(f"LISTENER Y QUAT {self.ee_base.transform.rotation.y}", once=True)
-            # self.get_logger().info(f"LISTENER Z QUAT {self.ee_base.transform.rotation.z}", once=True)
-            # self.get_logger().info(f"LISTENER W QUAT {self.ee_base.transform.rotation.w}", once=True)
-
-
-            # self.get_logger().info(f"LISTENER X POS {self.ee_base.transform.translation.x}", once=True)
-            # self.get_logger().info(f"LISTENER Y POS {self.ee_base.transform.translation.y}", once=True)
-            # self.get_logger().info(f"LISTENER Z POS {self.ee_base.transform.translation.z}", once=True)
-
-            #  r,p,y = euler_from_quaternion(
-                #  self.ee_base.transform.rotation.x,
-                #  self.ee_base.transform.rotation.y,
-                #  self.ee_base.transform.rotation.z,
-                #  self.ee_base.transform.rotation.w
-            #  )
-
-            #  self.get_logger().info(f"LISTENER X ROT {r}",once=True)
-            #  self.get_logger().info(f"LISTENER Y ROT {p}",once=True)
-            #  self.get_logger().info(f"LISTENER Z ROT {y}",once=True)
         
             self.get_logger().info("Panda TF data Status:OK",once=True)
         except:

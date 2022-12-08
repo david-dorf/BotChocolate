@@ -146,7 +146,6 @@ class TrajectoryCaller(Node):
         self._homing_client = ActionClient(self, Homing, "/panda_gripper/homing")
 
         # Initialize the timer callback
-        # self.timer = self.create_timer(1 / 100, self.timer_callback)
         self.state = State.IDLE
         self.plan_scene_flag=0
 
@@ -196,7 +195,6 @@ class TrajectoryCaller(Node):
         goal_msg.epsilon.outer = epsilon[1]
         self._grasp_client.wait_for_server()
         self.future_grasp_res= self._grasp_client.send_goal_async(goal_msg)
-        #self.grasp_response=await self.future_grasp_res.get_result_async()
         self.get_logger().info("Done Grasping")
         return self.future_grasp_res
 
@@ -213,7 +211,6 @@ class TrajectoryCaller(Node):
         goal_msg.command.max_effort = 1.0
         self._gripper_action_client.wait_for_server()
         self.future_open_res= self._gripper_action_client.send_goal_async(goal_msg)
-        #self.open_response=await self.future_open_res.get_result_async()
         self.get_logger().info("Gripper Open")
         return self.future_open_res
 
@@ -230,18 +227,6 @@ class TrajectoryCaller(Node):
         self._homing_client.wait_for_server()
         return self._homing_client.send_goal_async(goal_msg)
 
-    # def plan(self, waypoint):
-        # """
-        # Moves the end-effector the specified waypoint.
-        # """
-        # assert len(waypoint) == 2, "Invalid waypoint recieved"
-        # self.request.goal_pos.position = waypoint[0]
-        # self.request.goal_pos.orientation = waypoint[1]
-        # self.request.is_xyzrpy = True
-        # self.request.execute_now = True
-        # self.future = self.cart_client.call_async(self.request)
-        # rclpy.spin_until_future_complete(self, self.future)
-        # return self.future.result()
         
     def plan(self,waypoint,execute_now):
         '''
@@ -252,18 +237,14 @@ class TrajectoryCaller(Node):
         self.request.goal_pos.orientation = waypoint[1]
 
         if len(waypoint[0])>3:
-            print('BITCH')
             self.request.is_xyzrpy = False ## SENDING HOME JOINT STATES 
         else:
-            print('TRUEEEEE')
             self.request.is_xyzrpy = True
         self.request.execute_now = False#execute_now
 
         self.future = self.plan_client.call_async(self.request)
         rclpy.spin_until_future_complete(self, self.future)
-        
-        # TODO: Need to adjust state machine in API 
-        # so we can just set execute_now flag instead of this
+
         if execute_now and not self.request.goal_pos.orientation :
             self.send_execute_request()
         elif execute_now and not self.request.goal_pos.position:
@@ -346,7 +327,7 @@ class TrajectoryCaller(Node):
                 [
                     self.jig_pose.position.x-0.3,
                     self.jig_pose.position.y-0.02,
-                    self.jig_pose.position.z + 0.17,
+                    self.jig_pose.position.z + 0.13,
                 ],
                 [],
             ],
@@ -396,11 +377,15 @@ class TrajectoryCaller(Node):
                     [],
                     [pi,-pi/4,pi]
                 ],
+            "pour_rot_3": [
+                    [],
+                    [pi,-pi/2,pi]
+                ],
             "pour_so_1": [
                 [
                     self.cup_pose.position.x-0.03,
                     self.cup_pose.position.y+0.01,
-                    self.cup_pose.position.z + 0.40,
+                    self.cup_pose.position.z + 0.45,
                 ],
                 [],
             ],
@@ -420,6 +405,12 @@ class TrajectoryCaller(Node):
                     [],
                     [pi,pi/2.7,pi/2]
                 ],
+            
+            "pour_rot_final": [
+                    [],
+                    [pi,-0.5,pi]
+                ],
+            
             
             "kettle_switch": [
                 [
@@ -458,7 +449,7 @@ class TrajectoryCaller(Node):
                 [
                     self.cup_pose.position.x + -0.1,
                     self.cup_pose.position.y,
-                    self.cup_pose.position.z + 0.6,
+                    self.cup_pose.position.z + 0.5,
                 ],
                 [],
             ],
@@ -591,29 +582,33 @@ class TrajectoryCaller(Node):
         self.plan(self.waypoints.kettle, execute_now=True)
 
     
-#         self.grasp(width=0.008,force=90.0)
-            
-#         time.sleep(3)
+        self.grasp(width=0.008,force=90.0)
+        time.sleep(3)
        
 
         self.plan(self.waypoints.kettle_standoff, execute_now=True)
-        self.plan(self.waypoints.cup_tilt_standoff, execute_now=True)
+        self.plan(self.waypoints.cup_pour, execute_now=True)
         self.plan(self.waypoints.pour_so_1, execute_now=True)
         self.plan(self.waypoints.pour_rot_1, execute_now=True)
+        self.plan(self.waypoints.pour_rot_2, execute_now=True)
         self.plan(self.waypoints.pour_so_2, execute_now=True)
+        self.plan(self.waypoints.pour_rot_3, execute_now=True)
+        time.sleep(5)
+        self.plan(self.waypoints.pour_so_1, execute_now=True)
         self.plan(self.waypoints.pour_rot_2, execute_now=True)
         self.plan(self.waypoints.pour_rot_1, execute_now=True)
-        self.plan(self.waypoints.cup_pour, execute_now=True)
 
-        # # put kettle down
+#         # # put kettle down
         self.plan(self.waypoints.kettle_return_standoff,execute_now=True)
+        self.plan(self.waypoints.pour_rot_1, execute_now=True)
         self.plan(self.waypoints.kettle_return,execute_now=True)
+        # self.plan(self.waypoints.pour_rot_final, execute_now=True)
         self.open_gripper()
         time.sleep(6)
         self.plan(self.waypoints.kettle_return_standoff,execute_now=True)
         
-################# ABOVE GOOD ##########################
-########### DO NOT CHANGE UNTIL TUNING #################
+# ################# ABOVE GOOD ##########################
+# ########### DO NOT CHANGE UNTIL TUNING #################
 
         #   STIR
         self.plan(self.waypoints.stir_standoff, execute_now=True)
