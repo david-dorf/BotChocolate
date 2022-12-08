@@ -189,7 +189,7 @@ class MoveBot(Node):
         self.box_w = 0.2
         self.box_h = 0.2
         self.box_name = "box_0"
-
+        self.single_joint_rotation_cnt = 0
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.time = 0
@@ -526,19 +526,41 @@ class MoveBot(Node):
             joint_constraints.position = goal.joint_state.position[i] #goal.joint_state.position[i]
             
             # joint_constraints.position = self.joint_statesmsg.position[i] 
-            joint_constraints.tolerance_above =0.005# 0.002
-            joint_constraints.tolerance_below = 0.005#0.002
+            joint_constraints.tolerance_above =0.002
+            joint_constraints.tolerance_below = 0.002
             joint_constraints.weight = 1.0
             goal_constraints.joint_constraints.append(joint_constraints)
 
-        # goal_constraints.joint_constraints[6].position=goal.joint_state.position[6]
+        if goal.joint_state.position == self.joint_statesmsg.position:
+            if self.single_joint_rotation_cnt == 0:
+                self.get_logger().info(f'LOGGER CAUSE WE GOING NEW HOME')
+                goal_constraints.joint_constraints[0].position= np.pi/2
+                goal_constraints.joint_constraints[6].position=-np.pi/4
+                self.homeconfig = Constraints()
+                self.homeconfig = goal_constraints
+                self.single_joint_rotation_cnt +=1
+                
+            elif self.single_joint_rotation_cnt > 0:
+                self.get_logger().info(f'LOGGER CAUSE WE GOING NEW HOME')
+                for i in range(len(self.homeconfig.joint_constraints)):
+                    goal_constraints.joint_constraints[i].position=self.homeconfig.joint_constraints[i].position
+                self.single_joint_rotation_cnt +=1
+            # elif self.single_joint_rotation_cnt == 2:
+            #     goal_constraints.joint_constraints[4].position= np.pi/4
+            #     self.single_joint_rotation_cnt +=1
+            # elif self.single_joint_rotation_cnt == 3:
+            #     goal_constraints.joint_constraints[4].position= np.pi/2
+            #     self.single_joint_rotation_cnt +=1
+                
+        
         # self.get_logger().info(f"goal {goal_constraints.joint_constraints[6].position}")    
 
         motion_req.goal_constraints = [goal_constraints]
         motion_req.pipeline_id = 'move_group'
         motion_req.group_name = 'panda_manipulator'
-        motion_req.num_planning_attempts = 10
-        motion_req.allowed_planning_time = 5.0
+        motion_req.num_planning_attempts = 100
+        motion_req.allowed_planning_time = 10.0
+        
         motion_req.max_velocity_scaling_factor = 0.1
         motion_req.max_acceleration_scaling_factor = 0.1
         motion_req.max_cartesian_speed = 0.0
@@ -703,8 +725,8 @@ class MoveBot(Node):
             # tmp.position = request.goal_pos.position
             # self.get_logger().info(f'akk {request.goal_pos.position[1]}')
             # self.get_logger().info(f'akk {request.goal_pos.position}')
-            goal_in_joint_config.joint_state.position=request.goal_pos.position ## GOAL POS IS JUST JOINT STATES
-            self.get_logger().info(f'akk,  {goal_in_joint_config.joint_state.position}')
+            goal_in_joint_config.joint_state.position= self.joint_statesmsg.position #request.goal_pos.position ## GOAL POS IS JUST JOINT STATES
+            # self.get_logger().info(f'akk,  {goal_in_joint_config.joint_state.position}')
             plan_msg = self.get_motion_request(
                     start_in_joint_config,
                     goal_in_joint_config,
