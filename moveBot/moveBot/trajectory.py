@@ -408,7 +408,7 @@ class TrajectoryCaller(Node):
             
             "pour_rot_final": [
                     [],
-                    [pi,-0.5,pi]
+                    [pi,-0.1,pi]
                 ],
             
             
@@ -601,8 +601,8 @@ class TrajectoryCaller(Node):
 #         # # put kettle down
         self.plan(self.waypoints.kettle_return_standoff,execute_now=True)
         self.plan(self.waypoints.pour_rot_1, execute_now=True)
-        self.plan(self.waypoints.kettle_return,execute_now=True)
         # self.plan(self.waypoints.pour_rot_final, execute_now=True)
+        self.plan(self.waypoints.kettle_return,execute_now=True)
         self.open_gripper()
         time.sleep(6)
         self.plan(self.waypoints.kettle_return_standoff,execute_now=True)
