@@ -16,6 +16,7 @@ INSERT DESCRIPTION OF THE PACKAGE HERE
    :caption: Contents:
 
    movebot
+   movebot_interfaces
 
 Indices and tables
 ==================
