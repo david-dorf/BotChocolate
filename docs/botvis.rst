@@ -1,11 +1,10 @@
-BotVision
-==========
-
 .. toctree::
    :maxdepth: 4
 
+.. mdinclude:: ../bot_vis/README.md
+
 AprilTF 
---------
+-------
 
 .. automodule:: bot_vis.bot_vis.april_tf
    :members:
@@ -14,18 +13,10 @@ AprilTF
 
 
 Calibration
-------------
+-----------
 
 .. automodule:: bot_vis.bot_vis.calibration
    :members:
    :undoc-members:
    :show-inheritance:
 
-
-ImageSub
-------------
-
-.. automodule:: bot_vis.bot_vis.image_sub
-   :members:
-   :undoc-members:
-   :show-inheritance:

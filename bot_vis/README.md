@@ -1,4 +1,4 @@
-# bot_vis: Computer Vision Package for BotChocolate
+# BotVis: Computer Vision Package for BotChocolate
 
 ## Package Description
 The bot_vis is consists of two executable, `april_tf.py` and `calibration.py`.

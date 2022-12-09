@@ -1,5 +1,6 @@
-# Trajectory
-## A movement sequence program for the Franka Emika robot arm using ROS2 MoveIt2 API
+# Trajectory: A movement sequence program for the Franka Emika Panda robot arm using ROS2 MoveIt2 API
+
+## Package Description
 The trajectory package contains the trajectory node, which runs services that interact with the movebot API to command the Franka Emika robot's motion. The trajectory node allows the robot to move and manipulate objects in its surroundings to make hot chocolate (or other powdered beverages).
 
 ## Services

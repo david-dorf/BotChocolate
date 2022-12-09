@@ -1,10 +1,9 @@
-.. trajectory documentation master file, created by
-   sphinx-quickstart on Thu Dec  8 19:53:40 2022.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+:tocdepth: 4
 
 BotChocolate
 ============
+
+Making hot chocolate using the Franka Emika Panda 7-DoF robot arm
 
 .. toctree::
    :maxdepth: 2
@@ -12,7 +11,6 @@ BotChocolate
 
    trajectory
    botvis
-
 
 
 Indices and tables

@@ -1,7 +1,9 @@
-Trajectory 
-==========
+.. toctree::
+   :maxdepth: 3
 
-trajectory node
+.. mdinclude:: ../trajectory/README.md
+
+Trajectory Node
 ---------------
 
 .. automodule:: trajectory.trajectory.trajectory
