@@ -1,9 +1,6 @@
 movebot package
 ===============
 
-Submodules
-----------
-
 movebot.simple\_move module
 ---------------------------
 
