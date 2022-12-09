@@ -23,9 +23,9 @@ between different waypoints necessary to make hot chocolate
 `bot_vis` is the computer vision package for BotChocolate that uses AprilTag ROS2 packages to calibrate
 the system and broadcast tranformations of the hot chocolate components to the robot
 
-# Demonstration
+# Demonstration (Note: 1.5x Speed)
 
-[robot_move.webm]()
+[botchoc_15speed.webm](https://user-images.githubusercontent.com/46512429/206770769-fba8fc8e-2711-4839-bb2b-fb6178e7839a.webm)
 
 ## Setup and External Packages
 Before being able to run BotChocolate, you must ensure that you have all the necessary Franka 
