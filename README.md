@@ -1,77 +1,60 @@
-# ME495 Embedded Systems Homework 3 Part 2
-Group: Bot Chocolate
+# BotChocolate - The Hot Chocolate Making Robot
+Collaborators: James Oubre, Allan Garcia, Shantao Cao, Nick Marks, David Dorf
 
-Group Members: James Oubre, Allan Garcia, Shantao Cao, Nick Marks, David Dorf
+![bot_choc-min](https://user-images.githubusercontent.com/46512429/206768445-4503edc2-2075-48b4-baf7-e6dc7bd3ca86.png)
 
-## Package Description
-The moveBot package offers a sequence of three services that allow the Franka Emika robot arm to
-plan and execute a trajectory through space while avoiding stationary obstacles. RViz must first be
-initialized for the Franka robot with the command `ros2 launch franka_moveit_config moveit.launch.py robot_ip:=dont-care use_fake_hardware:=true` in the built and sourced nuws directory.
+The purpose of this project was to create hot chocolate using the Franka Emika 7 DOF robot arm. To 
+percieve the environment, the system utilizes an Intel D435i camera AprilTags. Upon initial setup, a
+calibration process must be completed. After this, the process consisted of using AprilTags to 
+locate a scoop of cocoa, a mug, a spoon, and a kettle relative to the robot. Next, using our custom 
+MoveIt API for python, movebot, the robot is able to perform path planning between all of these 
+objects. It turns on the kettle, dumps the cocoa powder into the mug, pours the hot water over the 
+power, and stirs the mixture it with the spoon.
 
-## Operation
-Package calls services in the order create a trajectory to a goal position. More information on the messages and services used can be found [here.](./movebot_interfaces) 
+## System Architecture
+BotChocolate consists of 4 packages:
 
-### Call Launch File
-`ros2 launch moveBot simple_move.launch.py`
+`movebot` is a python API for MoveIt in ROS2 used for path planning of the robot
 
-### Create and Execute a Trajectory
-The template to create trajectroy plans is given below:
+`movebot_interfaces` consists of the custom srv and msgs to interact with the movebot package
 
-`
-    ros2 service call /call_plan movebot_interfaces/srv/GetPlanRqst 
-    "start_pos:
-    position: []
-    orientation: []
-    goal_pos:
-    position: []
-    orientation: []
-    is_xyzrpy: true
-    execute_now: true 
-    "
-`
-The `start_pos` and `goal_pos` fields are where different trajectory start and end points can be 
-specified. 
+`trajectory` package has the actual hot chocoalate plan and uses the movebot package to create paths
+between different waypoints necessary to make hot chocolate
 
-To use the current position of the end effector as a start position, the `start_pos` field can
-be passed as empty.
-
-Each pose field also has a position and orientation subfield. Here an end effector configuration
-position may be specified in Cartesian coordinates and the end effector angle may be specified
-as roll, pitch, and yaw in radians. Furthermore, to specify solely a position or solely an 
-orientation, the opposite subfield may be entered as empty in the service call.
-
-Lastly, there are two flags to alter the operation of system. By setting `is_xyzrpy` the user may
-specify that the start and end coordinates being input are in Cartesian coordinates and not a
-joint state vector. By setting `execute_now` to true, the robot will immediately execute the planned
-trajectory. Otherwise, a separate service must be called to execute the trajectory.
-
-By setting `execute_now` to false, the user can then execute a trajectroy by calling the following
-service:
-`ros2 service call /call_execute std_srvs/srv/Empty`
-
-### Adding Obstacles to the Planning Scene
-It is possible to add boxes of different sizes to the plannning scene for the robot to navigate 
-around.
-
-The following command will add a box to the planning scene:
-`
-        ros2 service call /add_box movebot_interfaces/srv/AddBox "name: '<obstacle_name>'
-        x: 0.2
-        y: 0.2
-        z: 0.2
-        l: 0.2
-        w: 0.2
-        h: 0.2
-`
-
-'ros2 service call /call_box std_srvs/srv/Empty'
-
-To delete the last added box the following command may be used:
-`ros2 service call /clear_current_box std_srvs/srv/Empty `
-
-To clear all obstacle from the planning scene:
-`ros2 service call /clear_all_box std_srvs/srv/Empty`
+`bot_vis` is the computer vision package for BotChocolate that uses AprilTag ROS2 packages to calibrate
+the system and broadcast tranformations of the hot chocolate components to the robot
 
 # Demonstration
 
-[robot_move.webm](https://user-images.githubusercontent.com/46512429/201226143-f7d638e7-5f5c-4de6-9c8c-1f0e36112dcc.webm)
+[robot_move.webm]()
+
+## Setup and External Packages
+Before being able to run BotChocolate, you must ensure that you have all the necessary Franka 
+packages installed (https://nu-msr.github.io/me495_site/franka.html).
+It is convenient to have a workspace that is updated to the latest version of numsr_patches (https://github.com/m-elwin/numsr_patches)
+
+Necessary external packages outside of numsr_patches can be installed with the botchoc.repos file using
+`vcs import < botchoc.repos`.
+
+## Operation 
+to run from scratch a calibration must first be done
+Cailbrate the robot
+To calibrate the system, the end-effector AprilTag must be placed in the robot's gripper, aligned with the panda_link_tcp frame, and in the field of view of the camera. Next, just call the launch launch file with the calibration flag.
+kill the calibration terminal
+this step can now be ignored for subsequent runs
+
+ssh into robot and go thorugh franka setup
+
+call launch file
+call service
+make botchocolate
+
+## Documentation
+
+Say where and how to open docs
+
+### Nodes
+say nodes and what they do
+
+### Launch Files
+say launch files and what they launch
