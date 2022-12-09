@@ -3,8 +3,11 @@
 
 .. mdinclude:: ../trajectory/README.md
 
-Trajectory Node
----------------
+Modules
+-------
+
+Trajectory
+**********
 
 .. automodule:: trajectory.trajectory.trajectory
    :members:

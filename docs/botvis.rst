@@ -3,8 +3,11 @@
 
 .. mdinclude:: ../bot_vis/README.md
 
-AprilTF 
+Modules
 -------
+
+AprilTF 
+*******
 
 .. automodule:: bot_vis.bot_vis.april_tf
    :members:
@@ -12,8 +15,8 @@ AprilTF
    :show-inheritance:
 
 
-Calibration
------------
+Calibration 
+***********
 
 .. automodule:: bot_vis.bot_vis.calibration
    :members:

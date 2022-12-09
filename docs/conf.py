@@ -28,4 +28,11 @@ source_suffix = {
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+html_context = {
+  'display_github': True,
+  'github_user': 'ME495-EmbeddedSystems',
+  'github_repo': 'hw3group-botchocolate',
+  'github_version': 'main/docs',
+}
+
 
