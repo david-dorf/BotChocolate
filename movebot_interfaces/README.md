@@ -1,15 +1,24 @@
+# MoveBot Interfaces
 
-# Interface Package Description
-The movebot_interfaces package contains all the services and messages necessary for interacting with the Franka Emika robot arm.
-There are three services and one message:
+The movebot_interfaces package creates additional service and message types used by the MoveBot API
+for interacting with the Franka Emika Panda robot arm using ROS2 MoveIt!.
 
-1. IkGoalRqstMsg.msg, Type: movebot_interfaces.msg - Used for creating lists of position and orientation 
+## Messages 
 
-2. AddBox.srv, Type: movebot_interfaces.srv - Used to give the dimensions of the box object added to the planning scene
+**IkGoalRqstMsg.msg** (movebot_interfaces.msg): Used for creating lists of position and orientation 
 
-3. GetPlanRqst.srv, Type: movebot_interfaces.srv - Used to give the start and end poses for path planning, and "execute" plan option
+**CartIKRequest** (movebot_interfaces.msg): Used to give parameters needed to 
+generate a cartesian trajectory.
 
-4. IkGoalRqst.srv, Type: movebot_interfaces.srv - Used to send the given position and orientation store the returned joint states
+**SimpleCartPath** (movebot_interfaces.msg): Defines a new message of type CartIKRequest to simplify the API.
+
+## Services 
+
+**AddBox.srv** (movebot_interfaces.srv) - Used to give the dimensions of the box object added to the planning scene
+
+**GetPlanRqst.srv** (movebot_interfaces.srv) - Used to give the start and end poses for path planning, and "execute" plan option
+
+**IkGoalRqst.srv** (movebot_interfaces.srv) - Used to send the given position and orientation store the returned joint states
 
 
 
