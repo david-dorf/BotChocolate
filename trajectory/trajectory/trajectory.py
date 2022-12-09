@@ -6,41 +6,15 @@ from std_srvs.srv import Empty
 import time
 from movebot_interfaces.srv import AddBox, GetPlanRqst
 from geometry_msgs.msg import Pose
-
-# from moveBot.gripper import Gripper
 from rclpy.action import ActionClient
 from control_msgs.action import GripperCommand
 from franka_msgs.action import Grasp
 from franka_msgs.action import Homing
 from math import pi
-
 from types import SimpleNamespace
 
-
-class State(Enum):
-    """Create a state machine to eventually implement planning the entire
-    stored trajectory plan sequence, for executing it only once at the end.
-    """
-
-    IDLE = auto(),
-    # MAKE_PLAN_SCENE=auto(),
-    SCOOP_STANDOFF=auto(),
-    SCOOP_HANDLE=auto(),
-    KETTLE_STANDOFF = auto(),
-    KETTLE=auto(),
-    KETTLE_SWITCH_STANDOFF=auto(),
-    STIR_STANDOFF=auto(),
-    STIR_HANDLE=auto(),
-
-    KETTLE_SWITCH=auto(),
-
-    PLAN = auto(),
-    EXECUTE = auto()
-
-
 class BoxCaller(Node):
-    """Spawn in box objects for the planning scene."""
-
+    """Spawn in collision box objects for the planning scene."""
     def __init__(self):
         super().__init__("box_node")
         self.cbgroup = ReentrantCallbackGroup()
@@ -145,8 +119,6 @@ class TrajectoryCaller(Node):
         self._grasp_client = ActionClient(self, Grasp, "/panda_gripper/grasp")
         self._homing_client = ActionClient(self, Homing, "/panda_gripper/homing")
 
-        # Initialize the timer callback
-        self.state = State.IDLE
         self.plan_scene_flag=0
         self.trial_flag=0
 
@@ -160,7 +132,6 @@ class TrajectoryCaller(Node):
         self.GRIP = False
         
     def get_kettle_pose_callback(self, pose_msg):
-
         self.kettle_pose = pose_msg
 
     def get_pose_callback(self, pose_msg):
@@ -187,7 +158,7 @@ class TrajectoryCaller(Node):
         :param force: force the gripper will grasp the object
         :param epsilon: inner and outer tolerance
         """
-        self.get_logger().info("grasping...")
+        self.get_logger().info("Grasping...")
         goal_msg = Grasp.Goal()
         goal_msg.width = width
         goal_msg.speed = speed
@@ -206,7 +177,6 @@ class TrajectoryCaller(Node):
         :return: A future object from the ActionClient.send_goal_async()
         function
         """
-
         goal_msg = GripperCommand.Goal()
         goal_msg.command.position = 0.04
         goal_msg.command.max_effort = 1.0
@@ -223,25 +193,27 @@ class TrajectoryCaller(Node):
         :return: A future object from the ActionClient.send_goal_async()
         function
         """
-
         goal_msg = Homing.Goal()
         self._homing_client.wait_for_server()
         return self._homing_client.send_goal_async(goal_msg)
 
         
     def plan(self,waypoint,execute_now):
-        '''
-        Moves the end-effector the specified waypoint
-        '''
+        """
+        Create a trajectory plan for the end-effector to reach thespecified waypoint
+
+        :return: If in x,y,z,r,p,y configuration, a cartesian trajectory plan. If otherwise,
+        a rotation motion plan.
+        """
         assert(len(waypoint) == 2),'Invalid waypoint recieved'
         self.request.goal_pos.position = waypoint[0]
         self.request.goal_pos.orientation = waypoint[1]
 
         if len(waypoint[0])>3:
-            self.request.is_xyzrpy = False ## SENDING HOME JOINT STATES 
+            self.request.is_xyzrpy = False  # SENDING HOME JOINT STATES
         else:
             self.request.is_xyzrpy = True
-        self.request.execute_now = False#execute_now
+        self.request.execute_now = False
 
         self.future = self.plan_client.call_async(self.request)
         rclpy.spin_until_future_complete(self, self.future)
@@ -257,6 +229,8 @@ class TrajectoryCaller(Node):
         """
         Execute the trajectory plan - used in each step of the entire
         trajectory sequence.
+
+        :return: Empty
         """
         self.future = self.execute_client.call_async(Empty.Request())
         rclpy.spin_until_future_complete(self, self.future)
@@ -340,7 +314,6 @@ class TrajectoryCaller(Node):
                     [],
                     [pi,0.0,pi/2]
                 ],
-
             "straighten":[
                 [],
                 [pi,0.0,0.0]
@@ -373,7 +346,6 @@ class TrajectoryCaller(Node):
                     [],
                     [pi,0.0,pi]
                 ],
-            
             "pour_rot_2": [
                     [],
                     [pi,-pi/4,pi]
@@ -390,14 +362,10 @@ class TrajectoryCaller(Node):
                 ],
                 [],
             ],
-            # "pour_rot_2": [
-            #         [],
-            #         [pi,pi/2,0.0]
-            #     ],
             "pour_so_2": [
                 [
                     self.cup_pose.position.x -0.03,
-                    self.cup_pose.position.y,#-0.02,
+                    self.cup_pose.position.y,
                     self.cup_pose.position.z + 0.38 ,
                 ],
                 [],
@@ -471,11 +439,6 @@ class TrajectoryCaller(Node):
                 ],
                 [],
             ],
-
-            # "stir_handle": [
-            #     [self.stir_pose.position.x,self.stir_pose.position.y,self.stir_pose.position.z+0.11],
-            #     []
-            # ],
             "cup_tilt_standoff": [
                 [self.cup_pose.position.x,self.cup_pose.position.y-0.02,self.cup_pose.position.z+0.2],
                 []
@@ -490,7 +453,6 @@ class TrajectoryCaller(Node):
                 [self.cup_pose.position.x,self.cup_pose.position.y,self.cup_pose.position.z+0.3],
                 []
             ],
-
             "stir2": [
                 [
                     self.cup_pose.position.x,
@@ -499,7 +461,6 @@ class TrajectoryCaller(Node):
                 ],
                 [],
             ],
-
             "stir3": [
                 [
                     self.cup_pose.position.x - 0.02,
@@ -508,7 +469,6 @@ class TrajectoryCaller(Node):
                 ],
                 [],
             ],
-
             "stir4": [
                 [
                     self.cup_pose.position.x,
@@ -520,64 +480,48 @@ class TrajectoryCaller(Node):
         }
         self.waypoints = SimpleNamespace(**waypoints_dict)
 
-
-
     def make_chocolate_callback(self,request,response):
-        
-        self.get_logger().info(f"checking trial flag {self.trial_flag}")
-        if self.state==State.IDLE and self.plan_scene_flag==0:
-            self.get_logger().info(f"checking plan flag {self.plan_scene_flag}")
+        """
+        Summons in collision objects into the planning scene and executes the trajectory sequence
+        to create hot chocolate.
+        """
+        # Call in the collision boxes into the planning scene
+        if self.plan_scene_flag==0:
             box_client = BoxCaller()
             box_client.add_box_request()
             box_client.call_box_request()
             box_client.add_box2_request()
             box_client.call_box_request()
             self.plan_scene_flag+=1
-
+        # Call in the waypoints from the dictionary
         self.define_waypoints()
-        self.get_logger().info(f" CURRENT STATE {self.state}")
-        
-        # if self.trial_flag==0:
-        #     self.get_logger().info(f"ran already {self.trial_flag}")
-
+        # Kettle switch
         self.plan(self.waypoints.new_home, execute_now=True)
-
-        # time.sleep(5)
         self.plan(self.waypoints.kettle_switch_standoff, execute_now=True)
-
         if not self.GRIP:
             self.grasp(width=0.008,force=90.0)
             self.GRIP = True
         time.sleep(3)
         self.GRIP = False
-
         self.plan(self.waypoints.kettle_switch, execute_now=True)
         self.plan(self.waypoints.kettle_switch_standoff, execute_now=True)
         self.open_gripper()
         time.sleep(3)
-        
+        # Cocoa scoop
         self.plan(self.waypoints.cup_tilt_standoff, execute_now=True)
         self.plan(self.waypoints.new_home, execute_now=True)
-        # self.send_execute_request()
         self.plan(self.waypoints.scoop_standoff, execute_now=True)
         self.plan(self.waypoints.rotate_90, execute_now=True)
         self.plan(self.waypoints.rotate_45, execute_now=True)
         self.plan(self.waypoints.scoop_handle, execute_now=True)
-
-        
         self.grasp(width=0.008,force=90.0)
-            
         time.sleep(3)
-     
-        
         self.plan(self.waypoints.scoop_standoff, execute_now=True)
         self.plan(self.waypoints.cup_tilt_standoff, execute_now=True)
         self.plan(self.waypoints.rotate_90, execute_now=True)
         self.plan(self.waypoints.rotate_45_again, execute_now=True)
         self.plan(self.waypoints.rotate_90, execute_now=True)
-        
         self.plan(self.waypoints.cup_tilt_standoff, execute_now=True)
-        
         self.plan(self.waypoints.scoop_standoff, execute_now=True)
         self.plan(self.waypoints.rotate_45, execute_now=True)
         self.plan(self.waypoints.scoop_handle, execute_now=True)
@@ -585,15 +529,11 @@ class TrajectoryCaller(Node):
         time.sleep(3)
         self.plan(self.waypoints.scoop_standoff, execute_now=True)
         self.plan(self.waypoints.new_home, execute_now=True)
-        
+        # Kettle pour
         self.plan(self.waypoints.kettle_standoff, execute_now=True)
         self.plan(self.waypoints.kettle, execute_now=True)
-
-    
         self.grasp(width=0.008,force=90.0)
         time.sleep(3)
-       
-
         self.plan(self.waypoints.kettle_standoff, execute_now=True)
         self.plan(self.waypoints.cup_pour, execute_now=True)
         self.plan(self.waypoints.pour_so_1, execute_now=True)
@@ -605,20 +545,13 @@ class TrajectoryCaller(Node):
         self.plan(self.waypoints.pour_so_1, execute_now=True)
         self.plan(self.waypoints.pour_rot_2, execute_now=True)
         self.plan(self.waypoints.pour_rot_1, execute_now=True)
-
-#         # # put kettle down
         self.plan(self.waypoints.kettle_return_standoff,execute_now=True)
         self.plan(self.waypoints.pour_rot_1, execute_now=True)
-        # self.plan(self.waypoints.pour_rot_final, execute_now=True)
         self.plan(self.waypoints.kettle_return,execute_now=True)
         self.open_gripper()
         time.sleep(6)
         self.plan(self.waypoints.kettle_return_standoff,execute_now=True)
-        
-# ################# ABOVE GOOD ##########################
-# ########### DO NOT CHANGE UNTIL TUNING #################
-
-        #   STIR
+        # Stir
         self.plan(self.waypoints.stir_standoff, execute_now=True)
         self.plan(self.waypoints.stir_handle, execute_now=True)
         if not self.GRIP:
@@ -634,7 +567,6 @@ class TrajectoryCaller(Node):
             self.plan(self.waypoints.stir2, execute_now=True)
             self.plan(self.waypoints.stir3, execute_now=True)
             self.plan(self.waypoints.stir4, execute_now=True)
-            
         self.plan(self.waypoints.cup_center, execute_now=True)
         self.plan(self.waypoints.cup_standoff, execute_now=True)
         self.plan(self.waypoints.stir_standoff, execute_now=True)
@@ -643,12 +575,11 @@ class TrajectoryCaller(Node):
             self.open_gripper()
             self.GRIP = False
         self.plan(self.waypoints.stir_standoff, execute_now=True)
-
         self.plan(self.waypoints.cup_tilt_standoff, execute_now=True)
+        # Return home
         self.plan(self.waypoints.new_home, execute_now=True)
-
         self.trial_flag+=1
-        
+        # Delete boxes
         box_client.clear_box_request()
         return response
 
