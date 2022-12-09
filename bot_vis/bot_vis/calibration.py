@@ -99,19 +99,23 @@ class Calibration(Node):
         Take in a x, y, z position with a quaternion angle and returns a dictionary that will
         be used to generate the calibration yaml.
 
-        Args:
-        ----
-            x_in (float): x position of base relative to world frame
-            y_in (float): y position of base relative to world frame
-            z_in (float): z position of base relative to world frame
-            x_quat_in (float): x rotation of base relative to world frame
-            y_quat_in (float): y rotation of base relative to world frame
-            z_quat_in (float): z rotation of base relative to world frame
-            w_quat_in (float): w rotation of base relative to world frame
+        :param x_in: x position of base relative to world frame
+        :type x_in: float
+        :param y_in: y position of base relative to world frame
+        :type y_in: float
+        :param z_in: z position of base relative to world frame
+        :type z_in: float
+        :param x_quat_in: x rotation of base relative to world frame
+        :type x_quat_in: float
+        :param y_quat_in: y rotation of base relative to world frame
+        :type y_quat_in: float
+        :param z_quat_in: z rotation of base relative to world frame
+        :type z_quat_in: float
+        :param w_quat_in: w rotation of base relative to world frame
+        :type w_quat_in: float
 
-        Returns:
-        -------
-            dict: Dictionary with values for yaml file
+        :return: Dictionary with values for yaml file
+        :rtype: dict
         """
         return dict(x = x_in,
                     y = y_in,
@@ -141,7 +145,7 @@ class Calibration(Node):
             self.panda_hand_tcp_2_panda_link0.transform.translation.x
 
         self.end_eff_tag_2_panda_link0.transform.translation.y = \
-            self.panda_hand_tcp_2_panda_link0.transform.translation.y# + 0.015
+            self.panda_hand_tcp_2_panda_link0.transform.translation.y
 
         self.end_eff_tag_2_panda_link0.transform.translation.z = \
             self.panda_hand_tcp_2_panda_link0.transform.translation.z

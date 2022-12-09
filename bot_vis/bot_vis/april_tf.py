@@ -23,7 +23,7 @@ from rcl_interfaces.msg import ParameterDescriptor
 class AprilTF(Node):
     """
     Node that publishes the current positions of the kettle, cup, scooper, and stirrer relative to
-    the robot frame. 
+    the robot frame.
     """
 
     def __init__(self):
@@ -48,16 +48,12 @@ class AprilTF(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        # Create a broadcaster to link april tag TF's to robot arm TF's
-        # TODO i think when defining the actual positions of this transform, itll just be from the yaml
-        # Also TODO imort yaml (launch file)
+        # Create a broadcasters to link april tag TF's to robot arm TF's
         self.world_2_panda_link0 = TransformStamped()
         self.world_2_panda_link0.header.stamp = self.get_clock().now().to_msg()
         self.world_2_panda_link0.header.frame_id = "world"
         self.world_2_panda_link0.child_frame_id = "panda_link0"
         self.broadcaster = StaticTransformBroadcaster(self)
-
-        # Create a broadcaster to link april tag TF's to robot arm TF's
         self.world_2_cam = TransformStamped()
         self.world_2_cam.header.stamp = self.get_clock().now().to_msg()
         self.world_2_cam.header.frame_id = "world"
@@ -97,21 +93,18 @@ class AprilTF(Node):
         self.cali_rot_w = self.get_parameter(
             "w_q").get_parameter_value().double_value
 
-        #static broadcaster
-        #static frames for gripper use
+        # Static frames for gripper use
         self.static_broadcaster = StaticTransformBroadcaster(self)
         self.kettle_adapter_tf = TransformStamped()
         self.kettle_adapter_tf.header.stamp = self.get_clock().now().to_msg()
         self.kettle_adapter_tf.header.frame_id = "kettle"
         self.kettle_adapter_tf.child_frame_id = "kettle_adapter"
-        self.kettle_adapter_tf.transform.translation.x = 0.1651+0.01-0.01-0.0025+0.005
-        self.kettle_adapter_tf.transform.translation.y = 0.1216-0.052-0.005-0.003
-        self.kettle_adapter_tf.transform.translation.z = -0.085+0.01-0.01+0.015
-
+        self.kettle_adapter_tf.transform.translation.x = 0.1676
+        self.kettle_adapter_tf.transform.translation.y = 0.0616
+        self.kettle_adapter_tf.transform.translation.z = -0.07
 
         # Need change 
         # check coordinate in robot
-
         self.kettle_switch_tf = TransformStamped()
         self.kettle_switch_tf.header.stamp = self.get_clock().now().to_msg()
         self.kettle_switch_tf.header.frame_id = "kettle"
@@ -122,7 +115,7 @@ class AprilTF(Node):
 
         self.cup_center_tf = TransformStamped()
         self.cup_center_tf.header.stamp = self.get_clock().now().to_msg()
-        self.cup_center_tf.header.frame_id = "jig" #jig change
+        self.cup_center_tf.header.frame_id = "jig"
         self.cup_center_tf.child_frame_id = "cup_center"
         self.cup_center_tf.transform.translation.x = -0.25
         self.cup_center_tf.transform.translation.y = 0.0
@@ -130,27 +123,32 @@ class AprilTF(Node):
 
         self.scoop_tf = TransformStamped()
         self.scoop_tf.header.stamp = self.get_clock().now().to_msg()
-        self.scoop_tf.header.frame_id = "jig" #jig change
+        self.scoop_tf.header.frame_id = "jig"
         self.scoop_tf.child_frame_id = "scoop"
-        self.scoop_tf.transform.translation.x = -0.5#-0.005
-        self.scoop_tf.transform.translation.y = -0.02#0.06-0.055
-        self.scoop_tf.transform.translation.z =  -0.203 - 0.045#+(5.0/2+1.0)/1000 # math part to account for handle
+        self.scoop_tf.transform.translation.x = -0.5
+        self.scoop_tf.transform.translation.y = -0.02
+        self.scoop_tf.transform.translation.z =  -0.248
 
         self.stirrer_tf = TransformStamped()
         self.stirrer_tf.header.stamp = self.get_clock().now().to_msg()
-        self.stirrer_tf.header.frame_id = "jig" #jig change
+        self.stirrer_tf.header.frame_id = "jig" 
         self.stirrer_tf.child_frame_id = "stirrer"
         self.stirrer_tf.transform.translation.x = 0.0
-        self.stirrer_tf.transform.translation.y = (6.0/1000) #TODO change this to where we want robot to grab stirrer
+        self.stirrer_tf.transform.translation.y = 0.006
         self.stirrer_tf.transform.translation.z = -0.203
-        
+
         self.timer = self.create_timer(1/100, self.timer_callback)
 
     def calibrate_flag_cb(self, data):
+        """Recieve flag to see if calibration is running.
+
+        :param data: Flag that is True is calibrating
+        :type data: bool
+        """
         self.calibrate_flag = data
 
     def get_april_2_robot(self):
-        """See if april tag is in in end eff. If so use its position to get the TF to base from
+        """See if AprilTag is in end-effector. If so use its position to get the TF to base from
         april tag. If not, use saved TF
         """
 
@@ -161,7 +159,6 @@ class AprilTF(Node):
         self.world_2_panda_link0.transform.rotation.y = self.cali_rot_y
         self.world_2_panda_link0.transform.rotation.z = self.cali_rot_z
         self.world_2_panda_link0.transform.rotation.w = self.cali_rot_w
-
 
         self.broadcaster.sendTransform(self.world_2_panda_link0)
 
@@ -188,7 +185,7 @@ class AprilTF(Node):
             self.static_broadcaster.sendTransform(self.scoop_tf)
 
 
-        # Need to broadcast tf from ee to panda_link0
+        # Listen to transformation from botchocolate components and publish positions to a topic
         try:
             scoop_2_base = self.tf_buffer.lookup_transform(
                 'panda_link0',
@@ -229,7 +226,6 @@ class AprilTF(Node):
             pass
 
         try:
-            # TODO
             stirrer_2_base = self.tf_buffer.lookup_transform(
                 'panda_link0',
                 'stirrer',
@@ -267,27 +263,16 @@ class AprilTF(Node):
             switch_xzy.position.z = jig_2_base.transform.translation.z
             self.jig_pub.publish(switch_xzy)
         except:
-            #self.get_logger().error("jig missing")
+            self.get_logger().error("Jig missing")
             pass
 
 
 def main(args=None):
 
-    # Initialize the rclpy library
     rclpy.init(args=args)
-
-    # Create the node
     april_tf = AprilTF()
-
-    # Spin the node so the callback function is called.
     rclpy.spin(april_tf)
-
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
     april_tf.destroy_node()
-
-    # Shutdown the ROS client library for Python
     rclpy.shutdown()
 
 
