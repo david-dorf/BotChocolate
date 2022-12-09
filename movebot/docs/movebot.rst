@@ -1,13 +1,10 @@
-moveBot package
+movebot package
 ===============
 
-Submodules
-----------
-
-moveBot.simple\_move module
+movebot.simple\_move module
 ---------------------------
 
-.. automodule:: moveBot.simple_move
+.. automodule:: movebot.simple_move
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +12,7 @@ moveBot.simple\_move module
 Module contents
 ---------------
 
-.. automodule:: moveBot
+.. automodule:: movebot
    :members:
    :undoc-members:
    :show-inheritance:
