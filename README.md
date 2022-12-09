@@ -50,7 +50,16 @@ make botchocolate
 
 ## Documentation
 
-Say where and how to open docs
+Documentation for the BotChocolate project contains documentation for both the `trajectory` and `bot_vis` packages. Separate documentation
+for the MoveBot API can be found in `movebot/docs`. 
+
+For now, documentation is only viewable by building locally. To build the BotChocolate documentation,
+navigate the to `docs/` directory and run `make html` (note you must have `make` installed).
+There now should be a new directory `_build/html` and in it you will find a file, `index.html`
+which you can open in your web browser of choice to view the documentation.
+
+To view the MoveBot API documentation, navigate to `movebot/docs` and again run `make html` and the `index.html` 
+file will be located at `movebot/docs/_build/html/index.html`
 
 ### Nodes
 say nodes and what they do
