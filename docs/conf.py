@@ -32,7 +32,7 @@ html_context = {
   'display_github': True,
   'github_user': 'ME495-EmbeddedSystems',
   'github_repo': 'hw3group-botchocolate',
-  'github_version': 'main/docs',
+  'github_version': 'main/docs/',
 }
 
 
