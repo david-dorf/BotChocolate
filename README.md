@@ -1,7 +1,6 @@
 # BotChocolate - The Hot Chocolate Making Robot
 Collaborators: James Oubre, Allan Garcia, Shantao Cao, Nick Marks, David Dorf
 
-![bot_choc-min](https://user-images.githubusercontent.com/46512429/206768445-4503edc2-2075-48b4-baf7-e6dc7bd3ca86.png)
 
 The purpose of this project was to create hot chocolate using the Franka Emika 7 DOF robot arm. To 
 percieve the environment, the system utilizes an Intel D435i camera AprilTags. Upon initial setup, a
@@ -58,3 +57,8 @@ say nodes and what they do
 
 ### Launch Files
 say launch files and what they launch
+
+## The Group
+
+![bot_choc-min](https://user-images.githubusercontent.com/46512429/206768445-4503edc2-2075-48b4-baf7-e6dc7bd3ca86.png)
+
