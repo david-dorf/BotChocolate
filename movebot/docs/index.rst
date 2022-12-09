@@ -7,17 +7,15 @@ MoveBot
 =======
 
 A Python API for MoveIt! in ROS2  
-################################
+--------------------------------
 
-We should put some text here probably
+INSERT DESCRIPTION OF THE PACKAGE HERE
 
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
 
-   pages/README.md
-   modules
-.. include:: pages/asdf.rst
+   movebot
 
 Indices and tables
 ==================
