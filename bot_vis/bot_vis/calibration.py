@@ -12,6 +12,36 @@ import yaml
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 from std_msgs.msg import Bool
 
+def average_points(x_list, y_list, z_list, quat_x_list, 
+                    quat_y_list, quat_z_list, quat_w_list):
+    """Average several lists of points.
+
+    Args:
+    ----
+        x_list (list): list of x points to be averaged
+        y_list (list): list of y points to be averaged
+        z_list (list): list of z points to be averaged
+        quat_x_list (list): list of rotation x points to be averaged
+        quat_y_list (list): list of rotation y points to be averaged
+        quat_z_list (list): list of rotation z points to be averaged
+        quat_w_list (list): list of rotation w points to be averaged
+
+    Returns:
+    -------
+        float: the averaged x,y,z and rotation values
+    """
+    try:
+        x = sum(x_list) / len(x_list)
+        y = sum(y_list) / len(y_list)
+        z = sum(z_list) / len(z_list)
+        x_quat = sum(quat_x_list) / len(quat_x_list)
+        y_quat = sum(quat_y_list) / len(quat_y_list)
+        z_quat = sum(quat_z_list) / len(quat_z_list)
+        w_quat = sum(quat_w_list) / len(quat_w_list)
+    except:
+        pass
+    return x, y, z, x_quat, y_quat, z_quat, w_quat
+    
 class Calibration(Node):
     """
     Node that finds transform from camera to end_effector tag and saves the pose of the calibration
@@ -164,36 +194,6 @@ class Calibration(Node):
             # Get TF from file
             self.get_logger().error("Tag not detected! Make sure tag in camera view.")
             pass
-
-    def average_points(self, x_list, y_list, z_list, quat_x_list, 
-                       quat_y_list, quat_z_list, quat_w_list):
-        """Average several lists of points.
-
-        Args:
-        ----
-            x_list (list): list of x points to be averaged
-            y_list (list): list of y points to be averaged
-            z_list (list): list of z points to be averaged
-            quat_x_list (list): list of rotation x points to be averaged
-            quat_y_list (list): list of rotation y points to be averaged
-            quat_z_list (list): list of rotation z points to be averaged
-            quat_w_list (list): list of rotation w points to be averaged
-
-        Returns:
-        -------
-            float: the averaged x,y,z and rotation values
-        """
-        try:
-            x = sum(x_list) / len(x_list)
-            y = sum(y_list) / len(y_list)
-            z = sum(z_list) / len(z_list)
-            x_quat = sum(quat_x_list) / len(quat_x_list)
-            y_quat = sum(quat_y_list) / len(quat_y_list)
-            z_quat = sum(quat_z_list) / len(quat_z_list)
-            w_quat = sum(quat_w_list) / len(quat_w_list)
-        except:
-            pass
-        return x, y, z, x_quat, y_quat, z_quat, w_quat
 
     def timer_callback(self):
         """
