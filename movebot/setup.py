@@ -2,7 +2,7 @@ from setuptools import setup
 import os
 from glob import glob
 
-package_name = 'moveBot'
+package_name = 'movebot'
 
 setup(
     name=package_name,
@@ -24,9 +24,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'simple_move = moveBot.simple_move:main',
-            'trajectory = moveBot.trajectory:main',
-            'plan_scene_objects = moveBot.plan_scene_objects:main'
+            'simple_move = movebot.simple_move:main',
+            'trajectory = trajectory.trajectory:main',
             ],
         },
     )

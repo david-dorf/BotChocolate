@@ -30,14 +30,14 @@ def generate_launch_description():
     # launches the simple_move launchfile
     simple_move = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [FindPackageShare("moveBot"),"/launch/","simple_move.launch.py"]
+            [FindPackageShare("movebot"),"/launch/","simple_move.launch.py"]
         )
     )
     
 
     # starts the trajectory node 
     trajectory = Node(
-        package='moveBot',
+        package='movebot',
         executable='trajectory',
         name='trajectory',
     )

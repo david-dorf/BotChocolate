@@ -5,7 +5,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     move_bot_node = Node(
-          package='moveBot',
+          package='movebot',
           executable='simple_move',
           name='simple_move',
           )
