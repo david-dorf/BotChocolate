@@ -71,9 +71,10 @@ file will be located at `movebot/docs/_build/html/index.html`
 ### Launch Files
 `launch_vision.py` launches the `april_tf`, `apriltag_node`, and `realsense` nodes as well as rviz and the `calibration` node if specified.
 
-`simple_move.launch.py` launches ...
+`simple_move.launch.py` launches the `simple_move` API node
 
-`botchocolate.launch.py` launches ...
+`botchocolate.launch.py` launches the `simple_move` API node, the `trajectory` node, an rviz node, the `april_tf` node and `apriltag_node` node. 
+This launch file launches all the other launch files which are necessary for making allowing the Franka Arm to make hot chocolate. 
 
 ## The Group
 
