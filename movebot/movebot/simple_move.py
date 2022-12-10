@@ -502,7 +502,6 @@ class MoveBot(Node):
 
         if goal.joint_state.position == self.joint_statesmsg.position:
             if self.single_joint_rotation_cnt == 0:
-                self.get_logger().info(f'LOGGER CAUSE WE GOING NEW HOME')
                 goal_constraints.joint_constraints[0].position= np.pi/2
                 goal_constraints.joint_constraints[6].position=-np.pi/4
                 self.homeconfig = Constraints()
@@ -510,7 +509,6 @@ class MoveBot(Node):
                 self.single_joint_rotation_cnt +=1
                 
             elif self.single_joint_rotation_cnt > 0:
-                self.get_logger().info(f'LOGGER CAUSE WE GOING NEW HOME')
                 for i in range(len(self.homeconfig.joint_constraints)):
                     goal_constraints.joint_constraints[i].position=self.homeconfig.joint_constraints[i].position
                 self.single_joint_rotation_cnt +=1 
