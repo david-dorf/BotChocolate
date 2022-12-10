@@ -53,7 +53,7 @@ joint state vector. By setting `execute_now` to true, the robot will immediately
 trajectory. Otherwise, a separate service must be called to execute the trajectory.
 
 By setting `execute_now` to false, the user can execute a trajectory by calling the `/call_execute` service
-one of two ways:
+one of two ways: <br />
     1. In the terminal: `ros2 service call /call_execute std_srvs/srv/Empty`
     2. By creating a client for the service in another node
 
