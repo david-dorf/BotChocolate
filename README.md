@@ -7,7 +7,7 @@ calibration process must be completed. After this, the process consisted of usin
 locate a scoop of cocoa, a mug, a spoon, and a kettle relative to the robot. Next, using our custom 
 MoveIt API for python, movebot, the robot is able to perform path planning between all of these 
 objects. It turns on the kettle, dumps the cocoa powder into the mug, pours the hot water over the 
-power, and stirs the mixture it with the spoon.
+power, and stirs the mixture with the spoon.
 
 ## System Architecture
 BotChocolate consists of 4 packages:
