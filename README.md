@@ -5,14 +5,14 @@ The purpose of this project was to create hot chocolate using the Franka Emika 7
 perceive the environment, the system utilizes an Intel D435i camera AprilTags. Upon initial setup, a
 calibration process must be completed. After this, the process consisted of using AprilTags to 
 locate a scoop of cocoa, a mug, a spoon, and a kettle relative to the robot. Next, using our custom 
-MoveIt API for python, movebot, the robot is able to perform path planning between all of these 
+MoveIt API for Python, movebot, the robot is able to perform path planning between all of these
 objects. It turns on the kettle, dumps the cocoa powder into the mug, pours the hot water over the 
-power, and stirs the mixture with the spoon.
+power, and stirs the mixture it with the spoon.
 
 ## System Architecture
 BotChocolate consists of 4 packages:
 
-`movebot` is a python API for MoveIt in ROS2 used for path planning of the robot. It uses the `simple_move`
+`movebot` is a Python API for MoveIt in ROS2 used for path planning of the robot. It uses the `simple_move`
 to interface with other nodes.
 
 `movebot_interfaces` consists of the custom srv and msgs to interact with the movebot package.
@@ -71,10 +71,9 @@ file will be located at `movebot/docs/_build/html/index.html`
 ### Launch Files
 `launch_vision.py` launches the `april_tf`, `apriltag_node`, and `realsense` nodes as well as rviz and the `calibration` node if specified.
 
-`simple_move.launch.py` launches the `simple_move` API node
+`simple_move.launch.py` launches ...
 
-`botchocolate.launch.py` launches the `simple_move` API node, the `trajectory` node, an rviz node, the `april_tf` node and `apriltag_node` node. 
-This launch file launches all the other launch files which are necessary for making allowing the Franka Arm to make hot chocolate. 
+`botchocolate.launch.py` launches ...
 
 ## The Group
 

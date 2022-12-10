@@ -208,7 +208,7 @@ class AprilTF(Node):
             scoop_xzy.position.y = scoop_2_base.transform.translation.y
             scoop_xzy.position.z = scoop_2_base.transform.translation.z
             self.scoop_pub.publish(scoop_xzy)
-        except:
+        except TypeError:
             pass
         try:
             cup_2_base = self.tf_buffer.lookup_transform(
@@ -219,7 +219,7 @@ class AprilTF(Node):
             cup_xzy.position.y = cup_2_base.transform.translation.y
             cup_xzy.position.z = cup_2_base.transform.translation.z
             self.cup_pub.publish(cup_xzy)
-        except:
+        except TypeError:
             pass
         try:
             kettle_2_base = self.tf_buffer.lookup_transform(
@@ -230,7 +230,7 @@ class AprilTF(Node):
             kettle_xzy.position.y = kettle_2_base.transform.translation.y
             kettle_xzy.position.z = kettle_2_base.transform.translation.z
             self.kettle_pub.publish(kettle_xzy)
-        except:
+        except TypeError:
             pass
         try:
             stirrer_2_base = self.tf_buffer.lookup_transform(
@@ -241,7 +241,7 @@ class AprilTF(Node):
             stirrer_xzy.position.y = stirrer_2_base.transform.translation.y
             stirrer_xzy.position.z = stirrer_2_base.transform.translation.z
             self.stirrer_pub.publish(stirrer_xzy)
-        except:
+        except TypeError:
             pass
         try:
             # TODO
@@ -253,7 +253,7 @@ class AprilTF(Node):
             switch_xzy.position.y = switch_2_base.transform.translation.y
             switch_xzy.position.z = switch_2_base.transform.translation.z
             self.kettle_switch_pub.publish(switch_xzy)
-        except:
+        except TypeError:
             pass
         try:
             # TODO
@@ -265,7 +265,7 @@ class AprilTF(Node):
             switch_xzy.position.y = jig_2_base.transform.translation.y
             switch_xzy.position.z = jig_2_base.transform.translation.z
             self.jig_pub.publish(switch_xzy)
-        except:
+        except TypeError:
             self.get_logger().error("Jig missing")
             pass
 

@@ -9,7 +9,7 @@ from launch.actions import ExecuteProcess
 
 def generate_launch_description():
     """
-    Launches simple_move, copmuter vision nodes, and rviz.
+    Launches simple_move, vision stuff, and rviz.
 
     # With the real robot:
     ros2 launch moveBot botchocolate.launch.py real:=true

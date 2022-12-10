@@ -38,7 +38,7 @@ def average_points(
         y_quat = sum(quat_y_list) / len(quat_y_list)
         z_quat = sum(quat_z_list) / len(quat_z_list)
         w_quat = sum(quat_w_list) / len(quat_w_list)
-    except:
+    except TypeError:
         pass
     return x, y, z, x_quat, y_quat, z_quat, w_quat
 
@@ -201,7 +201,7 @@ class Calibration(Node):
 
             self.time_count += 1
             self.get_logger().error("Calibrating")
-        except:
+        except TypeError:
             # Get TF from file
             self.get_logger().error("Tag not detected! Make sure tag in camera view.")
             pass
