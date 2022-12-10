@@ -58,12 +58,13 @@ This step can now be ignored for subsequent runs.
 ## Documentation
 
 Documentation for the BotChocolate project contains documentation for both the `trajectory` and `bot_vis` packages. Separate documentation
-for the MoveBot API can be found in `movebot/docs`. 
+for the MoveBot API can be found in `movebot/docs`. For now, documentation is only viewable by building locally. To build it 
+you must first install the `m2r2` python package. Run `pip3 install m2r2` before trying to build the docs. You may 
+also need to install sphinx with `apt install python3-sphinx`.
 
-For now, documentation is only viewable by building locally. To build the BotChocolate documentation,
-navigate the to `docs/` directory and run `make html` (note you must have `make` installed).
-There now should be a new directory `_build/html` and in it you will find a file, `index.html`
-which you can open in your web browser of choice to view the documentation.
+To build the BotChocolate documentation,navigate the to `docs/` directory and run `make html`
+(note you must have `make` installed). There now should be a new directory `_build/html`
+and in it you will find a file, `index.html` which you can open in your web browser of choice to view the documentation.
 
 To view the MoveBot API documentation, navigate to `movebot/docs` and again run `make html` and the `index.html` 
 file will be located at `movebot/docs/_build/html/index.html`
