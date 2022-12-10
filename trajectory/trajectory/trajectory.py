@@ -549,7 +549,7 @@ class TrajectoryCaller(Node):
         self.plan(self.waypoints.pour_rot_1, execute_now=True)
         self.plan(self.waypoints.kettle_return,execute_now=True)
         self.open_gripper()
-        time.sleep(6)
+        time.sleep(3)
         self.plan(self.waypoints.kettle_return_standoff,execute_now=True)
         # Stir
         self.plan(self.waypoints.stir_standoff, execute_now=True)
