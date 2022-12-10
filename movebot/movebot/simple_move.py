@@ -374,8 +374,6 @@ class MoveBot(Node):
         ikmsg.pose_stamped.pose.orientation.w = quats[3]
         ikmsg.timeout.sec = 5
 
-  
-        # self.get_logger().info(f"IK QUATS   {quats}")
 
         return ikmsg
 
@@ -420,17 +418,10 @@ class MoveBot(Node):
         else:
             pose_vec = np.hstack([request.position, request.orientation])
 
-        # self.get_logger().info(f"goal pose vec {pose_vec}")
 
         msg = self.get_ik_rqst_msg(pose_vec)
-
-    
-        
-        # self.get_logger().info(f"goal ik req msg {msg}")
         self.ik_response = await self.ik_client.call_async(GetPositionIK.Request(ik_request=msg))
         response.joint_state = self.ik_response.solution.joint_state
-        # self.get_logger().info(f"goal ik response {response}")
-
 
         return response
 
@@ -502,7 +493,7 @@ class MoveBot(Node):
         for i in range(len(self.joint_statesmsg.name)):
             joint_constraints = JointConstraint()
             joint_constraints.joint_name = self.joint_statesmsg.name[i]
-            joint_constraints.position = goal.joint_state.position[i] #goal.joint_state.position[i]
+            joint_constraints.position = goal.joint_state.position[i] 
             
             joint_constraints.tolerance_above =0.002
             joint_constraints.tolerance_below = 0.002
@@ -522,16 +513,7 @@ class MoveBot(Node):
                 self.get_logger().info(f'LOGGER CAUSE WE GOING NEW HOME')
                 for i in range(len(self.homeconfig.joint_constraints)):
                     goal_constraints.joint_constraints[i].position=self.homeconfig.joint_constraints[i].position
-                self.single_joint_rotation_cnt +=1
-            # elif self.single_joint_rotation_cnt == 2:
-            #     goal_constraints.joint_constraints[4].position= np.pi/4
-            #     self.single_joint_rotation_cnt +=1
-            # elif self.single_joint_rotation_cnt == 3:
-            #     goal_constraints.joint_constraints[4].position= np.pi/2
-            #     self.single_joint_rotation_cnt +=1
-                
-        
-        # self.get_logger().info(f"goal {goal_constraints.joint_constraints[6].position}")    
+                self.single_joint_rotation_cnt +=1 
 
         motion_req.goal_constraints = [goal_constraints]
         motion_req.pipeline_id = 'move_group'
@@ -576,7 +558,7 @@ class MoveBot(Node):
 
     
         self.get_logger().info(f"READY TO PLAN {self.state}")
-        if request.is_xyzrpy:  # If start pos was given as X,Y,Z, R, P, Y
+        if request.is_xyzrpy:
             if len(request.start_pos.position) <= 0:
                 # IF there is no given start position, use current joint config as start
                 request.start_pos.position = self.joint_statesmsg.position
