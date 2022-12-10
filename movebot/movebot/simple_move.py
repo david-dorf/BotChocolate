@@ -167,11 +167,11 @@ class MoveBot(Node):
             self.clear_callback,
             callback_group=self.cbgroup)
 
-        # self.clear_current_box = self.create_service(
-        #     Empty,
-        #     "clear_current_box",
-        #     self.remove_callback,
-        #     callback_group=self.cbgroup)
+        self.clear_current_box = self.create_service(
+            Empty,
+            "clear_current_box",
+            self.remove_callback,
+            callback_group=self.cbgroup)
 
         self.scene_client = self.create_client(
             GetPlanningScene,
@@ -303,35 +303,35 @@ class MoveBot(Node):
 
         return Empty.Response()
 
-    # async def remove_callback(self, request, response):
-    #     """
-    #     Call back function for clear_current_box service.
+    async def remove_callback(self, request, response):
+        """
+        Call back function for clear_current_box service.
 
-    #     Clear the box in PlanningScene.world.collision_objects
-    #     with the id which is match the save box information
+        Clear the box in PlanningScene.world.collision_objects
+        with the id which is match the save box information
 
-    #     :param request: Empty.
-    #     :type request: movebot_interface/srv/AddBox.request
-    #     :param response: Empty.
-    #     :type response: movebot_interface/srv/AddBox.response
+        :param request: Empty.
+        :type request: movebot_interface/srv/AddBox.request
+        :param response: Empty.
+        :type response: movebot_interface/srv/AddBox.response
     
-    #     :rtype: std_srvs.srv.Empty.Response()
+        :rtype: std_srvs.srv.Empty.Response()
 
-    #     """
-    #     component = PlanningSceneComponents()
-    #     Scene_raw = await self.scene_client.call_async(
-    #         GetPlanningScene.Request(components=component)
-    #         )
-    #     Scene = Scene_raw.scene
+        """
+        component = PlanningSceneComponents()
+        Scene_raw = await self.scene_client.call_async(
+            GetPlanningScene.Request(components=component)
+            )
+        Scene = Scene_raw.scene
 
-    #     for i in Scene.world.collision_objects:
-    #         if i.id == self.box_name:
-    #             Scene.world.collision_objects.remove(i)
-    #             break
+        for i in Scene.world.collision_objects:
+            if i.id == self.box_name:
+                Scene.world.collision_objects.remove(i)
+                break
 
-    #     self.box_publisher.publish(Scene)
+        self.box_publisher.publish(Scene)
 
-    #     return Empty.Response()
+        return Empty.Response()
 
     def js_cb(self, jointstate):
         """
@@ -441,7 +441,6 @@ class MoveBot(Node):
         cart_req.cart_request.header.stamp = self.get_clock().now().to_msg()
         cart_req.cart_request.header.frame_id = 'panda_link0'
         cart_req.cart_request.start_state.joint_state = start.joint_state
-        # print(f"\n START STATE {cart_req.cart_request.start_state.joint_state}")
         
 
         cart_req.cart_request.group_name = 'panda_manipulator'
@@ -451,29 +450,20 @@ class MoveBot(Node):
         cart_req.cart_request.revolute_jump_threshold= 20.0 
 
         wp1=Pose()
-        # print(f"\n GP {goal.position[:]}")
         wp1.position.x=goal.position[0]
         wp1.position.y=goal.position[1]
         wp1.position.z=goal.position[2]
 
-        # print(f"\n OR {goal.orientation}")
 
         if len(goal.orientation)==3:
             quats = quaternion_from_euler(goal.orientation[0], goal.orientation[1],goal.orientation[2])
         else:
             quats=[goal.orientation[0],goal.orientation[1],goal.orientation[2],goal.orientation[3]]
-        # r,p,y=euler_from_quaternion(goal.orientation[0],goal.orientation[1],goal.orientation[2],goal.orientation[3])
-        # self.get_logger().info(f"LISTENER X ROT {r}", once=True)
-        # self.get_logger().info(f"LISTENER Y ROT {p}", once=True)
-        # self.get_logger().info(f"LISTENER Z ROT {y}", once=True)
-        
-        # print(f"\n OR QUATS {quats}")
         wp1.orientation.x=quats[0]
         wp1.orientation.y=quats[1]
         wp1.orientation.z=quats[2]
         wp1.orientation.w=quats[3]
 
-        # print(f"\n WP1 {wp1}")
         cart_req.cart_request.waypoints= [wp1]
 
 
@@ -564,20 +554,23 @@ class MoveBot(Node):
 
     async def plan_callback(self, request, response):
         """
-        Plan the cartesian trajectory path that the robot arm will follow.
+        Plan the desired trajectory path that the robot arm will follow.
 
         This path will be followed by the robot upon execution.
 
-        :param request: Message that includes the start position, goal position of the
+        Depending on the given request, the motion plan message is
+        either created with with the get_motion_request or the 
+        create_cart_msg. Both of these return a message that are passed 
+        as a request to either the MoveGroup action client 
+        or GetCartesianPath service client respectively. 
+
+        :param request: Message that includes the start position and goal position of the
         trajectory, and a flag that indicates if its in XYZ coords or joint positions, as well
         as a flag that determines if it should execute immediately or not.
         :type request: GetPlanRqst
 
-        :param response: Message to send to the move_action client.
-        :type response: MotionPlanRequest
-
-        :return: Message to send to the move_action client.
-        :rtype: MotionPlanRequest
+        :param response: Message to send to the execute_trajectory action client.
+        :type response: ExecuteTrajectory
 
         """
 
@@ -639,7 +632,6 @@ class MoveBot(Node):
             self.get_logger().info(f"CHANGING TO PLAN EXEC STATE")
             self.state=State.PLAN_EXEC
             self.get_logger().info(f"CURRENT STATE {self.state}")
-            # print(self.state)
             if request.execute_now==True:
                 self.get_logger().info(f" 'EXECUTE NOW' TRUE-- EXECUTING PLAN REQUEST")
                 self.get_logger().info(f"CHANGING TO IDLE STATE")
@@ -663,17 +655,13 @@ class MoveBot(Node):
                                 self.ee_base.transform.translation.z]
 
 
-            # print(f"\n GOAL POSE {request.goal_pos}")
 
             plan_msg = self.create_cart_msg(
                 start_in_joint_config,
                 request.goal_pos,
                 )
 
-            # print(f"\n CART REQ MSG {plan_msg}")
-
             
-            # print(f"\n CART PLAN RESP {plan_msg.cart_request}")
             self.cart_response = await self.cart_client.call_async(GetCartesianPath.Request(header=plan_msg.cart_request.header, 
                                                                                             start_state=plan_msg.cart_request.start_state,
                                                                                             group_name=plan_msg.cart_request.group_name,
@@ -682,13 +670,9 @@ class MoveBot(Node):
                                                                                             prismatic_jump_threshold=plan_msg.cart_request.prismatic_jump_threshold,
                                                                                             revolute_jump_threshold=plan_msg.cart_request.revolute_jump_threshold,
                                                                                             waypoints=plan_msg.cart_request.waypoints,))
-            # self.plan_response = await self.future_response.get_result_async()
-            # print(f"\n CART PLAN RESP {self.cart_response}")
 
             if self.state==State.CART_MSG:
-
                 self.get_logger().info(f"CHANGING TO CART EXEC STATE")
-                # print('SENDING CART MSG')
                 self.state=State.CART_EXEC
 
 
@@ -703,12 +687,11 @@ class MoveBot(Node):
             start_in_joint_config.joint_state = self.joint_statesmsg
 
             goal_in_joint_config = RobotState()
-            goal_in_joint_config.joint_state.position= self.joint_statesmsg.position ## GOAL POS IS JUST JOINT STATES
+            goal_in_joint_config.joint_state.position= self.joint_statesmsg.position
             plan_msg = self.get_motion_request(
                     start_in_joint_config,
                     goal_in_joint_config,
                     request.execute_now)
-
 
             self.future_response = await self._plan_client.send_goal_async(plan_msg)
             self.plan_response = await self.future_response.get_result_async()
@@ -737,14 +720,11 @@ class MoveBot(Node):
 
         """
         execute_msg = ExecuteTrajectory.Goal()
-        # self.get_logger().info(f"exec msg {self.cart_response.solution.joint_trajectory}")
 
         if self.state==State.CART_EXEC:
 
             self.get_logger().info(f" CURRENT STATE {self.state}")
             execute_msg.trajectory = self.cart_response.solution
-
-            # self.state=State.IDLE
 
         if self.state==State.PLAN_EXEC:
             print('EXECUTING ROT MSG')
