@@ -1,7 +1,0 @@
-AprilRec node
--------------
-
-.. automodule:: bot_vis.bot_vis.april_tf
-   :members:
-   :undoc-members:
-   :show-inheritance:
