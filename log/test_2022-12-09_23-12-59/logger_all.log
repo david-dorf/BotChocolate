@@ -1,0 +1,200 @@
+[0.286s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'test']
+[0.286s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='test', build_base='build', install_base='install', merge_install=False, test_result_base=None, retest_until_fail=0, retest_until_pass=0, abort_on_error=False, return_code_on_test_failure=False, executor='parallel', parallel_workers=8, event_handlers=None, ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['.'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, allow_overriding=[], ctest_args=None, python_testing=None, pytest_args=None, pytest_with_coverage=False, unittest_args=None, mixin_files=None, mixin=None, verb_parser=<colcon_mixin.mixin.mixin_argument.MixinArgumentDecorator object at 0x7fdd73320c10>, verb_extension=<colcon_core.verb.test.TestVerb object at 0x7fdd734e27a0>, main=<bound method TestVerb.main of <colcon_core.verb.test.TestVerb object at 0x7fdd734e27a0>>, mixin_verb=('test',))
+[0.302s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.302s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.302s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.302s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.302s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[0.302s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.302s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/ddorf/testbotchoc/hw3group-botchocolate'
+[0.302s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[0.302s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[0.303s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[0.303s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[0.303s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[0.303s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[0.303s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[0.303s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[0.303s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[0.311s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[0.311s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[0.311s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[0.311s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[0.311s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[0.311s] Level 1:colcon.colcon_core.package_identification:_identify(bot_vis) by extensions ['ignore', 'ignore_ament_install']
+[0.311s] Level 1:colcon.colcon_core.package_identification:_identify(bot_vis) by extension 'ignore'
+[0.311s] Level 1:colcon.colcon_core.package_identification:_identify(bot_vis) by extension 'ignore_ament_install'
+[0.311s] Level 1:colcon.colcon_core.package_identification:_identify(bot_vis) by extensions ['colcon_pkg']
+[0.311s] Level 1:colcon.colcon_core.package_identification:_identify(bot_vis) by extension 'colcon_pkg'
+[0.311s] Level 1:colcon.colcon_core.package_identification:_identify(bot_vis) by extensions ['colcon_meta']
+[0.311s] Level 1:colcon.colcon_core.package_identification:_identify(bot_vis) by extension 'colcon_meta'
+[0.312s] Level 1:colcon.colcon_core.package_identification:_identify(bot_vis) by extensions ['ros']
+[0.312s] Level 1:colcon.colcon_core.package_identification:_identify(bot_vis) by extension 'ros'
+[0.313s] DEBUG:colcon.colcon_core.package_identification:Package 'bot_vis' with type 'ros.ament_python' and name 'bot_vis'
+[0.313s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[0.313s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[0.313s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore_ament_install'
+[0.313s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['colcon_pkg']
+[0.313s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'colcon_pkg'
+[0.313s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['colcon_meta']
+[0.313s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'colcon_meta'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ros']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ros'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['cmake', 'python']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'cmake'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'python'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['python_setup_py']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'python_setup_py'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extensions ['ignore', 'ignore_ament_install']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'ignore'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'ignore_ament_install'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extensions ['colcon_pkg']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'colcon_pkg'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extensions ['colcon_meta']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'colcon_meta'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extensions ['ros']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'ros'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extensions ['cmake', 'python']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'cmake'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'python'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extensions ['python_setup_py']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'python_setup_py'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs/media) by extensions ['ignore', 'ignore_ament_install']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs/media) by extension 'ignore'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs/media) by extension 'ignore_ament_install'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs/media) by extensions ['colcon_pkg']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs/media) by extension 'colcon_pkg'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs/media) by extensions ['colcon_meta']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs/media) by extension 'colcon_meta'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs/media) by extensions ['ros']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs/media) by extension 'ros'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs/media) by extensions ['cmake', 'python']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs/media) by extension 'cmake'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs/media) by extension 'python'
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs/media) by extensions ['python_setup_py']
+[0.314s] Level 1:colcon.colcon_core.package_identification:_identify(docs/media) by extension 'python_setup_py'
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore_ament_install'
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['colcon_pkg']
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'colcon_pkg'
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['colcon_meta']
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'colcon_meta'
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ros']
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ros'
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['cmake', 'python']
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'cmake'
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'python'
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['python_setup_py']
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'python_setup_py'
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(movebot) by extensions ['ignore', 'ignore_ament_install']
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(movebot) by extension 'ignore'
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(movebot) by extension 'ignore_ament_install'
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(movebot) by extensions ['colcon_pkg']
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(movebot) by extension 'colcon_pkg'
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(movebot) by extensions ['colcon_meta']
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(movebot) by extension 'colcon_meta'
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(movebot) by extensions ['ros']
+[0.315s] Level 1:colcon.colcon_core.package_identification:_identify(movebot) by extension 'ros'
+[0.316s] DEBUG:colcon.colcon_core.package_identification:Package 'movebot' with type 'ros.ament_python' and name 'movebot'
+[0.316s] Level 1:colcon.colcon_core.package_identification:_identify(movebot_interfaces) by extensions ['ignore', 'ignore_ament_install']
+[0.316s] Level 1:colcon.colcon_core.package_identification:_identify(movebot_interfaces) by extension 'ignore'
+[0.316s] Level 1:colcon.colcon_core.package_identification:_identify(movebot_interfaces) by extension 'ignore_ament_install'
+[0.316s] Level 1:colcon.colcon_core.package_identification:_identify(movebot_interfaces) by extensions ['colcon_pkg']
+[0.316s] Level 1:colcon.colcon_core.package_identification:_identify(movebot_interfaces) by extension 'colcon_pkg'
+[0.316s] Level 1:colcon.colcon_core.package_identification:_identify(movebot_interfaces) by extensions ['colcon_meta']
+[0.316s] Level 1:colcon.colcon_core.package_identification:_identify(movebot_interfaces) by extension 'colcon_meta'
+[0.316s] Level 1:colcon.colcon_core.package_identification:_identify(movebot_interfaces) by extensions ['ros']
+[0.316s] Level 1:colcon.colcon_core.package_identification:_identify(movebot_interfaces) by extension 'ros'
+[0.316s] DEBUG:colcon.colcon_core.package_identification:Package 'movebot_interfaces' with type 'ros.ament_cmake' and name 'movebot_interfaces'
+[0.316s] Level 1:colcon.colcon_core.package_identification:_identify(trajectory) by extensions ['ignore', 'ignore_ament_install']
+[0.316s] Level 1:colcon.colcon_core.package_identification:_identify(trajectory) by extension 'ignore'
+[0.316s] Level 1:colcon.colcon_core.package_identification:_identify(trajectory) by extension 'ignore_ament_install'
+[0.316s] Level 1:colcon.colcon_core.package_identification:_identify(trajectory) by extensions ['colcon_pkg']
+[0.317s] Level 1:colcon.colcon_core.package_identification:_identify(trajectory) by extension 'colcon_pkg'
+[0.317s] Level 1:colcon.colcon_core.package_identification:_identify(trajectory) by extensions ['colcon_meta']
+[0.317s] Level 1:colcon.colcon_core.package_identification:_identify(trajectory) by extension 'colcon_meta'
+[0.317s] Level 1:colcon.colcon_core.package_identification:_identify(trajectory) by extensions ['ros']
+[0.317s] Level 1:colcon.colcon_core.package_identification:_identify(trajectory) by extension 'ros'
+[0.317s] DEBUG:colcon.colcon_core.package_identification:Package 'trajectory' with type 'ros.ament_python' and name 'trajectory'
+[0.317s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[0.317s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[0.317s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[0.317s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[0.317s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[0.321s] Level 5:colcon.colcon_core.verb:set package 'bot_vis' test argument 'ctest_args' from command line to 'None'
+[0.321s] Level 5:colcon.colcon_core.verb:set package 'bot_vis' test argument 'python_testing' from command line to 'None'
+[0.321s] Level 5:colcon.colcon_core.verb:set package 'bot_vis' test argument 'pytest_args' from command line to 'None'
+[0.321s] Level 5:colcon.colcon_core.verb:set package 'bot_vis' test argument 'pytest_with_coverage' from command line to 'False'
+[0.321s] Level 5:colcon.colcon_core.verb:set package 'bot_vis' test argument 'unittest_args' from command line to 'None'
+[0.321s] Level 5:colcon.colcon_core.verb:set package 'bot_vis' test argument 'retest_until_pass' from command line to '0'
+[0.321s] Level 5:colcon.colcon_core.verb:set package 'bot_vis' test argument 'retest_until_fail' from command line to '0'
+[0.321s] DEBUG:colcon.colcon_core.verb.test:Testing package 'bot_vis' with the following arguments: {'build_base': '/home/ddorf/testbotchoc/hw3group-botchocolate/build/bot_vis', 'ctest_args': None, 'install_base': '/home/ddorf/testbotchoc/hw3group-botchocolate/install/bot_vis', 'path': '/home/ddorf/testbotchoc/hw3group-botchocolate/bot_vis', 'pytest_args': None, 'pytest_with_coverage': False, 'python_testing': None, 'retest_until_fail': 0, 'retest_until_pass': 0, 'test_result_base': None, 'unittest_args': None}
+[0.322s] Level 5:colcon.colcon_core.verb:set package 'movebot_interfaces' test argument 'ctest_args' from command line to 'None'
+[0.322s] Level 5:colcon.colcon_core.verb:set package 'movebot_interfaces' test argument 'python_testing' from command line to 'None'
+[0.322s] Level 5:colcon.colcon_core.verb:set package 'movebot_interfaces' test argument 'pytest_args' from command line to 'None'
+[0.322s] Level 5:colcon.colcon_core.verb:set package 'movebot_interfaces' test argument 'pytest_with_coverage' from command line to 'False'
+[0.322s] Level 5:colcon.colcon_core.verb:set package 'movebot_interfaces' test argument 'unittest_args' from command line to 'None'
+[0.322s] Level 5:colcon.colcon_core.verb:set package 'movebot_interfaces' test argument 'retest_until_pass' from command line to '0'
+[0.322s] Level 5:colcon.colcon_core.verb:set package 'movebot_interfaces' test argument 'retest_until_fail' from command line to '0'
+[0.322s] DEBUG:colcon.colcon_core.verb.test:Testing package 'movebot_interfaces' with the following arguments: {'build_base': '/home/ddorf/testbotchoc/hw3group-botchocolate/build/movebot_interfaces', 'ctest_args': None, 'install_base': '/home/ddorf/testbotchoc/hw3group-botchocolate/install/movebot_interfaces', 'path': '/home/ddorf/testbotchoc/hw3group-botchocolate/movebot_interfaces', 'pytest_args': None, 'pytest_with_coverage': False, 'python_testing': None, 'retest_until_fail': 0, 'retest_until_pass': 0, 'test_result_base': None, 'unittest_args': None}
+[0.323s] Level 5:colcon.colcon_core.verb:set package 'movebot' test argument 'ctest_args' from command line to 'None'
+[0.323s] Level 5:colcon.colcon_core.verb:set package 'movebot' test argument 'python_testing' from command line to 'None'
+[0.323s] Level 5:colcon.colcon_core.verb:set package 'movebot' test argument 'pytest_args' from command line to 'None'
+[0.323s] Level 5:colcon.colcon_core.verb:set package 'movebot' test argument 'pytest_with_coverage' from command line to 'False'
+[0.323s] Level 5:colcon.colcon_core.verb:set package 'movebot' test argument 'unittest_args' from command line to 'None'
+[0.323s] Level 5:colcon.colcon_core.verb:set package 'movebot' test argument 'retest_until_pass' from command line to '0'
+[0.323s] Level 5:colcon.colcon_core.verb:set package 'movebot' test argument 'retest_until_fail' from command line to '0'
+[0.323s] DEBUG:colcon.colcon_core.verb.test:Testing package 'movebot' with the following arguments: {'build_base': '/home/ddorf/testbotchoc/hw3group-botchocolate/build/movebot', 'ctest_args': None, 'install_base': '/home/ddorf/testbotchoc/hw3group-botchocolate/install/movebot', 'path': '/home/ddorf/testbotchoc/hw3group-botchocolate/movebot', 'pytest_args': None, 'pytest_with_coverage': False, 'python_testing': None, 'retest_until_fail': 0, 'retest_until_pass': 0, 'test_result_base': None, 'unittest_args': None}
+[0.324s] Level 5:colcon.colcon_core.verb:set package 'trajectory' test argument 'ctest_args' from command line to 'None'
+[0.324s] Level 5:colcon.colcon_core.verb:set package 'trajectory' test argument 'python_testing' from command line to 'None'
+[0.324s] Level 5:colcon.colcon_core.verb:set package 'trajectory' test argument 'pytest_args' from command line to 'None'
+[0.324s] Level 5:colcon.colcon_core.verb:set package 'trajectory' test argument 'pytest_with_coverage' from command line to 'False'
+[0.324s] Level 5:colcon.colcon_core.verb:set package 'trajectory' test argument 'unittest_args' from command line to 'None'
+[0.324s] Level 5:colcon.colcon_core.verb:set package 'trajectory' test argument 'retest_until_pass' from command line to '0'
+[0.324s] Level 5:colcon.colcon_core.verb:set package 'trajectory' test argument 'retest_until_fail' from command line to '0'
+[0.324s] DEBUG:colcon.colcon_core.verb.test:Testing package 'trajectory' with the following arguments: {'build_base': '/home/ddorf/testbotchoc/hw3group-botchocolate/build/trajectory', 'ctest_args': None, 'install_base': '/home/ddorf/testbotchoc/hw3group-botchocolate/install/trajectory', 'path': '/home/ddorf/testbotchoc/hw3group-botchocolate/trajectory', 'pytest_args': None, 'pytest_with_coverage': False, 'python_testing': None, 'retest_until_fail': 0, 'retest_until_pass': 0, 'test_result_base': None, 'unittest_args': None}
+[0.324s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[0.328s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[0.328s] INFO:colcon.colcon_ros.task.ament_cmake.test:Testing ROS package in '/home/ddorf/testbotchoc/hw3group-botchocolate/movebot_interfaces' with build type 'ament_cmake'
+[0.328s] INFO:colcon.colcon_cmake.task.cmake.test:Testing CMake package in '/home/ddorf/testbotchoc/hw3group-botchocolate/movebot_interfaces'
+[0.329s] INFO:colcon.colcon_ros.task.ament_python.test:Testing ROS package in '/home/ddorf/testbotchoc/hw3group-botchocolate/bot_vis' with build type'ament_python'
+[0.329s] INFO:colcon.colcon_core.task.python.test:Testing Python package in '/home/ddorf/testbotchoc/hw3group-botchocolate/bot_vis'
+[0.333s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[0.333s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.333s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.337s] ERROR:colcon.colcon_core.task.python.test:Failed to find the following files:
+- /home/ddorf/testbotchoc/hw3group-botchocolate/install/bot_vis/share/bot_vis/package.sh
+Check that the following packages have been built:
+- bot_vis
+[0.337s] INFO:colcon.colcon_ros.task.ament_python.test:Testing ROS package in '/home/ddorf/testbotchoc/hw3group-botchocolate/movebot' with build type'ament_python'
+[0.337s] INFO:colcon.colcon_core.task.python.test:Testing Python package in '/home/ddorf/testbotchoc/hw3group-botchocolate/movebot'
+[0.338s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.338s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.342s] ERROR:colcon.colcon_core.task.python.test:Failed to find the following files:
+- /home/ddorf/testbotchoc/hw3group-botchocolate/install/movebot_interfaces/share/movebot_interfaces/package.sh
+- /home/ddorf/testbotchoc/hw3group-botchocolate/install/movebot/share/movebot/package.sh
+Check that the following packages have been built:
+- movebot_interfaces
+- movebot
+[0.342s] INFO:colcon.colcon_ros.task.ament_python.test:Testing ROS package in '/home/ddorf/testbotchoc/hw3group-botchocolate/trajectory' with build type'ament_python'
+[0.342s] INFO:colcon.colcon_core.task.python.test:Testing Python package in '/home/ddorf/testbotchoc/hw3group-botchocolate/trajectory'
+[0.343s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.343s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.347s] ERROR:colcon.colcon_core.task.python.test:Failed to find the following files:
+- /home/ddorf/testbotchoc/hw3group-botchocolate/install/movebot_interfaces/share/movebot_interfaces/package.sh
+- /home/ddorf/testbotchoc/hw3group-botchocolate/install/trajectory/share/trajectory/package.sh
+Check that the following packages have been built:
+- movebot_interfaces
+- trajectory
+[0.357s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[0.358s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[0.358s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with 'Has this package been built before?'
+[0.358s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[0.363s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[0.366s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[0.366s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[0.378s] DEBUG:colcon.colcon_core.event_reactor:joined thread

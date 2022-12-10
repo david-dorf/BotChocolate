@@ -1,7 +1,7 @@
+import os
+import sys
 
-import os 
-import sys 
-sys.path.insert(0,os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('..'))
 
 project = 'BotChocolate'
 copyright = '2022, BotChocolate'
@@ -19,7 +19,7 @@ extensions = [
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-autodoc_mock_imports = ["movebot_interfaces"] # ignore this for now
+autodoc_mock_imports = ["movebot_interfaces"]
 source_suffix = {
     '.rst': 'restructuredtext',
     '.md': 'markdown'
@@ -34,5 +34,3 @@ html_context = {
   'github_repo': 'hw3group-botchocolate',
   'github_version': 'main/docs/',
 }
-
-

@@ -48,8 +48,8 @@ def generate_launch_description():
     apriltag_node = Node(
         package='apriltag_ros',
         executable='apriltag_node',
-        remappings=[('image_rect','/camera/color/image_raw'),
-                    ('camera_info','/camera/color/camera_info')],
+        remappings=[('image_rect', '/camera/color/image_raw'),
+                    ('camera_info', '/camera/color/camera_info')],
         parameters=[tag_yaml_path]
         )
 

@@ -7,18 +7,14 @@
 # Import the necessary libraries
 import rclpy  # Python library for ROS 2
 from rclpy.node import Node  # Handles the creation of nodes
-from sensor_msgs.msg import Image, CameraInfo  # Image is the message type
-from cv_bridge import CvBridge  # Package to convert between ROS and OpenCV Images
-import cv2  # OpenCV library
-from tf2_ros import TransformException, TransformBroadcaster
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
-from geometry_msgs.msg import Point
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import TransformStamped
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 from std_msgs.msg import Bool
 from rcl_interfaces.msg import ParameterDescriptor
+
 
 class AprilTF(Node):
     """
@@ -31,18 +27,16 @@ class AprilTF(Node):
         Class constructor to set up the node
         """
         # Initiate the Node class's constructor and give it a name
-        super().__init__('april_tf')
+        super().__init__("april_tf")
 
         # Create publishers to publish the x,y,z,R,P,Y position of each aspect of the botcholate
         # setup
-        self.scoop_pub = self.create_publisher(Pose, 'scoop_xzy', 10)
-        self.cup_pub = self.create_publisher(Pose, 'cup_xyz', 10)
-        self.kettle_pub = self.create_publisher(Pose, 'kettle_xyz', 10)
-        self.stirrer_pub = self.create_publisher(Pose, 'stirrer_xyz', 10)
-        self.kettle_switch_pub = self.create_publisher(Pose, 'kettle_switch_xyz', 10)
-        self.jig_pub = self.create_publisher(Pose, 'jig_xyz', 10)
-
-
+        self.scoop_pub = self.create_publisher(Pose, "scoop_xzy", 10)
+        self.cup_pub = self.create_publisher(Pose, "cup_xyz", 10)
+        self.kettle_pub = self.create_publisher(Pose, "kettle_xyz", 10)
+        self.stirrer_pub = self.create_publisher(Pose, "stirrer_xyz", 10)
+        self.kettle_switch_pub = self.create_publisher(Pose, "kettle_switch_xyz", 10)
+        self.jig_pub = self.create_publisher(Pose, "jig_xyz", 10)
 
         # Create a listener to recieve the TF's from each tag to the camera
         self.tf_buffer = Buffer()
@@ -60,38 +54,59 @@ class AprilTF(Node):
         self.world_2_cam.child_frame_id = "camera_link"
         self.broadcaster2 = StaticTransformBroadcaster(self)
         self.calibrate_flag_sub = self.create_subscription(
-            Bool, '/is_calibrating', self.calibrate_flag_cb, 10)
+            Bool, "/is_calibrating", self.calibrate_flag_cb, 10
+        )
         self.calibrate_flag = False
 
         # Get transformation params from calibration
-        self.declare_parameter("x", 0.0, ParameterDescriptor(
-            description="The x translation from base to world frame"))
-        self.declare_parameter("y", 0.0, ParameterDescriptor(
-            description="The y translation from base to world frame"))
-        self.declare_parameter("z", 0.0, ParameterDescriptor(
-            description="The z translation from base to world frame"))
-        self.declare_parameter("x_q", 0.0, ParameterDescriptor(
-            description="The x rotation from base to world frame"))
-        self.declare_parameter("y_q", 0.0, ParameterDescriptor(
-            description="The y rotation from base to world frame"))
-        self.declare_parameter("z_q", 0.0, ParameterDescriptor(
-            description="The z rotation from base to world frame"))
-        self.declare_parameter("w_q", 0.0, ParameterDescriptor(
-            description="The w rotation from base to world frame"))
-        self.cali_trans_x = self.get_parameter(
-            "x").get_parameter_value().double_value
-        self.cali_trans_y = self.get_parameter(
-            "y").get_parameter_value().double_value
-        self.cali_trans_z = self.get_parameter(
-            "z").get_parameter_value().double_value
-        self.cali_rot_x = self.get_parameter(
-            "x_q").get_parameter_value().double_value
-        self.cali_rot_y = self.get_parameter(
-            "y_q").get_parameter_value().double_value
-        self.cali_rot_z = self.get_parameter(
-            "z_q").get_parameter_value().double_value
-        self.cali_rot_w = self.get_parameter(
-            "w_q").get_parameter_value().double_value
+        self.declare_parameter(
+            "x",
+            0.0,
+            ParameterDescriptor(
+                description="The x translation from base to world frame"
+            ),
+        )
+        self.declare_parameter(
+            "y",
+            0.0,
+            ParameterDescriptor(
+                description="The y translation from base to world frame"
+            ),
+        )
+        self.declare_parameter(
+            "z",
+            0.0,
+            ParameterDescriptor(
+                description="The z translation from base to world frame"
+            ),
+        )
+        self.declare_parameter(
+            "x_q",
+            0.0,
+            ParameterDescriptor(description="The x rotation from base to world frame"),
+        )
+        self.declare_parameter(
+            "y_q",
+            0.0,
+            ParameterDescriptor(description="The y rotation from base to world frame"),
+        )
+        self.declare_parameter(
+            "z_q",
+            0.0,
+            ParameterDescriptor(description="The z rotation from base to world frame"),
+        )
+        self.declare_parameter(
+            "w_q",
+            0.0,
+            ParameterDescriptor(description="The w rotation from base to world frame"),
+        )
+        self.cali_trans_x = self.get_parameter("x").get_parameter_value().double_value
+        self.cali_trans_y = self.get_parameter("y").get_parameter_value().double_value
+        self.cali_trans_z = self.get_parameter("z").get_parameter_value().double_value
+        self.cali_rot_x = self.get_parameter("x_q").get_parameter_value().double_value
+        self.cali_rot_y = self.get_parameter("y_q").get_parameter_value().double_value
+        self.cali_rot_z = self.get_parameter("z_q").get_parameter_value().double_value
+        self.cali_rot_w = self.get_parameter("w_q").get_parameter_value().double_value
 
         # Static frames for gripper use
         self.static_broadcaster = StaticTransformBroadcaster(self)
@@ -103,7 +118,7 @@ class AprilTF(Node):
         self.kettle_adapter_tf.transform.translation.y = 0.0616
         self.kettle_adapter_tf.transform.translation.z = -0.07
 
-        # Need change 
+        # Need change
         # check coordinate in robot
         self.kettle_switch_tf = TransformStamped()
         self.kettle_switch_tf.header.stamp = self.get_clock().now().to_msg()
@@ -119,7 +134,7 @@ class AprilTF(Node):
         self.cup_center_tf.child_frame_id = "cup_center"
         self.cup_center_tf.transform.translation.x = -0.25
         self.cup_center_tf.transform.translation.y = 0.0
-        self.cup_center_tf.transform.translation.z =  -0.203
+        self.cup_center_tf.transform.translation.z = -0.203
 
         self.scoop_tf = TransformStamped()
         self.scoop_tf.header.stamp = self.get_clock().now().to_msg()
@@ -127,17 +142,17 @@ class AprilTF(Node):
         self.scoop_tf.child_frame_id = "scoop"
         self.scoop_tf.transform.translation.x = -0.5
         self.scoop_tf.transform.translation.y = -0.02
-        self.scoop_tf.transform.translation.z =  -0.248
+        self.scoop_tf.transform.translation.z = -0.248
 
         self.stirrer_tf = TransformStamped()
         self.stirrer_tf.header.stamp = self.get_clock().now().to_msg()
-        self.stirrer_tf.header.frame_id = "jig" 
+        self.stirrer_tf.header.frame_id = "jig"
         self.stirrer_tf.child_frame_id = "stirrer"
         self.stirrer_tf.transform.translation.x = 0.0
         self.stirrer_tf.transform.translation.y = 0.006
         self.stirrer_tf.transform.translation.z = -0.203
 
-        self.timer = self.create_timer(1/100, self.timer_callback)
+        self.timer = self.create_timer(1 / 100, self.timer_callback)
 
     def calibrate_flag_cb(self, data):
         """Recieve flag to see if calibration is running.
@@ -176,21 +191,18 @@ class AprilTF(Node):
         """
         Callback function.
         """
-        if not self.calibrate_flag: # IF not calibrating
+        if not self.calibrate_flag:  # IF not calibrating
             self.get_april_2_robot()
             self.static_broadcaster.sendTransform(self.kettle_adapter_tf)
             self.static_broadcaster.sendTransform(self.kettle_switch_tf)
             self.static_broadcaster.sendTransform(self.cup_center_tf)
             self.static_broadcaster.sendTransform(self.stirrer_tf)
             self.static_broadcaster.sendTransform(self.scoop_tf)
-
-
         # Listen to transformation from botchocolate components and publish positions to a topic
         try:
             scoop_2_base = self.tf_buffer.lookup_transform(
-                'panda_link0',
-                'scoop',
-                rclpy.time.Time())
+                "panda_link0", "scoop", rclpy.time.Time()
+            )
             scoop_xzy = Pose()
             scoop_xzy.position.x = scoop_2_base.transform.translation.x
             scoop_xzy.position.y = scoop_2_base.transform.translation.y
@@ -198,12 +210,10 @@ class AprilTF(Node):
             self.scoop_pub.publish(scoop_xzy)
         except:
             pass
-
         try:
             cup_2_base = self.tf_buffer.lookup_transform(
-                'panda_link0',
-                'cup_center',
-                rclpy.time.Time())
+                "panda_link0", "cup_center", rclpy.time.Time()
+            )
             cup_xzy = Pose()
             cup_xzy.position.x = cup_2_base.transform.translation.x
             cup_xzy.position.y = cup_2_base.transform.translation.y
@@ -211,12 +221,10 @@ class AprilTF(Node):
             self.cup_pub.publish(cup_xzy)
         except:
             pass
-
         try:
             kettle_2_base = self.tf_buffer.lookup_transform(
-                'panda_link0',
-                'kettle_adapter',
-                rclpy.time.Time())
+                "panda_link0", "kettle_adapter", rclpy.time.Time()
+            )
             kettle_xzy = Pose()
             kettle_xzy.position.x = kettle_2_base.transform.translation.x
             kettle_xzy.position.y = kettle_2_base.transform.translation.y
@@ -224,12 +232,10 @@ class AprilTF(Node):
             self.kettle_pub.publish(kettle_xzy)
         except:
             pass
-
         try:
             stirrer_2_base = self.tf_buffer.lookup_transform(
-                'panda_link0',
-                'stirrer',
-                rclpy.time.Time())
+                "panda_link0", "stirrer", rclpy.time.Time()
+            )
             stirrer_xzy = Pose()
             stirrer_xzy.position.x = stirrer_2_base.transform.translation.x
             stirrer_xzy.position.y = stirrer_2_base.transform.translation.y
@@ -237,13 +243,11 @@ class AprilTF(Node):
             self.stirrer_pub.publish(stirrer_xzy)
         except:
             pass
-
         try:
             # TODO
             switch_2_base = self.tf_buffer.lookup_transform(
-                'panda_link0',
-                'kettle_switch',
-                rclpy.time.Time())
+                "panda_link0", "kettle_switch", rclpy.time.Time()
+            )
             switch_xzy = Pose()
             switch_xzy.position.x = switch_2_base.transform.translation.x
             switch_xzy.position.y = switch_2_base.transform.translation.y
@@ -254,9 +258,8 @@ class AprilTF(Node):
         try:
             # TODO
             jig_2_base = self.tf_buffer.lookup_transform(
-                'panda_link0',
-                'jig',
-                rclpy.time.Time())
+                "panda_link0", "jig", rclpy.time.Time()
+            )
             switch_xzy = Pose()
             switch_xzy.position.x = jig_2_base.transform.translation.x
             switch_xzy.position.y = jig_2_base.transform.translation.y
@@ -276,5 +279,5 @@ def main(args=None):
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

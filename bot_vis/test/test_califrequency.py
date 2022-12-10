@@ -1,24 +1,16 @@
-import os
 import time
 import unittest
-
 import launch
 import launch_ros
 import launch_ros.actions
 import launch_testing.actions
-
 from std_msgs.msg import Bool
-
 import pytest
-
 import rclpy
-
-from ament_index_python.packages import get_package_share_directory
 
 
 @pytest.mark.rostest
 def generate_test_description():
-
 
     cali_node = launch_ros.actions.Node(
         package='bot_vis',

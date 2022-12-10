@@ -1,6 +1,6 @@
-import os 
+import os
 import sys
-sys.path.insert(0,os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('..'))
 
 project = 'MoveBot'
 copyright = '2022'
@@ -16,7 +16,7 @@ extensions = [
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-autodoc_mock_imports = ["movebot_interfaces"] # ignore this for now
+autodoc_mock_imports = ["movebot_interfaces"]
 source_suffix = {
     '.rst': 'restructuredtext',
     '.md': 'markdown'
@@ -24,4 +24,3 @@ source_suffix = {
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
-

@@ -4,16 +4,16 @@ from rclpy.node import Node  # Handles the creation of nodes
 from tf2_ros import TransformBroadcaster
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
-from geometry_msgs.msg import Point
-from geometry_msgs.msg import Pose
 from geometry_msgs.msg import TransformStamped
-from ament_index_python.packages import get_package_share_path, get_package_prefix
+from ament_index_python.packages import get_package_share_path
 import yaml
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 from std_msgs.msg import Bool
 
-def average_points(x_list, y_list, z_list, quat_x_list, 
-                    quat_y_list, quat_z_list, quat_w_list):
+
+def average_points(
+    x_list, y_list, z_list, quat_x_list, quat_y_list, quat_z_list, quat_w_list
+):
     """Average several lists of points.
 
     Args:
@@ -41,11 +41,12 @@ def average_points(x_list, y_list, z_list, quat_x_list,
     except:
         pass
     return x, y, z, x_quat, y_quat, z_quat, w_quat
-    
+
+
 class Calibration(Node):
     """
     Node that finds transform from camera to end_effector tag and saves the pose of the calibration
-    tag in a yaml file. 
+    tag in a yaml file.
     """
 
     def __init__(self):
@@ -53,7 +54,7 @@ class Calibration(Node):
         Class constructor to set up the node
         """
         # Initiate the Node class's constructor and give it a name
-        super().__init__('calibration')
+        super().__init__("calibration")
 
         # Create a listener to recieve the TF's from each tag to the camera
         self.tf_buffer = Buffer()
@@ -67,8 +68,8 @@ class Calibration(Node):
         self.broadcaster = TransformBroadcaster(self)
 
         # Path for the calibration file
-        self.bot_vis_path = get_package_share_path('bot_vis')
-        self.calibration_path = str(self.bot_vis_path) + '/calibration.yaml'
+        self.bot_vis_path = get_package_share_path("bot_vis")
+        self.calibration_path = str(self.bot_vis_path) + "/calibration.yaml"
 
         # Lists to save the x,y,z and quaternions
         self.x_list = []
@@ -89,12 +90,13 @@ class Calibration(Node):
         self.broadcaster = StaticTransformBroadcaster(self)
 
         # Create a publisher that indicates if the calibration node is running
-        self.flag_pub = self.create_publisher(Bool, '/is_calibrating', 10)
+        self.flag_pub = self.create_publisher(Bool, "/is_calibrating", 10)
 
         self.timer = self.create_timer(0.1, self.timer_callback)
 
-
-    def generate_yaml(self, x_in, y_in, z_in, x_quat_in, y_quat_in, z_quat_in, w_quat_in):
+    def generate_yaml(
+        self, x_in, y_in, z_in, x_quat_in, y_quat_in, z_quat_in, w_quat_in
+    ):
         """
         Take in a x, y, z position with a quaternion angle and returns a dictionary that will
         be used to generate the calibration yaml.
@@ -117,17 +119,18 @@ class Calibration(Node):
         :return: Dictionary with values for yaml file
         :rtype: dict
         """
-        return dict(x = x_in,
-                    y = y_in,
-                    z = z_in,
-                    x_q = x_quat_in,
-                    y_q = y_quat_in,
-                    z_q = z_quat_in,
-                    w_q = w_quat_in)
+        return dict(
+            x=x_in,
+            y=y_in,
+            z=z_in,
+            x_q=x_quat_in,
+            y_q=y_quat_in,
+            z_q=z_quat_in,
+            w_q=w_quat_in,
+        )
 
     def append_list(self):
-        """Add the the current TF locations to a list of position values to be averaged later.
-        """
+        """Add the the current TF locations to a list of position values to be averaged later."""
         self.x_list.append(self.cam_2_panda_link0.transform.translation.x)
         self.y_list.append(self.cam_2_panda_link0.transform.translation.y)
         self.z_list.append(self.cam_2_panda_link0.transform.translation.z)
@@ -141,26 +144,33 @@ class Calibration(Node):
         Set the TF from the end effector tag to the panda equal to the TF from the panda hand tcp
         frame since the end effector tag is in the same place as the panda hand tcp frame.
         """
-        self.end_eff_tag_2_panda_link0.transform.translation.x = \
+        self.end_eff_tag_2_panda_link0.transform.translation.x = (
             self.panda_hand_tcp_2_panda_link0.transform.translation.x
+        )
 
-        self.end_eff_tag_2_panda_link0.transform.translation.y = \
+        self.end_eff_tag_2_panda_link0.transform.translation.y = (
             self.panda_hand_tcp_2_panda_link0.transform.translation.y
+        )
 
-        self.end_eff_tag_2_panda_link0.transform.translation.z = \
+        self.end_eff_tag_2_panda_link0.transform.translation.z = (
             self.panda_hand_tcp_2_panda_link0.transform.translation.z
+        )
 
-        self.end_eff_tag_2_panda_link0.transform.rotation.x = \
+        self.end_eff_tag_2_panda_link0.transform.rotation.x = (
             self.panda_hand_tcp_2_panda_link0.transform.rotation.x
+        )
 
-        self.end_eff_tag_2_panda_link0.transform.rotation.y = \
+        self.end_eff_tag_2_panda_link0.transform.rotation.y = (
             self.panda_hand_tcp_2_panda_link0.transform.rotation.y
+        )
 
-        self.end_eff_tag_2_panda_link0.transform.rotation.z = \
+        self.end_eff_tag_2_panda_link0.transform.rotation.z = (
             self.panda_hand_tcp_2_panda_link0.transform.rotation.z
+        )
 
-        self.end_eff_tag_2_panda_link0.transform.rotation.w = \
+        self.end_eff_tag_2_panda_link0.transform.rotation.w = (
             self.panda_hand_tcp_2_panda_link0.transform.rotation.w
+        )
 
         self.broadcaster.sendTransform(self.end_eff_tag_2_panda_link0)
 
@@ -173,22 +183,19 @@ class Calibration(Node):
         try:
             # Get tf from camera to end_eff_tag
             self.cam_2_ee = self.tf_buffer.lookup_transform(
-                'camera_link',
-                'end_eff_tag',
-                rclpy.time.Time())
+                "camera_link", "end_eff_tag", rclpy.time.Time()
+            )
 
             # Get TF from panda_hand_tcp to panda_link0
             self.panda_hand_tcp_2_panda_link0 = self.tf_buffer.lookup_transform(
-                'panda_hand_tcp',
-                'panda_link0',
-                rclpy.time.Time())
+                "panda_hand_tcp", "panda_link0", rclpy.time.Time()
+            )
 
             # Link frames
             self.link_frames()
             self.cam_2_panda_link0 = self.tf_buffer.lookup_transform(
-                'camera_link',
-                'panda_link0',
-                rclpy.time.Time())
+                "camera_link", "panda_link0", rclpy.time.Time()
+            )
 
             self.append_list()
 
@@ -211,20 +218,30 @@ class Calibration(Node):
         # Get transforms over a 5 second interval
         if self.time_count < 50:
             self.get_tf()
-        else: # Average TF readings and put the average in a yaml
-            x, y, z, x_quat, y_quat, z_quat, w_quat = \
-                self.average_points(self.x_list, self.y_list, self.z_list, self.quat_x_list, 
-                                    self.quat_y_list, self.quat_z_list, self.quat_w_list)
+        else:  # Average TF readings and put the average in a yaml
+            x, y, z, x_quat, y_quat, z_quat, w_quat = self.average_points(
+                self.x_list,
+                self.y_list,
+                self.z_list,
+                self.quat_x_list,
+                self.quat_y_list,
+                self.quat_z_list,
+                self.quat_w_list,
+            )
 
-            data = dict( april_tf = dict(
-            ros__parameters = 
-                self.generate_yaml(x, y, z, x_quat, y_quat, z_quat, w_quat)
-            ))
+            data = dict(
+                april_tf=dict(
+                    ros__parameters=self.generate_yaml(
+                        x, y, z, x_quat, y_quat, z_quat, w_quat
+                    )
+                )
+            )
 
-            with open(str(self.calibration_path), 'w') as outfile:
+            with open(str(self.calibration_path), "w") as outfile:
                 outfile.write(yaml.safe_dump(data, default_flow_style=False))
             self.get_logger().info("Done Calibrating")
             self.destroy_node()
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -233,5 +250,6 @@ def main(args=None):
     calibration.destroy_node()
     rclpy.shutdown()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
