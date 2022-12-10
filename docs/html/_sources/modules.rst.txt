@@ -1,0 +1,8 @@
+BotChocolate
+============
+
+.. toctree::
+   :maxdepth: 4
+   
+   trajectory
+   april_rec

@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>trajectory.trajectory.trajectory &mdash; BotChocolate 1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> BotChocolate
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../trajectory.html">Trajectory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../botvis.html">BotVis</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">BotChocolate</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">trajectory.trajectory.trajectory</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for trajectory.trajectory.trajectory</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">rclpy</span>
+<span class="kn">from</span> <span class="nn">rclpy.node</span> <span class="kn">import</span> <span class="n">Node</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
+<span class="kn">from</span> <span class="nn">rclpy.callback_groups</span> <span class="kn">import</span> <span class="n">ReentrantCallbackGroup</span>
+<span class="kn">from</span> <span class="nn">std_srvs.srv</span> <span class="kn">import</span> <span class="n">Empty</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">movebot_interfaces.srv</span> <span class="kn">import</span> <span class="n">AddBox</span><span class="p">,</span> <span class="n">GetPlanRqst</span>
+<span class="kn">from</span> <span class="nn">geometry_msgs.msg</span> <span class="kn">import</span> <span class="n">Pose</span>
+<span class="kn">from</span> <span class="nn">rclpy.action</span> <span class="kn">import</span> <span class="n">ActionClient</span>
+<span class="kn">from</span> <span class="nn">control_msgs.action</span> <span class="kn">import</span> <span class="n">GripperCommand</span>
+<span class="kn">from</span> <span class="nn">franka_msgs.action</span> <span class="kn">import</span> <span class="n">Grasp</span>
+<span class="kn">from</span> <span class="nn">franka_msgs.action</span> <span class="kn">import</span> <span class="n">Homing</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">SimpleNamespace</span>
+
+<div class="viewcode-block" id="BoxCaller"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.BoxCaller">[docs]</a><span class="k">class</span> <span class="nc">BoxCaller</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Spawn in collision box objects for the planning scene.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s2">&quot;box_node&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbgroup</span> <span class="o">=</span> <span class="n">ReentrantCallbackGroup</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_box_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_client</span><span class="p">(</span>
+            <span class="n">AddBox</span><span class="p">,</span> <span class="s2">&quot;add_box&quot;</span><span class="p">,</span> <span class="n">callback_group</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cbgroup</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">call_box_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_client</span><span class="p">(</span>
+            <span class="n">Empty</span><span class="p">,</span> <span class="s2">&quot;call_box&quot;</span><span class="p">,</span> <span class="n">callback_group</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cbgroup</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_box_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_client</span><span class="p">(</span>
+            <span class="n">Empty</span><span class="p">,</span> <span class="s2">&quot;clear_all_box&quot;</span><span class="p">,</span> <span class="n">callback_group</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cbgroup</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span> <span class="o">=</span> <span class="n">AddBox</span><span class="o">.</span><span class="n">Request</span><span class="p">()</span>
+
+<div class="viewcode-block" id="BoxCaller.add_box_request"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.BoxCaller.add_box_request">[docs]</a>    <span class="k">def</span> <span class="nf">add_box_request</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add in the table underneath the base of the robot for collision avoidance.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;box1&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.1</span> <span class="o">-</span> <span class="mf">0.1</span>  <span class="c1"># minus 0.1 because of extra collision height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">l</span> <span class="o">=</span> <span class="mf">0.914</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="mf">0.610</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="mf">0.2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_box_client</span><span class="o">.</span><span class="n">call_async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">rclpy</span><span class="o">.</span><span class="n">spin_until_future_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BoxCaller.add_box2_request"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.BoxCaller.add_box2_request">[docs]</a>    <span class="k">def</span> <span class="nf">add_box2_request</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add in the table adjacent to the table underneath the base of the robot.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;box2&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="mf">0.37</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="mf">0.69</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.19</span> <span class="o">-</span> <span class="mf">0.1</span>  <span class="c1"># minus 0.1 because of extra collision height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">l</span> <span class="o">=</span> <span class="mf">1.78</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="mf">0.74</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="mf">0.2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_box_client</span><span class="o">.</span><span class="n">call_async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">rclpy</span><span class="o">.</span><span class="n">spin_until_future_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BoxCaller.call_box_request"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.BoxCaller.call_box_request">[docs]</a>    <span class="k">def</span> <span class="nf">call_box_request</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Call the boxes into the environment from the add queue.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">call_box_client</span><span class="o">.</span><span class="n">call_async</span><span class="p">(</span><span class="n">Empty</span><span class="o">.</span><span class="n">Request</span><span class="p">())</span>
+        <span class="n">rclpy</span><span class="o">.</span><span class="n">spin_until_future_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BoxCaller.clear_box_request"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.BoxCaller.clear_box_request">[docs]</a>    <span class="k">def</span> <span class="nf">clear_box_request</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove all of the boxes from the simulated environment.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_box_client</span><span class="o">.</span><span class="n">call_async</span><span class="p">(</span><span class="n">Empty</span><span class="o">.</span><span class="n">Request</span><span class="p">())</span>
+        <span class="n">rclpy</span><span class="o">.</span><span class="n">spin_until_future_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="TrajectoryCaller"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.TrajectoryCaller">[docs]</a><span class="k">class</span> <span class="nc">TrajectoryCaller</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Call the plan and execute services from simple_move.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s2">&quot;trajectory_node&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbgroup</span> <span class="o">=</span> <span class="n">ReentrantCallbackGroup</span><span class="p">()</span>
+
+        <span class="c1"># Subscribe to object positions from computer vision</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scoop_sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subscription</span><span class="p">(</span>
+            <span class="n">Pose</span><span class="p">,</span> <span class="s2">&quot;scoop_xzy&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pose_callback</span><span class="p">,</span> <span class="mi">10</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stir_sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subscription</span><span class="p">(</span>
+            <span class="n">Pose</span><span class="p">,</span> <span class="s2">&quot;stirrer_xyz&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_stir_pose_callback</span><span class="p">,</span> <span class="mi">10</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cup_sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subscription</span><span class="p">(</span>
+            <span class="n">Pose</span><span class="p">,</span> <span class="s2">&quot;cup_xyz&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cup_pose_callback</span><span class="p">,</span> <span class="mi">10</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kettle_sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subscription</span><span class="p">(</span>
+            <span class="n">Pose</span><span class="p">,</span> <span class="s2">&quot;kettle_xyz&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_kettle_pose_callback</span><span class="p">,</span> <span class="mi">10</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kettle_switch_sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subscription</span><span class="p">(</span>
+            <span class="n">Pose</span><span class="p">,</span> <span class="s2">&quot;kettle_switch_xyz&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_kettle_switch_pose_callback</span><span class="p">,</span> <span class="mi">10</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jig_sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subscription</span><span class="p">(</span>
+            <span class="n">Pose</span><span class="p">,</span> <span class="s2">&quot;jig_xyz&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_jig_pose_callback</span><span class="p">,</span> <span class="mi">10</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Initialize robot trajectory clients</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_client</span><span class="p">(</span>
+            <span class="n">GetPlanRqst</span><span class="p">,</span> <span class="s2">&quot;call_plan&quot;</span><span class="p">,</span> <span class="n">callback_group</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cbgroup</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cart_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_client</span><span class="p">(</span>
+            <span class="n">GetPlanRqst</span><span class="p">,</span> <span class="s2">&quot;call_cart&quot;</span><span class="p">,</span> <span class="n">callback_group</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cbgroup</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_client</span><span class="p">(</span>
+            <span class="n">Empty</span><span class="p">,</span> <span class="s2">&quot;call_execute&quot;</span><span class="p">,</span> <span class="n">callback_group</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cbgroup</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute_final_path_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_service</span><span class="p">(</span>
+            <span class="n">Empty</span><span class="p">,</span> <span class="s2">&quot;make_hot_chocolate&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_chocolate_callback</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span> <span class="o">=</span> <span class="n">GetPlanRqst</span><span class="o">.</span><span class="n">Request</span><span class="p">()</span>
+
+        <span class="c1"># Initialize gripper action clients</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gripper_action_client</span> <span class="o">=</span> <span class="n">ActionClient</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">GripperCommand</span><span class="p">,</span> <span class="s2">&quot;/panda_gripper/gripper_action&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_grasp_client</span> <span class="o">=</span> <span class="n">ActionClient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Grasp</span><span class="p">,</span> <span class="s2">&quot;/panda_gripper/grasp&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_homing_client</span> <span class="o">=</span> <span class="n">ActionClient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Homing</span><span class="p">,</span> <span class="s2">&quot;/panda_gripper/homing&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan_scene_flag</span><span class="o">=</span><span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trial_flag</span><span class="o">=</span><span class="mi">0</span>
+
+        <span class="c1"># Define the initial state of the robot</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">home_x</span> <span class="o">=</span> <span class="mf">0.3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">home_y</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">home_z</span> <span class="o">=</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">home_roll</span> <span class="o">=</span> <span class="n">pi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">home_pitch</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">home_yaw</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">GRIP</span> <span class="o">=</span> <span class="kc">False</span>
+        
+<div class="viewcode-block" id="TrajectoryCaller.get_kettle_pose_callback"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.TrajectoryCaller.get_kettle_pose_callback">[docs]</a>    <span class="k">def</span> <span class="nf">get_kettle_pose_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose_msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kettle_pose</span> <span class="o">=</span> <span class="n">pose_msg</span></div>
+
+<div class="viewcode-block" id="TrajectoryCaller.get_pose_callback"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.TrajectoryCaller.get_pose_callback">[docs]</a>    <span class="k">def</span> <span class="nf">get_pose_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose_msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scoop_pose</span> <span class="o">=</span> <span class="n">pose_msg</span></div>
+
+<div class="viewcode-block" id="TrajectoryCaller.get_stir_pose_callback"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.TrajectoryCaller.get_stir_pose_callback">[docs]</a>    <span class="k">def</span> <span class="nf">get_stir_pose_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose_msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stir_pose</span> <span class="o">=</span> <span class="n">pose_msg</span></div>
+
+<div class="viewcode-block" id="TrajectoryCaller.get_cup_pose_callback"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.TrajectoryCaller.get_cup_pose_callback">[docs]</a>    <span class="k">def</span> <span class="nf">get_cup_pose_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose_msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span> <span class="o">=</span> <span class="n">pose_msg</span></div>
+
+<div class="viewcode-block" id="TrajectoryCaller.get_kettle_switch_pose_callback"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.TrajectoryCaller.get_kettle_switch_pose_callback">[docs]</a>    <span class="k">def</span> <span class="nf">get_kettle_switch_pose_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose_msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">switch_pose</span> <span class="o">=</span> <span class="n">pose_msg</span></div>
+    
+<div class="viewcode-block" id="TrajectoryCaller.get_jig_pose_callback"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.TrajectoryCaller.get_jig_pose_callback">[docs]</a>    <span class="k">def</span> <span class="nf">get_jig_pose_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose_msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jig_pose</span> <span class="o">=</span> <span class="n">pose_msg</span></div>
+
+<div class="viewcode-block" id="TrajectoryCaller.grasp"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.TrajectoryCaller.grasp">[docs]</a>    <span class="k">def</span> <span class="nf">grasp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">speed</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="mf">30.0</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="p">(</span><span class="mf">0.005</span><span class="p">,</span> <span class="mf">0.005</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Grasps an object. It can fail if the width is not accurate</span>
+
+<span class="sd">        :param width: width of the object you are grasping</span>
+<span class="sd">        :param speed: speed the gripper will close</span>
+<span class="sd">        :param force: force the gripper will grasp the object</span>
+<span class="sd">        :param epsilon: inner and outer tolerance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Grasping...&quot;</span><span class="p">)</span>
+        <span class="n">goal_msg</span> <span class="o">=</span> <span class="n">Grasp</span><span class="o">.</span><span class="n">Goal</span><span class="p">()</span>
+        <span class="n">goal_msg</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
+        <span class="n">goal_msg</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="n">speed</span>
+        <span class="n">goal_msg</span><span class="o">.</span><span class="n">force</span> <span class="o">=</span> <span class="n">force</span>
+        <span class="n">goal_msg</span><span class="o">.</span><span class="n">epsilon</span><span class="o">.</span><span class="n">inner</span> <span class="o">=</span> <span class="n">epsilon</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">goal_msg</span><span class="o">.</span><span class="n">epsilon</span><span class="o">.</span><span class="n">outer</span> <span class="o">=</span> <span class="n">epsilon</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_grasp_client</span><span class="o">.</span><span class="n">wait_for_server</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">future_grasp_res</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grasp_client</span><span class="o">.</span><span class="n">send_goal_async</span><span class="p">(</span><span class="n">goal_msg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Done Grasping&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">future_grasp_res</span></div>
+
+<div class="viewcode-block" id="TrajectoryCaller.open_gripper"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.TrajectoryCaller.open_gripper">[docs]</a>    <span class="k">def</span> <span class="nf">open_gripper</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Opens the gripper, position=0.04 is open for some reason</span>
+
+<span class="sd">        :return: A future object from the ActionClient.send_goal_async()</span>
+<span class="sd">        function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">goal_msg</span> <span class="o">=</span> <span class="n">GripperCommand</span><span class="o">.</span><span class="n">Goal</span><span class="p">()</span>
+        <span class="n">goal_msg</span><span class="o">.</span><span class="n">command</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="mf">0.04</span>
+        <span class="n">goal_msg</span><span class="o">.</span><span class="n">command</span><span class="o">.</span><span class="n">max_effort</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gripper_action_client</span><span class="o">.</span><span class="n">wait_for_server</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">future_open_res</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gripper_action_client</span><span class="o">.</span><span class="n">send_goal_async</span><span class="p">(</span><span class="n">goal_msg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Gripper Open&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">future_open_res</span></div>
+
+<div class="viewcode-block" id="TrajectoryCaller.home_gripper"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.TrajectoryCaller.home_gripper">[docs]</a>    <span class="k">def</span> <span class="nf">home_gripper</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Homes the gripper by first closing the gripper, then opening all the</span>
+<span class="sd">        way.</span>
+
+<span class="sd">        :return: A future object from the ActionClient.send_goal_async()</span>
+<span class="sd">        function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">goal_msg</span> <span class="o">=</span> <span class="n">Homing</span><span class="o">.</span><span class="n">Goal</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_homing_client</span><span class="o">.</span><span class="n">wait_for_server</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_homing_client</span><span class="o">.</span><span class="n">send_goal_async</span><span class="p">(</span><span class="n">goal_msg</span><span class="p">)</span></div>
+
+        
+<div class="viewcode-block" id="TrajectoryCaller.plan"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.TrajectoryCaller.plan">[docs]</a>    <span class="k">def</span> <span class="nf">plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">waypoint</span><span class="p">,</span><span class="n">execute_now</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a trajectory plan for the end-effector to reach thespecified waypoint</span>
+
+<span class="sd">        :return: If in x,y,z,r,p,y configuration, a cartesian trajectory plan. If otherwise,</span>
+<span class="sd">        a rotation motion plan.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">waypoint</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">),</span><span class="s1">&#39;Invalid waypoint recieved&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">goal_pos</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="n">waypoint</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">goal_pos</span><span class="o">.</span><span class="n">orientation</span> <span class="o">=</span> <span class="n">waypoint</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">waypoint</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">&gt;</span><span class="mi">3</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">is_xyzrpy</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># SENDING HOME JOINT STATES</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">is_xyzrpy</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">execute_now</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plan_client</span><span class="o">.</span><span class="n">call_async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">rclpy</span><span class="o">.</span><span class="n">spin_until_future_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">execute_now</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">goal_pos</span><span class="o">.</span><span class="n">orientation</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_execute_request</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">execute_now</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">goal_pos</span><span class="o">.</span><span class="n">position</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; FINISHED EXECUTING- CHANGING STATES&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_execute_request</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TrajectoryCaller.send_execute_request"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.TrajectoryCaller.send_execute_request">[docs]</a>    <span class="k">def</span> <span class="nf">send_execute_request</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute the trajectory plan - used in each step of the entire</span>
+<span class="sd">        trajectory sequence.</span>
+
+<span class="sd">        :return: Empty</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_client</span><span class="o">.</span><span class="n">call_async</span><span class="p">(</span><span class="n">Empty</span><span class="o">.</span><span class="n">Request</span><span class="p">())</span>
+        <span class="n">rclpy</span><span class="o">.</span><span class="n">spin_until_future_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; FINISHED EXECUTING- CHANGING STATES&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TrajectoryCaller.define_waypoints"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.TrajectoryCaller.define_waypoints">[docs]</a>    <span class="k">def</span> <span class="nf">define_waypoints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a dictionary of waypoints based on the current TF data</span>
+<span class="sd">        for the different objects. Should be called in timer loop to</span>
+<span class="sd">        get up to date data.</span>
+
+<span class="sd">        Each waypoint must be a nested list of length 2. The first element</span>
+<span class="sd">        is a list of length 3 corresponding to the waypoint (x,y,z) and the</span>
+<span class="sd">        second element is another list of length 2 corresponding to the</span>
+<span class="sd">        (roll, pitch, yaw) of the EE at the waypoint.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">waypoints_dict</span> <span class="o">=</span> <span class="p">{</span>
+
+            <span class="s2">&quot;send_home&quot;</span><span class="p">:</span> <span class="p">[</span>
+
+                    <span class="p">[</span><span class="o">-</span><span class="mf">0.001312</span><span class="p">,</span><span class="o">-</span><span class="mf">0.787102</span><span class="p">,</span><span class="o">-</span><span class="mf">0.003124</span><span class="p">,</span><span class="o">-</span><span class="mf">2.357184</span><span class="p">,</span><span class="o">-</span><span class="mf">0.000188</span><span class="p">,</span><span class="mf">1.571918</span><span class="p">,</span><span class="mf">0.783990</span><span class="p">,</span> <span class="mf">0.000323</span><span class="p">,</span> <span class="mf">0.000323</span><span class="p">],</span>
+                    <span class="p">[]</span>
+                <span class="p">],</span>
+            <span class="s2">&quot;new_home&quot;</span><span class="p">:</span> <span class="p">[</span>
+
+                    <span class="p">[</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="o">-</span><span class="mf">0.783508</span><span class="p">,</span><span class="o">-</span><span class="mf">0.000244</span><span class="p">,</span><span class="o">-</span><span class="mf">2.356829</span><span class="p">,</span><span class="o">-</span><span class="mf">0.003843</span><span class="p">,</span><span class="mf">1.572944</span><span class="p">,</span><span class="o">-</span><span class="mf">0.784056</span><span class="p">,</span> <span class="mf">0.034865</span><span class="p">,</span> <span class="mf">0.034865</span><span class="p">],</span>
+                    <span class="p">[]</span>
+                <span class="p">],</span>
+            <span class="s2">&quot;scoop_standoff&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">scoop_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">scoop_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">scoop_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span><span class="o">+</span><span class="mf">0.15</span><span class="p">],</span>
+                    <span class="p">[]</span>
+                <span class="p">],</span>
+            <span class="s2">&quot;scoop_handle&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">scoop_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">scoop_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">scoop_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span><span class="p">],</span>
+                    <span class="p">[]</span>
+                <span class="p">],</span>
+            <span class="s2">&quot;kettle_standoff&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">kettle_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">kettle_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">kettle_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.15</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;kettle&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">kettle_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">kettle_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">kettle_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.035</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;kettle_return_standoff&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">jig_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="o">-</span><span class="mf">0.3</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">jig_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="o">-</span><span class="mf">0.02</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">jig_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.4</span><span class="p">,</span> <span class="c1">#0.4</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;kettle_return&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">jig_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="o">-</span><span class="mf">0.3</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">jig_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="o">-</span><span class="mf">0.02</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">jig_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.13</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;move_test&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span> <span class="p">[]],</span>
+            <span class="s2">&quot;move_home&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="bp">self</span><span class="o">.</span><span class="n">home_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">home_y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">home_z</span><span class="p">],</span> <span class="p">[]],</span>
+            <span class="s2">&quot;rot_home&quot;</span><span class="p">:[[],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">home_roll</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">home_pitch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">home_yaw</span><span class="p">]],</span>
+            <span class="s2">&quot;rotate_home&quot;</span><span class="p">:</span> <span class="p">[[],</span> <span class="p">[</span><span class="n">pi</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span>
+            <span class="s2">&quot;rotate_90&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">[],</span>
+                    <span class="p">[</span><span class="n">pi</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">]</span>
+                <span class="p">],</span>
+            <span class="s2">&quot;straighten&quot;</span><span class="p">:[</span>
+                <span class="p">[],</span>
+                <span class="p">[</span><span class="n">pi</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]</span>
+                <span class="p">],</span>
+            <span class="s2">&quot;kettle_switch_standoff&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">switch_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">switch_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">switch_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;rotate_minus_45_yaw&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">[],</span>
+                    <span class="p">[</span><span class="n">pi</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="o">-</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span><span class="p">]</span>
+                <span class="p">],</span>
+            <span class="s2">&quot;rotate_minus_0_yaw&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">[],</span>
+                    <span class="p">[</span><span class="n">pi</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]</span>
+                <span class="p">],</span>
+            <span class="s2">&quot;rotate_45&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">[],</span>
+                    <span class="p">[</span><span class="n">pi</span><span class="p">,</span><span class="o">-</span><span class="n">pi</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">]</span>
+                <span class="p">],</span>
+            <span class="s2">&quot;rotate_45_back&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">[],</span>
+                    <span class="p">[</span><span class="n">pi</span><span class="p">,</span><span class="o">-</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span><span class="p">,</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">]</span>
+                <span class="p">],</span>
+            <span class="s2">&quot;pour_rot_1&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">[],</span>
+                    <span class="p">[</span><span class="n">pi</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="n">pi</span><span class="p">]</span>
+                <span class="p">],</span>
+            <span class="s2">&quot;pour_rot_2&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">[],</span>
+                    <span class="p">[</span><span class="n">pi</span><span class="p">,</span><span class="o">-</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span><span class="p">,</span><span class="n">pi</span><span class="p">]</span>
+                <span class="p">],</span>
+            <span class="s2">&quot;pour_rot_3&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">[],</span>
+                    <span class="p">[</span><span class="n">pi</span><span class="p">,</span><span class="o">-</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="n">pi</span><span class="p">]</span>
+                <span class="p">],</span>
+            <span class="s2">&quot;pour_so_1&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="o">-</span><span class="mf">0.03</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="o">+</span><span class="mf">0.01</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.45</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;pour_so_2&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span><span class="mf">0.03</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.38</span> <span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;rotate_45_again&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">[],</span>
+                    <span class="p">[</span><span class="n">pi</span><span class="p">,</span><span class="n">pi</span><span class="o">/</span><span class="mf">2.7</span><span class="p">,</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">]</span>
+                <span class="p">],</span>
+            
+            <span class="s2">&quot;pour_rot_final&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">[],</span>
+                    <span class="p">[</span><span class="n">pi</span><span class="p">,</span><span class="o">-</span><span class="mf">0.1</span><span class="p">,</span><span class="n">pi</span><span class="p">]</span>
+                <span class="p">],</span>
+            
+            
+            <span class="s2">&quot;kettle_switch&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">switch_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">switch_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">switch_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">-</span> <span class="mf">0.005</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;stir_standoff&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">stir_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">stir_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">stir_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.3</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;stir_handle&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">stir_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">stir_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">stir_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.05</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;cup_standoff&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.3</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+
+            <span class="s2">&quot;cup_pour&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;cup_center&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+
+            <span class="s2">&quot;stir1&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="mf">0.02</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;cup_tilt_standoff&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="o">-</span><span class="mf">0.02</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span><span class="o">+</span><span class="mf">0.2</span><span class="p">],</span>
+                <span class="p">[]</span>
+            <span class="p">],</span>
+            
+            <span class="s2">&quot;cup_standoff&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span><span class="o">+</span><span class="mf">0.3</span><span class="p">],</span>
+                <span class="p">[]</span>
+            <span class="p">],</span>
+
+            <span class="s2">&quot;cup_handle&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span><span class="o">+</span><span class="mf">0.3</span><span class="p">],</span>
+                <span class="p">[]</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;stir2&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="mf">0.02</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;stir3&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="mf">0.02</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;stir4&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="mf">0.02</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cup_pose</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="p">[],</span>
+            <span class="p">],</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span> <span class="o">=</span> <span class="n">SimpleNamespace</span><span class="p">(</span><span class="o">**</span><span class="n">waypoints_dict</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TrajectoryCaller.make_chocolate_callback"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.TrajectoryCaller.make_chocolate_callback">[docs]</a>    <span class="k">def</span> <span class="nf">make_chocolate_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">request</span><span class="p">,</span><span class="n">response</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Summons in collision objects into the planning scene and executes the trajectory sequence</span>
+<span class="sd">        to create hot chocolate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Call in the collision boxes into the planning scene</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">plan_scene_flag</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="n">box_client</span> <span class="o">=</span> <span class="n">BoxCaller</span><span class="p">()</span>
+            <span class="n">box_client</span><span class="o">.</span><span class="n">add_box_request</span><span class="p">()</span>
+            <span class="n">box_client</span><span class="o">.</span><span class="n">call_box_request</span><span class="p">()</span>
+            <span class="n">box_client</span><span class="o">.</span><span class="n">add_box2_request</span><span class="p">()</span>
+            <span class="n">box_client</span><span class="o">.</span><span class="n">call_box_request</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plan_scene_flag</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="c1"># Call in the waypoints from the dictionary</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">define_waypoints</span><span class="p">()</span>
+        <span class="c1"># Kettle switch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">new_home</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">kettle_switch_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRIP</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grasp</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mf">0.008</span><span class="p">,</span><span class="n">force</span><span class="o">=</span><span class="mf">90.0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">GRIP</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">GRIP</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">kettle_switch</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">kettle_switch_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">open_gripper</span><span class="p">()</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="c1"># Cocoa scoop</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">cup_tilt_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">new_home</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">scoop_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">rotate_90</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">rotate_45</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">scoop_handle</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grasp</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mf">0.008</span><span class="p">,</span><span class="n">force</span><span class="o">=</span><span class="mf">90.0</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">scoop_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">cup_tilt_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">rotate_90</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">rotate_45_again</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">rotate_90</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">cup_tilt_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">scoop_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">rotate_45</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">scoop_handle</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">open_gripper</span><span class="p">()</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">scoop_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">new_home</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Kettle pour</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">kettle_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">kettle</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grasp</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mf">0.008</span><span class="p">,</span><span class="n">force</span><span class="o">=</span><span class="mf">90.0</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">kettle_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">cup_pour</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">pour_so_1</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">pour_rot_1</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">pour_rot_2</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">pour_so_2</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">pour_rot_3</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">pour_so_1</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">pour_rot_2</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">pour_rot_1</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">kettle_return_standoff</span><span class="p">,</span><span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">pour_rot_1</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">kettle_return</span><span class="p">,</span><span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">open_gripper</span><span class="p">()</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">kettle_return_standoff</span><span class="p">,</span><span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Stir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">stir_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">stir_handle</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRIP</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grasp</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span><span class="n">force</span><span class="o">=</span><span class="mf">90.0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">GRIP</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">stir_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">cup_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">cup_center</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stir_duration</span> <span class="o">=</span> <span class="mi">4</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stir_duration</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">stir1</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">stir2</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">stir3</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">stir4</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">cup_center</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">cup_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">stir_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">stir_handle</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRIP</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">open_gripper</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">GRIP</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">stir_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">cup_tilt_standoff</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Return home</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">new_home</span><span class="p">,</span> <span class="n">execute_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trial_flag</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="c1"># Delete boxes</span>
+        <span class="n">box_client</span><span class="o">.</span><span class="n">clear_box_request</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">response</span></div></div>
+
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../trajectory.html#trajectory.trajectory.trajectory.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">rclpy</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">node</span> <span class="o">=</span> <span class="n">TrajectoryCaller</span><span class="p">()</span>
+    <span class="n">rclpy</span><span class="o">.</span><span class="n">spin</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">rclpy</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, BotChocolate.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
