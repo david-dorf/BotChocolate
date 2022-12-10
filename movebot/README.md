@@ -54,8 +54,8 @@ trajectory. Otherwise, a separate service must be called to execute the trajecto
 
 By setting `execute_now` to false, the user can execute a trajectory by calling the `/call_execute` service
 one of two ways:
-    -In the terminal: `ros2 service call /call_execute std_srvs/srv/Empty`
-    -By creating a client for the service in another node
+    1. In the terminal: `ros2 service call /call_execute std_srvs/srv/Empty`
+    2. By creating a client for the service in another node
 
 
 ### Adding Obstacles to the Planning Scene
