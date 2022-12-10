@@ -593,21 +593,17 @@ class MoveBot(Node):
                     start_in_joint_config)
         
 
-
         if not request.is_xyzrpy:
             self.get_logger().info(f"CHANGING TO SEND HOME STATE")
             self.state=State.HOME_MSG
         elif not request.goal_pos.position and self.state==State.IDLE:
-            # print('CHANGED TO PLAN ROT')
             self.get_logger().info(f"CHANGING TO PLAN ROT MSG STATE")
             self.state=State.ROT_MSG
         elif not request.goal_pos.orientation and self.state==State.IDLE:
-            # print('CHANGED TO CART TRANS')
             self.get_logger().info(f"CHANGING TO CART MSG STATE")
             self.state=State.CART_MSG
 
         if self.state==State.ROT_MSG:
-            # print('MAKING ROT MSG')
             self.get_logger().info(f" CURRENT STATE {self.state}")
             self.get_logger().info(f"MAKING ROT MSG")
             ik_request_message_goal = IkGoalRqstMsg()
@@ -699,9 +695,7 @@ class MoveBot(Node):
 
             self.get_logger().info(f"CHANGING TO PLAN EXEC STATE")
             self.state=State.PLAN_EXEC
-            # print('SENDING ROT MSG')
             self.get_logger().info(f"CURRENT STATE {self.state}")
-            # print(self.state)
             if request.execute_now==True:
                 self.get_logger().info(f" 'EXECUTE NOW' TRUE-- EXECUTING PLAN REQUEST")
                 self.get_logger().info(f"CHANGING TO IDLE STATE")
@@ -727,12 +721,8 @@ class MoveBot(Node):
             execute_msg.trajectory = self.cart_response.solution
 
         if self.state==State.PLAN_EXEC:
-            print('EXECUTING ROT MSG')
-            print(self.state)
             execute_msg.trajectory = self.plan_response.result.planned_trajectory
-            print('SWITCHED TO IDLE')
             self.state=State.IDLE
-            print(self.state)
 
         return execute_msg
 
