@@ -1,0 +1,17 @@
+repositories:
+  apriltag:
+    type: git
+    url: git@github.com:AprilRobotics/apriltag.git
+    version: master
+  apriltag_msgs:
+    type: git
+    url: git@github.com:christianrauch/apriltag_msgs.git
+    version: master
+  apriltag_ros:
+    type: git
+    url: git@github.com:christianrauch/apriltag_ros.git
+    version: master
+  hw3group-botchocolate:
+    type: git
+    url: git@github.com:ME495-EmbeddedSystems/hw3group-botchocolate.git
+    version: jpo

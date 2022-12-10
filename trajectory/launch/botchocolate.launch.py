@@ -1,7 +1,6 @@
-from launch import LaunchDescription, LaunchDescriptionSource
+from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import IncludeLaunchDescription,DeclareLaunchArgument
-from launch.substitutions import PathJoinSubstitution
+from launch.actions import IncludeLaunchDescription
 from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import LaunchConfigurationEquals
@@ -9,7 +8,7 @@ from launch.actions import ExecuteProcess
 
 
 def generate_launch_description():
-    '''
+    """
     Launches simple_move, vision stuff, and rviz.
 
     # With the real robot:
@@ -18,30 +17,21 @@ def generate_launch_description():
     # With fake hardware/only rviz on your computer:
     ros2 launch moveBot botchocolate.launch.py real:=false
 
-    '''
-    
-    real = DeclareLaunchArgument(
-        "real",
-        default_value="true",
-        description="Choose whether to use the real robot"
-    )
-
+    """
 
     # launches the simple_move launchfile
     simple_move = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [FindPackageShare("movebot"),"/launch/","simple_move.launch.py"]
+            [FindPackageShare("movebot"), "/launch/", "simple_move.launch.py"]
         )
     )
-    
 
-    # starts the trajectory node 
+    # starts the trajectory node
     trajectory = Node(
-        package='movebot',
-        executable='trajectory',
-        name='trajectory',
+        package="movebot",
+        executable="trajectory",
+        name="trajectory",
     )
-
 
     # Fake hardware rviz
     rviz_fake = ExecuteProcess(
@@ -51,11 +41,10 @@ def generate_launch_description():
             "franka_moveit_config",
             "moveit.launch.py",
             "robot_ip:=dont-care",
-            "use_fake_hardware:=true"
+            "use_fake_hardware:=true",
         ],
-        condition = LaunchConfigurationEquals("real","false")
+        condition=LaunchConfigurationEquals("real", "false"),
     )
-
 
     # Rviz when connected to real robot
     rviz_real = ExecuteProcess(
@@ -66,26 +55,17 @@ def generate_launch_description():
             "rviz.launch.py",
             "robot_ip:=panda0.robot",
         ],
-        condition = LaunchConfigurationEquals("real","true")
-
+        condition=LaunchConfigurationEquals("real", "true"),
     )
-
 
     # Starts the vision launchfile
     vision = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [FindPackageShare("bot_vis"),"/launch/","launch_vision.py"]
+            [FindPackageShare("bot_vis"), "/launch/", "launch_vision.py"]
         ),
-        condition = LaunchConfigurationEquals("real","true")
+        condition=LaunchConfigurationEquals("real", "true"),
     )
-    
 
-    ld = LaunchDescription([
-        simple_move,
-        vision,
-        rviz_real,
-        rviz_fake,
-        trajectory
-    ])
+    ld = LaunchDescription([simple_move, vision, rviz_real, rviz_fake, trajectory])
 
     return ld

@@ -5,7 +5,7 @@ from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, LaunchConfiguration
+from launch.substitutions import LaunchConfiguration
 from launch.conditions import LaunchConfigurationEquals
 from launch.actions import DeclareLaunchArgument
 
@@ -16,7 +16,7 @@ def generate_launch_description():
     tag_yaml_path = bot_vis_path / 'config/tag.yaml'
     default_rviz_config_path = bot_vis_path / 'april.rviz'
     calibration_path = bot_vis_path / 'calibration.yaml'
-    
+
     rviz_arg = DeclareLaunchArgument(
         name='rvizconfig',
         default_value=str(default_rviz_config_path),
@@ -31,7 +31,7 @@ def generate_launch_description():
         description="Flag to launch rviz visualization for seeing April tag tf's"
         )
 
-    calibrate_arg = DeclareLaunchArgument(
+    DeclareLaunchArgument(
         name="calibration",
         default_value='false',
         choices=['true',
@@ -45,12 +45,11 @@ def generate_launch_description():
             '/launch/rs_launch.py'])
     )
 
-    # Start turtle robot node
     apriltag_node = Node(
         package='apriltag_ros',
         executable='apriltag_node',
-        remappings=[('image_rect','/camera/color/image_raw'),
-                    ('camera_info','/camera/color/camera_info')],
+        remappings=[('image_rect', '/camera/color/image_raw'),
+                    ('camera_info', '/camera/color/camera_info')],
         parameters=[tag_yaml_path]
         )
 

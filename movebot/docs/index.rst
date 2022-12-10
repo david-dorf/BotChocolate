@@ -3,15 +3,20 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to move_bot's documentation!
-====================================
+MoveBot
+=======
+
+A Python API for MoveIt! in ROS2  
+--------------------------------
+
+INSERT DESCRIPTION OF THE PACKAGE HERE
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
-   modules
-   pages/usage
+   movebot
+   movebot_interfaces
 
 Indices and tables
 ==================
