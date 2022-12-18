@@ -2,7 +2,7 @@
 Collaborators: James Oubre, Allan Garcia, Shantao Cao, Nick Marks, David Dorf
 
 The purpose of this project was to create hot chocolate using the Franka Emika 7 DOF robot arm. To 
-perceive the environment, the system utilizes an Intel D435i camera AprilTags. Upon initial setup, a
+perceive the environment, the system utilizes an Intel D435i camera and AprilTags. Upon initial setup, a
 calibration process must be completed. After this, the process consisted of using AprilTags to 
 locate a scoop of cocoa, a mug, a spoon, and a kettle relative to the robot. Next, using our custom 
 MoveIt API for Python, movebot, the robot is able to perform path planning between all of these
