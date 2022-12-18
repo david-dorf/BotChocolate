@@ -72,9 +72,9 @@ file will be located at `movebot/docs/_build/html/index.html`
 ### Launch Files
 `launch_vision.py` launches the `april_tf`, `apriltag_node`, and `realsense` nodes as well as rviz and the `calibration` node if specified.
 
-`simple_move.launch.py` launches ...
+`simple_move.launch.py` launches the  `simple_move` node
 
-`botchocolate.launch.py` launches ...
+`botchocolate.launch.py` launches all the previous nodes as well as the `trajectory` node
 
 ## The Group
 
